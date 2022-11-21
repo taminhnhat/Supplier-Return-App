@@ -19,7 +19,11 @@ async function getStock(req, res) {
     } catch (err) {
         return res.status(500).json({ message: err.message })
     }
-    return res.json(result)
+    return res.status(200).json({
+        status: 'success',
+        results: result.length,
+        data: result
+    })
 }
 
 async function getStockById(req, res) {
@@ -32,7 +36,14 @@ async function getStockById(req, res) {
     } catch (err) {
         return res.status(500).json({ message: err.message })
     }
-    return res.json(result)
+    return res.status(200).json({
+        status: 'success',
+        data: result
+    })
+}
+
+async function deleteStockById(req, res) {
+    //
 }
 
 async function getStockByBarcode(req, res) {
@@ -50,7 +61,11 @@ async function getStockByBarcode(req, res) {
         result.forEach(element => {
             rgbHub.emit(`W1:${element.startPoint}:${element.endPoint}:${element.lightColor}\n`)
         });
-        return res.json(result)
+        return res.status(200).json({
+            status: 'success',
+            results: result.length,
+            data: result
+        })
     } catch (err) {
         return res.status(500).json({ message: err.message })
     }
@@ -60,30 +75,16 @@ async function deleteByBarcode(req, res) {
     try {
         const stocks = await _getStockByBarcode(req, res)
         if (stocks.length == 0) return res.status(404).json({ message: `Stock ${req.params.barcode} not found` })
+        const stocksChange = _deleteByBarcode(stocks, req.params.barcode)
         let result = []
-        stocks.forEach((stock, index) => {
-            const anyChange = false
-            stock.stocks.forEach(async (element, idx) => {
-                if (element == req.params.barcode) {
-                    anyChange = true
-                    stock.stocks.splice(index, 1)
-                }
+        stocksChange.forEach(async (stock, index) => {
+            const out = await stock.save()
+            result.push(out)
+            if (index == stocksChange.length - 1) return res.status(200).json({
+                status: 'success',
+                results: result.length,
+                data: result
             })
-            if (anyChange) {
-                const output = await stock.save()
-            }
-            new Promise(async (resolve, reject) => {
-                resolve(output)
-                // if (idx == stock.stocks.length - 1) reject()
-            })
-                .then((out) => {
-                    result.push(out)
-                    if (index == stocks.length - 1) {
-                        return res.json(result)
-                    }
-                }, () => {
-                    return res.status(500).json({ message: 'Cannot delete stock' })
-                })
         })
     } catch (err) {
         return res.status(500).json({ message: err.message })
@@ -98,12 +99,23 @@ async function addStock(req, res) {
     //     "size": "20cm",
     //     "mergeBarcode": "7862398125637"
     // }
-    if (req.body.extendVolume == true && req.body.mergeVolume == false) {
-        //
+    const defaultMode = req.body.extendVolume == false && req.body.mergeVolume == false
+    const extendMode = req.body.extendVolume == true && req.body.mergeVolume == false
+    const mergeMode = req.body.extendVolume == false && req.body.mergeVolume == true
+
+    if (extendMode) {
         _createVolume(req, res)
     }
-    else if (req.body.extendVolume == false && req.body.mergeVolume == true) {
-        //
+    else if (mergeMode) {
+        handleMergeMode(req, res)
+    }
+    else if (defaultMode) {
+        handleDefaultMode(req, res)
+    }
+    else {
+        return res.status(500).json({ message: 'Not a valid api' });
+    }
+    async function handleMergeMode(req, res) {
         try {
             const stocks = await Stock.find()
             if (stocks == null || stocks.length == 0) {
@@ -139,8 +151,7 @@ async function addStock(req, res) {
             return res.status(500).json({ message: err.message })
         }
     }
-    else if (req.body.extendVolume == false && req.body.mergeVolume == false) {
-        //
+    async function handleDefaultMode(req, res) {
         try {
             const stocks = await Stock.find()
             if (stocks == null) {
@@ -158,7 +169,7 @@ async function addStock(req, res) {
                     _createVolume(req, res)
                 }
                 else {
-                    rgbHub.emit(`F1:000000`);
+                    rgbHub.emit(`F1:000000\n`);
                     // result.forEach(ele => {
                     //     rgbHub.emit(`W1:${ele.startPoint}:${ele.endPoint}:${ele.lightColor}\n`);
                     // })
@@ -170,9 +181,6 @@ async function addStock(req, res) {
         } catch (err) {
             return res.status(500).json({ message: err.message })
         }
-    }
-    else {
-        return res.status(500).json({ message: 'Not a valid api' });
     }
 }
 
@@ -233,9 +241,14 @@ async function _createVolume(req, res) {
     lightIndex++;
     try {
         const newStock = await stock.save();
-        rgbHub.emit(`F1:000000`);
+        rgbHub.emit(`F1:000000\n`);
         rgbHub.emit(`W1:${startPoint}:${endPoint}:${lightColor}\n`);
-        return res.status(201).json(newStock);
+        return res.status(201).json({
+            status: 'success',
+            object: 'add_result',
+            url: '/api/v1/stocks',
+            data: newStock
+        });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
@@ -258,4 +271,13 @@ async function _getStockByBarcode(req, res) {
         return null
     }
 }
-module.exports = { getStock, getStockByBarcode, deleteByBarcode, getStockById, addStock, clearStock, reload };
+
+function _deleteByBarcode(stocks, matchSku) {
+    stocks.forEach((stock, index) => {
+        stock.stocks.forEach((sku, idx) => {
+            if (sku == matchSku) stock.stocks.splice(idx, 1)
+        })
+    })
+    return stocks
+}
+module.exports = { getStock, getStockByBarcode, deleteByBarcode, getStockById, deleteStockById, addStock, clearStock, reload };
