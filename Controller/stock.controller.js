@@ -111,24 +111,6 @@ async function getConfigurations(req, res) {
     }
 }
 
-async function searchBooks(req, res) {
-    const result = 0
-    return res.status(200).json({
-        status: 'success',
-        results: result.length,
-        result: result
-    })
-}
-
-async function searchBins(req, res) {
-    const result = 0
-    return res.status(200).json({
-        status: 'success',
-        results: result.length,
-        result: result
-    })
-}
-
 async function addStock(req, res) {
     //   {
     //     "barcode": "3467343908",
@@ -306,6 +288,7 @@ async function _getStockByBarcode(req, res) {
         });
         return result
     } catch (err) {
+        throw err
         return null
     }
 }
@@ -320,4 +303,4 @@ function _deleteByBarcode(stocks, matchSku) {
 }
 
 
-module.exports = { getStock, getStockByBarcode, removeBooksInStock, getStockById, getConfigurations, searchBooks, searchBins, deleteStockById, addStock, clearStock, reload };
+module.exports = { getStock, getStockByBarcode, removeBooksInStock, getStockById, getConfigurations, deleteStockById, addStock, clearStock, reload };

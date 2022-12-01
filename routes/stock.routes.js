@@ -30,4 +30,5 @@ router
   .route('/:id')
   .get(stockController.getStockById)
   .delete(stockController.deleteStockById)
+
 module.exports = router
