@@ -1,6 +1,7 @@
 require('dotenv').config({ path: './.env' })
 const Stock = require('../Models/stock')
 const rgbHub = require('../rgbHub')
+const config = require('config')
 
 let lightCursor_X = 0;
 let lightCursor_Y = 0;
@@ -10,6 +11,7 @@ const numOfStrip = process.env.NUM_OF_STRIP
 const numOfLed = numOfLedPerStrip * numOfStrip
 
 async function getStock(req, res) {
+    console.log(req.query)
     let result
     try {
         result = await Stock.find()
@@ -71,7 +73,7 @@ async function getStockByBarcode(req, res) {
     }
 }
 
-async function deleteByBarcode(req, res) {
+async function removeBooksInStock(req, res) {
     try {
         const stocks = await _getStockByBarcode(req, res)
         if (stocks.length == 0) return res.status(404).json({ message: `Stock ${req.params.barcode} not found` })
@@ -89,6 +91,42 @@ async function deleteByBarcode(req, res) {
     } catch (err) {
         return res.status(500).json({ message: err.message })
     }
+}
+
+async function getConfigurations(req, res) {
+    const result = JSON.parse(process.env.BIN_WIDTH_VALUE_ARRAY_IN_CM)
+    console.log('configurations', result)
+    if (result == null) {
+        return res.status(500).json({
+            status: 'fail',
+            message: 'Cannot find configurations'
+        })
+    }
+    else {
+        return res.status(200).json({
+            status: 'success',
+            results: result.length,
+            result: result
+        })
+    }
+}
+
+async function searchBooks(req, res) {
+    const result = 0
+    return res.status(200).json({
+        status: 'success',
+        results: result.length,
+        result: result
+    })
+}
+
+async function searchBins(req, res) {
+    const result = 0
+    return res.status(200).json({
+        status: 'success',
+        results: result.length,
+        result: result
+    })
 }
 
 async function addStock(req, res) {
@@ -280,4 +318,6 @@ function _deleteByBarcode(stocks, matchSku) {
     })
     return stocks
 }
-module.exports = { getStock, getStockByBarcode, deleteByBarcode, getStockById, deleteStockById, addStock, clearStock, reload };
+
+
+module.exports = { getStock, getStockByBarcode, removeBooksInStock, getStockById, getConfigurations, searchBooks, searchBins, deleteStockById, addStock, clearStock, reload };

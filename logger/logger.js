@@ -10,7 +10,7 @@ class Logger {
             if (value != null) console.log(value);
         }
         else {
-            let logtext = `${new Date().toISOString()}\t${level.toUpperCase()}`;
+            let logtext = `${Date(Date.now())}\t${level.toUpperCase()}`;
             if (location != null) {
                 logtext += `\tat:${location}`;
             }
