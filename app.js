@@ -8,6 +8,6 @@ app.use(express.json())
 app.use(morgan('common'))
 
 const stockRouter = require('./routes/stock.routes')
-app.use('/api/v1/stocks', stockRouter)
+app.use('/api/v1', stockRouter)
 
 module.exports = app

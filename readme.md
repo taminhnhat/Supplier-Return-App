@@ -1,10 +1,56 @@
+# Table of contents
 # DESCRIPTION
 # REQUIREMENT
-# INSTALLATION
+- Platform: raspberry pi 3 B+/4  
+- Os: ubuntu server 20.04 LTS (without desktop)  
+- Mongodb server for raspberry pi using this [guide](https://developer.mongodb.com/how-to/mongodb-on-raspberry-pi/)
+- [Node.js](https://github.com/nodesource/distributions/blob/master/README.md) 14.x
+# SETUP
+- Install all [requirements](#requirements)
+- Set static dhcp
 # API
-## 1. Add books to stock
+## 1. Retrieve all products
 ### Request
+GET /api/v1/products
+
+### Respond
+```json
+[
+    {
+        "_id": "639306f5d786cee674e711af",
+        "startPoint": 0,
+        "endPoint": 11,
+        "binId": 0,
+        "XCoordinate": 0,
+        "YCoordinate": 0,
+        "stocks": [
+            "67435928347652837"
+        ],
+        "dateCreated": "2022-12-09T09:59:17.097Z",
+        "__v": 0
+    },
+    {
+        "_id": "639306f5d786cee674e711b1",
+        "startPoint": 12,
+        "endPoint": 23,
+        "binId": 1,
+        "XCoordinate": 1,
+        "YCoordinate": 0,
+        "stocks": [
+            "2345734378621376"
+        ],
+        "dateCreated": "2022-12-09T09:59:17.935Z",
+        "__v": 0
+    },
+    {...}
+]
+```
 |Property|Type|Description|  
+|---|---|---|
+||||
+## 2. Request bin to add products
+### Request
+|Property|Type|Description|
 |---|---|---|
 |barcode|String||
 |extendVolume|bool||
@@ -46,6 +92,7 @@ content-type: application/json
     }
 }
 ```
+## 3. Delete 
 ## 2. Pick books from stock
 ### Delete stocks by barcode
 ```
