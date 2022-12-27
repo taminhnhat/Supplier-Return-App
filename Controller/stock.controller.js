@@ -6,8 +6,8 @@ const config = require('config')
 let lightCursor_X = 0;
 let lightCursor_Y = 0;
 let binIndex = 0;
-let binCoordinate_X = 0;
-let binCoordinate_Y = 0;
+let binIndex_X = 0;
+let binIndex_Y = 0;
 const numOfLedPerStrip = process.env.NUM_OF_LED_PER_STRIP
 const numOfStrip = process.env.NUM_OF_STRIP
 
@@ -16,10 +16,16 @@ async function getStock(req, res) {
     try {
         result = await Stock.find()
         if (result == null) {
-            return res.status(404).json({ message: 'Cannot find subscriber' })
+            return res.status(404).json({
+                status: 'fail',
+                message: 'Cannot find stock'
+            })
         }
     } catch (err) {
-        return res.status(500).json({ message: err.message })
+        return res.status(500).json({
+            status: 'fail',
+            message: err.message
+        })
     }
     return res.status(200).json(result)
 }
@@ -29,7 +35,7 @@ async function getBin(req, res) {
     try {
         result = await Stock.findById(req.params.id)
         if (result == null) {
-            return res.status(404).json({ message: 'Cannot find subscriber' })
+            return res.status(404).json({ message: 'Cannot find stock' })
         }
     } catch (err) {
         return res.status(500).json({ message: err.message })
@@ -55,7 +61,7 @@ async function searchProduct(req, res) {
             })
         });
         result.forEach(element => {
-            rgbHub.emit(`W1:${element.startPoint}:${element.endPoint}:${element.lightColor}\n`)
+            rgbHub.emit(`W1:${element.coordinate.startPoint}:${element.coordinate.endPoint}:${element.lightColor}\n`)
         });
         return res.status(200).json(result)
     } catch (err) {
@@ -152,7 +158,7 @@ async function addStock(req, res) {
                     orderId: req.body.orderId
                 })
 
-                rgbHub.emit(`W1:${stock.startPoint}:${stock.endPoint}:${stock.lightColor}\n`)
+                rgbHub.emit(`W1:${stock.coordinate.startPoint}:${stock.coordinate.endPoint}:${stock.lightColor}\n`)
                 return res.status(201).json({ stock })
 
             }, () => {
@@ -188,11 +194,8 @@ async function addStock(req, res) {
                 }
                 else {
                     rgbHub.emit(`F1:000000\n`);
-                    // result.forEach(ele => {
-                    //     rgbHub.emit(`W1:${ele.startPoint}:${ele.endPoint}:${ele.lightColor}\n`);
-                    // })
                     const tempRes = result[result.length - 1]
-                    rgbHub.emit(`W1:${tempRes.startPoint}:${tempRes.endPoint}:${tempRes.lightColor}\n`)
+                    rgbHub.emit(`W1:${tempRes.coordinate.startPoint}:${tempRes.coordinate.endPoint}:${tempRes.lightColor}\n`)
                     return res.json(tempRes)
                 }
             }
@@ -214,7 +217,7 @@ async function putToLight(req, res) {
     allBin.forEach((eachBin, index) => {
         if (eachBin.binId == req.body.binId) matchBin = eachBin
     })
-    console.log(matchBin)
+    console.log('find', matchBin)
     if (matchBin == undefined) {
         // no bin is matched, so create new bin
         createBin(req, res)
@@ -230,8 +233,9 @@ async function putToLight(req, res) {
         const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER)
         const binWidthInCm = Number(req.body.binWidth.replace('cm', ''))
         //
+        const deltaPoint = Math.floor(binWidthInCm / 100 * ledsPerMetterOfLedStrip) - 1
         let startPoint = lightCursor_X
-        let endPoint = lightCursor_X + Math.floor(binWidthInCm / 100 * ledsPerMetterOfLedStrip) - 1
+        let endPoint = lightCursor_X + deltaPoint
         // if row is full, add new row
         if (endPoint >= numOfLedPerStrip) {
             // if no row to expand
@@ -239,17 +243,23 @@ async function putToLight(req, res) {
                 return res.status(500).json({ message: 'Not enough space, use merge stock instead' })
             else {
                 lightCursor_Y += 1
-                endPoint = endPoint - startPoint
                 startPoint = 0
+                endPoint = deltaPoint
             }
+        }
+        else {
+            startPoint = lightCursor_X
+            endPoint = lightCursor_X + deltaPoint
         }
 
         const stock = new Stock({
-            startPoint: startPoint,
-            endPoint: endPoint,
             binId: binIndex,
-            XCoordinate: binCoordinate_X,
-            YCoordinate: binCoordinate_Y,
+            coordinate: {
+                startPoint: startPoint,
+                endPoint: endPoint,
+                X_index: binIndex_X,
+                Y_index: binIndex_Y
+            },
             stocks: [{
                 productId: req.body.productId,
                 orderId: req.body.orderId,
@@ -261,6 +271,7 @@ async function putToLight(req, res) {
             const newStock = await stock.save();
             rgbHub.emit(`F1:000000\n`);
             rgbHub.emit(`W1:${startPoint}:${endPoint}:${lightColor}\n`);
+            lightCursor_X = endPoint + 1
             return res.status(201).json({
                 status: 'success',
                 object: 'add_result',
@@ -274,11 +285,12 @@ async function putToLight(req, res) {
 
     async function updateBin(req, res) {
         // find match product in bin
-        let isAnyMatchedProduct
+        let isAnyMatchedProduct = false
+        let temp
         matchBin.stocks.forEach((eachProduct, productIndex) => {
             if (eachProduct.productId == req.body.productId) {
-                // update product quantity
-                eachProduct.productQuantity += req.body.productQuantity
+                temp = productIndex
+                // eachProduct.productQuantity += req.body.productQuantity // do this not work
                 isAnyMatchedProduct = true
             }
         })
@@ -291,13 +303,21 @@ async function putToLight(req, res) {
                 productQuantity: req.body.productQuantity
             })
         }
+        // if product matched, update product quantity
+        else if (isAnyMatchedProduct == true) {
+            let matchProduct = matchBin.stocks[temp]
+            matchProduct.productQuantity += req.body.productQuantity
+            matchBin.stocks.push(matchProduct)
+            matchBin.stocks.splice(temp, 1)
+        }
 
         try {
-            console.log(matchBin)
+            console.log('match', matchBin)
             // save matched bin
             const newBin = await matchBin.save()
+            console.log('new', newBin)
             rgbHub.emit(`F1:000000\n`)
-            rgbHub.emit(`W${matchBin.YCoordinate}:${matchBin.startPoint}:${matchBin.endPoint}:${req.body.lightColor}\n`)
+            rgbHub.emit(`W${matchBin.YCoordinate}:${matchBin.coordinate.startPoint}:${matchBin.coordinate.endPoint}:${req.body.lightColor}\n`)
             return res.status(201).json(newBin)
         }
         catch (err) {
@@ -319,7 +339,7 @@ async function pickToLight(req, res) {
             })
         });
         result.forEach(element => {
-            rgbHub.emit(`W1:${element.startPoint}:${element.endPoint}:${element.lightColor}\n`)
+            rgbHub.emit(`W1:${element.coordinate.startPoint}:${element.coordinate.endPoint}:${element.lightColor}\n`)
         });
         return res.status(200).json({
             status: 'success',
@@ -340,8 +360,8 @@ async function clearStock(req, res) {
         lightCursor_X = 0
         lightCursor_Y = 0
         binIndex = 0
-        binCoordinate_X = 0
-        binCoordinate_Y = 0
+        binIndex_X = 0
+        binIndex_Y = 0
         res.json({ message: 'Deleted stocks' })
     } catch (err) {
         res.status(500).json({ message: err.message })
@@ -355,9 +375,9 @@ async function reload(req, res) {
             console.log('Cannot find stocks')
         }
         stocks.forEach(stock => {
-            if (stock.endPoint >= lightCursor_X) lightCursor_X = stock.endPoint + 1
-            if (stock.XCoordinate >= binCoordinate_X) binCoordinate_X = stock.XCoordinate + 1
-            if (stock.YCoordinate >= binCoordinate_Y) binCoordinate_Y = stock.YCoordinate + 1
+            if (stock.endPoint >= lightCursor_X) lightCursor_X = stock.coordinate.endPoint + 1
+            if (stock.coordinate.X_index >= binIndex_X) binIndex_X = stock.coordinate.X_index + 1
+            if (stock.coordinate.Y_index >= binIndex_Y) binIndex_Y = stock.coordinate.Y_index + 1
             if (stock.binId >= binIndex) binIndex = stock.binId + 1
         })
     } catch (err) {
@@ -379,11 +399,13 @@ async function _createVolume(req, res) {
         }
     }
     const newStock = {
-        startPoint: startPoint,
-        endPoint: endPoint,
         binId: binIndex,
-        XCoordinate: binCoordinate_X,
-        YCoordinate: binCoordinate_Y,
+        coordinate: {
+            startPoint: startPoint,
+            endPoint: endPoint,
+            X_index: binIndex_X,
+            Y_index: binIndex_Y
+        },
         stocks: {
             productId: req.body.productId,
             orderId: req.body.orderId

@@ -1,29 +1,31 @@
 const mongoose = require('mongoose')
 
 const stockSchema = new mongoose.Schema({
-    startPoint: {
-        type: Number,
-        required: true
-    },
-    endPoint: {
-        type: Number,
-        required: true
-    },
     binId: {
         type: Number,
         required: true
     },
-    XCoordinate: {
-        type: Number,
-        required: true
-    },
-    YCoordinate: {
-        type: Number,
-        required: true
+    coordinate: {
+        startPoint: {
+            type: Number,
+            required: true
+        },
+        endPoint: {
+            type: Number,
+            required: true
+        },
+        X_index: {
+            type: Number,
+            required: true
+        },
+        Y_index: {
+            type: Number,
+            required: true
+        }
     },
     stocks: {
         type: Array,
-        required: false,
+        required: true,
         default: []
     },
     dateCreated: {
