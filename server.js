@@ -8,7 +8,7 @@ const db = mongoose.connection
 db.on('error', (error) => console.error(error))
 db.once('open', () => console.log('Connected to Database'))
 
-app.listen(3000, () => {
+app.listen(3000, '192.168.1.42', () => {
     stockController.reload()
     console.log('Server started')
 })

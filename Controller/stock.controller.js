@@ -1,7 +1,8 @@
 require('dotenv').config({ path: './.env' })
 const Stock = require('../Models/stock')
 const rgbHub = require('../rgbHub')
-const config = require('config')
+const config = require('config');
+const logger = require('../logger/logger');
 
 let lightCursor_X = 0;
 let lightCursor_Y = 0;
@@ -16,16 +17,10 @@ async function getStock(req, res) {
     try {
         result = await Stock.find()
         if (result == null) {
-            return res.status(404).json({
-                status: 'fail',
-                message: 'Cannot find stock'
-            })
+            return res.status(404).json({ message: 'Cannot find stock' })
         }
     } catch (err) {
-        return res.status(500).json({
-            status: 'fail',
-            message: err.message
-        })
+        return res.status(500).json({ message: err.message })
     }
     return res.status(200).json(result)
 }
@@ -95,11 +90,8 @@ async function deleteProduct(req, res) {
 
 async function getConfiguration(req, res) {
     const result = JSON.parse(process.env.BIN_WIDTH_VALUE_ARRAY_IN_CM)
-    console.log('configurations', result)
     if (result == null) {
-        return res.status(500).json({
-            message: 'Cannot find configurations'
-        })
+        return res.status(500).json({ message: 'Cannot find configurations' })
     }
     else {
         return res.status(200).json(result)
@@ -114,7 +106,6 @@ async function addStock(req, res) {
     //     "size": "20cm",
     //     "mergeBarcode": "7862398125637"
     // }
-    console.log(req.body)
     const arrangeMode = req.body.arrangeMode
     switch (arrangeMode) {
         case 'default':
@@ -177,7 +168,6 @@ async function addStock(req, res) {
     async function handleDefaultMode(req, res) {
         try {
             const allBin = await Stock.find()
-            console.log('stock', allBin)
             if (allBin == null) {
                 return res.status(404).json({ message: 'Cannot find stock' })
             }
@@ -217,7 +207,6 @@ async function putToLight(req, res) {
     allBin.forEach((eachBin, index) => {
         if (eachBin.binId == req.body.binId) matchBin = eachBin
     })
-    console.log('find', matchBin)
     if (matchBin == undefined) {
         // no bin is matched, so create new bin
         createBin(req, res)
@@ -272,14 +261,10 @@ async function putToLight(req, res) {
             rgbHub.emit(`F1:000000\n`);
             rgbHub.emit(`W1:${startPoint}:${endPoint}:${lightColor}\n`);
             lightCursor_X = endPoint + 1
-            return res.status(201).json({
-                status: 'success',
-                object: 'add_result',
-                data: newStock
-            });
+            return res.status(201).json(newStock);
 
         } catch (err) {
-            return res.status(500).json({ message: err.message });
+            return res.status(500).json({ message: err.message })
         }
     }
 
@@ -294,7 +279,6 @@ async function putToLight(req, res) {
                 isAnyMatchedProduct = true
             }
         })
-        console.log('isAnyMatchedProduct', isAnyMatchedProduct)
         // if no product matched, add new product
         if (isAnyMatchedProduct == false) {
             matchBin.stocks.push({
@@ -312,10 +296,8 @@ async function putToLight(req, res) {
         }
 
         try {
-            console.log('match', matchBin)
             // save matched bin
             const newBin = await matchBin.save()
-            console.log('new', newBin)
             rgbHub.emit(`F1:000000\n`)
             rgbHub.emit(`W${matchBin.YCoordinate}:${matchBin.coordinate.startPoint}:${matchBin.coordinate.endPoint}:${req.body.lightColor}\n`)
             return res.status(201).json(newBin)
@@ -341,11 +323,7 @@ async function pickToLight(req, res) {
         result.forEach(element => {
             rgbHub.emit(`W1:${element.coordinate.startPoint}:${element.coordinate.endPoint}:${element.lightColor}\n`)
         });
-        return res.status(200).json({
-            status: 'success',
-            results: result.length,
-            data: result
-        })
+        return res.status(200).json(result)
     } catch (err) {
         return res.status(500).json({ message: err.message })
     }
@@ -362,7 +340,7 @@ async function clearStock(req, res) {
         binIndex = 0
         binIndex_X = 0
         binIndex_Y = 0
-        res.json({ message: 'Deleted stocks' })
+        res.status(200).json({ message: 'Deleted stocks' })
     } catch (err) {
         res.status(500).json({ message: err.message })
     }
@@ -406,10 +384,10 @@ async function _createVolume(req, res) {
             X_index: binIndex_X,
             Y_index: binIndex_Y
         },
-        stocks: {
+        stocks: [{
             productId: req.body.productId,
             orderId: req.body.orderId
-        }
+        }]
     }
     return res.status(201).json({
         status: 'success',
