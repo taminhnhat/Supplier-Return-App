@@ -58,7 +58,7 @@ function rgbHubEmit(message) {
       lastTimeEmitToRgbHub = Date.now();
       emitTorgbHubComplete = true;
       if (rgbHubDebugMode == 'true');
-      // logger.debug({ message: `${Date.now()}-emit to rgb hub:`, value: messageToRgbHub, location: FILE_NAME });
+      logger.debug({ message: `${Date.now()}-emit to rgb hub:`, value: messageToRgbHub, location: FILE_NAME });
     });
   }
   else {
