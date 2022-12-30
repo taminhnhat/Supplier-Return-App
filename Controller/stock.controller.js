@@ -257,7 +257,7 @@ async function putToLight(req, res) {
         try {
             const newStock = await stock.save();
             rgbHub.emit(`F1:000000\n`);
-            rgbHub.emit(`W${binIndex_Y}:${startPoint}:${endPoint}:${lightColor}\n`);
+            rgbHub.emit(`W${binIndex_Y + 1}:${startPoint}:${endPoint}:${lightColor}\n`);
             lightCursor_X = endPoint + 1
             return res.status(201).json(newStock);
 
@@ -297,7 +297,7 @@ async function putToLight(req, res) {
             // save matched bin
             const newBin = await matchBin.save()
             rgbHub.emit(`F1:000000\n`)
-            rgbHub.emit(`W${matchBin.coordinate.Y_index}:${matchBin.coordinate.startPoint}:${matchBin.coordinate.endPoint}:${req.body.lightColor}\n`)
+            rgbHub.emit(`W${matchBin.coordinate.Y_index + 1}:${matchBin.coordinate.startPoint}:${matchBin.coordinate.endPoint}:${req.body.lightColor}\n`)
             return res.status(201).json(newBin)
         }
         catch (err) {
