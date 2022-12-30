@@ -1,8 +1,6 @@
 require('dotenv').config({ path: './.env' })
 const Stock = require('../Models/stock')
 const rgbHub = require('../rgbHub')
-const config = require('config');
-const logger = require('../logger/logger');
 
 let lightCursor_X = 0;
 let lightCursor_Y = 0;
@@ -152,8 +150,8 @@ async function addStock(req, res) {
                 rgbHub.emit(`W1:${stock.coordinate.startPoint}:${stock.coordinate.endPoint}:${stock.lightColor}\n`)
                 return res.status(201).json({ stock })
 
-            }, () => {
-                return res.status(500).json({ message: 'ERROR' })
+            }, (err) => {
+                return res.status(500).json({ message: err })
             })
 
             // if (result.length == 0) return res.status(404).json({ message: 'Cannot find stock' })
