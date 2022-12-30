@@ -356,6 +356,11 @@ async function reload(req, res) {
             if (stock.coordinate.Y_index >= binIndex_Y) binIndex_Y = stock.coordinate.Y_index + 1
             if (stock.binId >= binIndex) binIndex = stock.binId + 1
         })
+        rgbHub.emit(`F1:000000\n`)
+        rgbHub.emit(`F2:000000\n`)
+        rgbHub.emit(`F3:000000\n`)
+        rgbHub.emit(`F4:000000\n`)
+        rgbHub.emit(`F5:000000\n`)
     } catch (err) {
         console.log(err.message)
     }
