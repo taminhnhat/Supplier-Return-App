@@ -1,5 +1,5 @@
 require('dotenv').config({ path: './.env' })
-const Stock = require('../Models/stock')
+const stockData = require('../Models/stock')
 const rgbHub = require('../rgbHub')
 
 let lightCursor_X = 0;
@@ -13,7 +13,7 @@ const numOfStrip = process.env.NUM_OF_STRIP
 async function getStock(req, res) {
     let result
     try {
-        result = await Stock.find()
+        result = await stockData.find()
         if (result == null) {
             return res.status(404).json({ message: 'Cannot find stock' })
         }
@@ -26,7 +26,7 @@ async function getStock(req, res) {
 async function getBin(req, res) {
     let result
     try {
-        result = await Stock.findById(req.params.id)
+        result = await stockData.findById(req.params.id)
         if (result == null) {
             return res.status(404).json({ message: 'Cannot find stock' })
         }
@@ -44,7 +44,7 @@ async function searchProduct(req, res) {
     let result = [];
     try {
         // get all stock from db
-        const stocks = await Stock.find()
+        const stocks = await stockData.find()
         if (stocks == null) {
             return res.status(404).json({ message: 'Cannot find stock' })
         }
@@ -121,7 +121,7 @@ async function addStock(req, res) {
 
     async function handleMergeMode(req, res) {
         try {
-            const stocks = await Stock.find()
+            const stocks = await stockData.find()
             if (stocks == null || stocks.length == 0) {
                 return res.status(404).json({ message: 'Stock is empty, cannot merge' })
             }
@@ -165,7 +165,7 @@ async function addStock(req, res) {
     }
     async function handleDefaultMode(req, res) {
         try {
-            const allBin = await Stock.find()
+            const allBin = await stockData.find()
             if (allBin == null) {
                 return res.status(404).json({ message: 'Cannot find stock' })
             }
@@ -195,7 +195,7 @@ async function addStock(req, res) {
 
 async function putToLight(req, res) {
     // get all bin from db
-    const allBin = await Stock.find()
+    const allBin = await stockData.find()
     if (allBin == null) {
         // empty stock, create new bin
         createBin(req, res)
@@ -239,7 +239,7 @@ async function putToLight(req, res) {
             endPoint = lightCursor_X + deltaPoint
         }
 
-        const stock = new Stock({
+        const stock = new stockData({
             binId: binIndex,
             coordinate: {
                 startPoint: startPoint,
@@ -257,7 +257,7 @@ async function putToLight(req, res) {
         try {
             const newStock = await stock.save();
             rgbHub.emit(`F1:000000\n`);
-            rgbHub.emit(`W1:${startPoint}:${endPoint}:${lightColor}\n`);
+            rgbHub.emit(`W${binIndex_Y}:${startPoint}:${endPoint}:${lightColor}\n`);
             lightCursor_X = endPoint + 1
             return res.status(201).json(newStock);
 
@@ -297,7 +297,7 @@ async function putToLight(req, res) {
             // save matched bin
             const newBin = await matchBin.save()
             rgbHub.emit(`F1:000000\n`)
-            rgbHub.emit(`W${matchBin.YCoordinate}:${matchBin.coordinate.startPoint}:${matchBin.coordinate.endPoint}:${req.body.lightColor}\n`)
+            rgbHub.emit(`W${matchBin.coordinate.Y_index}:${matchBin.coordinate.startPoint}:${matchBin.coordinate.endPoint}:${req.body.lightColor}\n`)
             return res.status(201).json(newBin)
         }
         catch (err) {
@@ -309,7 +309,7 @@ async function putToLight(req, res) {
 async function pickToLight(req, res) {
     let result = [];
     try {
-        const stocks = await Stock.find()
+        const stocks = await stockData.find()
         if (stocks == null) {
             return res.status(404).json({ message: 'Cannot find stock' })
         }
@@ -329,7 +329,7 @@ async function pickToLight(req, res) {
 
 async function clearStock(req, res) {
     try {
-        const stocks = await Stock.find()
+        const stocks = await stockData.find()
         stocks.forEach(async stock => {
             await stock.remove()
         })
@@ -346,7 +346,7 @@ async function clearStock(req, res) {
 
 async function reload(req, res) {
     try {
-        const stocks = await Stock.find()
+        const stocks = await stockData.find()
         if (stocks == null) {
             console.log('Cannot find stocks')
         }
@@ -403,7 +403,7 @@ async function _createVolume(req, res) {
 async function _getStockByBarcode(req, res) {
     try {
         let result = [];
-        const stocks = await Stock.find()
+        const stocks = await stockData.find()
         if (stocks == null) {
             return res.status(404).json({ message: 'Cannot find stock' })
         }
