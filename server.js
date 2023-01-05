@@ -11,7 +11,7 @@ const db = mongoose.connection
 db.on('error', (error) => console.error(error))
 db.once('open', () => console.log('Connected to Database'))
 
-app.listen(3000, () => {
-    stockController.reload()
+const port = Number(process.env.HTTP_PORT)
+app.listen(port, () => {
     console.log('Server started')
 })

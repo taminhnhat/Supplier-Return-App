@@ -24,7 +24,7 @@ const rgbHub = new SerialPort(rgbHubPath, {
 
 rgbHub.on('open', function () {
   logger.debug({ message: 'rgb hub opened', location: FILE_NAME })
-  event.emit('rgbHub:opened', { message: 'RGB Hub opened' });
+  event.emit('rgbHub:opened', { message: 'RGB Hub opened' })
 });
 
 rgbHub.on('data', function (data) {
@@ -58,7 +58,7 @@ function rgbHubEmit(message) {
       lastTimeEmitToRgbHub = Date.now();
       emitTorgbHubComplete = true;
       if (rgbHubDebugMode == 'true');
-      logger.debug({ message: `${Date.now()}-emit to rgb hub:`, value: messageToRgbHub, location: FILE_NAME });
+      console.log(`${Date.now()}-emit to rgb hub:${String(messageToRgbHub).trim()}`);
     });
   }
   else {

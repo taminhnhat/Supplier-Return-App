@@ -15,7 +15,7 @@ router.post('/pickToLight', stockController.pickToLight)
 
 router.get('/products/search', stockController.searchProduct)
 
-router.delete('/products/:id', stockController.deleteProduct)
+router.delete('/products/:productId', stockController.deleteProduct)
 
 router.get('/configurations', stockController.getConfiguration)
 
