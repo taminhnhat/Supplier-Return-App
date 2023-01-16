@@ -349,15 +349,15 @@ async function putToLight(req, res) {
                 productQuantity: req.body.productQuantity
             }]
         });
-        let backup = await BackupCollection.find()
+        let backup = await BackupCollection.findOne({})
         console.log('backup:', backup)
         backup.lightCursor = lightCursor
         backup.binIdex = binIndex
         backup.binIndex_X = binIndex_X
         backup.binIndex_Y = binIndex_Y
         try {
-            const newStock = await backup.save()
-            await backup.save()
+            const newStock = await stock.save()
+            const out = await backup.save()
             rgbHub.emit(`F1:000000\n`)
             rgbHub.emit(`W${binIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
             lightCursor = endPoint + 1
@@ -379,17 +379,18 @@ async function putToLight(req, res) {
     async function updateBin(req, res) {
         // find match product in bin
         const matchBin = allBin[allBin.length - 1]
-        let isAnyMatchedProduct = false
+        let ifProductMatch = false
+        let ifOrderMatch = false
         let temp
         matchBin.stocks.forEach((eachProduct, productIndex) => {
             if (eachProduct.productId == req.body.productId) {
                 temp = productIndex
                 // eachProduct.productQuantity += req.body.productQuantity // do this not work
-                isAnyMatchedProduct = true
+                ifProductMatch = true
             }
         })
         // if no product matched, add new product
-        if (isAnyMatchedProduct == false) {
+        if (ifProductMatch == false) {
             matchBin.stocks.push({
                 productId: req.body.productId,
                 orderId: req.body.orderId,
@@ -397,7 +398,7 @@ async function putToLight(req, res) {
             })
         }
         // if product matched, update product quantity
-        else if (isAnyMatchedProduct == true) {
+        else if (ifProductMatch == true) {
             let matchProduct = matchBin.stocks[temp]
             matchProduct.productQuantity += req.body.productQuantity
             matchBin.stocks.push(matchProduct)
@@ -489,13 +490,13 @@ async function reload(req, res) {
     console.log(lightCursor, binIndex, binIndex_X, binIndex_Y)
 
     try {
-        const stocks = await StockCollection.find({}, {}, { sort: { coordinate: { Y_index: - 1 } } })
-        console.log(stocks)
-        // stocks.forEach(stock => {
-        //     if (stock.endPoint >= lightCursor) lightCursor = stock.coordinate.endPoint + 1
-        //     if (stock.coordinate.Y_index >= binIndex_Y) binIndex_Y = stock.coordinate.Y_index
-        //     if (stock.binId >= binIndex) binIndex = stock.binId + 1
-        // })
+        // const stocks = await StockCollection.find({}, {}, { sort: { coordinate: { Y_index: - 1 } } })
+        // console.log(stocks)
+        // // stocks.forEach(stock => {
+        // //     if (stock.endPoint >= lightCursor) lightCursor = stock.coordinate.endPoint + 1
+        // //     if (stock.coordinate.Y_index >= binIndex_Y) binIndex_Y = stock.coordinate.Y_index
+        // //     if (stock.binId >= binIndex) binIndex = stock.binId + 1
+        // // })
         const backup = await BackupCollection.find()
         if (backup.length == 0) {
             const backup = new BackupCollection({
