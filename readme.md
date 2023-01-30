@@ -8,6 +8,33 @@
 # SETUP
 - Install all [requirements](#requirements)
 - Set static dhcp
+- Set static serial port path
+- Test
+- Create and start service
+# Run
+- Create .env file in .../Suplier-Return-App/.env
+```
+NODE_ENV=development
+HTTP_PORT=3000
+DATABASE_URL=mongodb://localhost:27017/merge-order-shelf
+RGB_HUB_PATH=COM7
+RGB_DEBUG_MODE=true
+NUM_OF_LED_PER_STRIP=80
+BIN_WIDTH_VALUE_ARRAY_IN_CM={"binWidth":["15cm","20cm","25cm","30cm","35cm","40cm"]}
+FINDING_MODE_LIGHT_COLOR=ffff00
+PUTTING_MODE_LIGHT_COLOR=00ff00
+NUM_OF_STRIP=4
+LEDS_PER_METTER=60
+```
+|Property|Type|Description|  
+|---|---|---|
+|NODE_ENV|development/production||
+|RGB_HUB_PATH|serial port path||
+|RGB_DEBUG_MODE|true/false||
+|NUM_OF_LED_PER_STRIP|Number||
+|BIN_WIDTH_VALUE_ARRAY_IN_CM|||
+|FINDING_MODE_LIGHT_COLOR|color code in hexa||
+|PUTTING_MODE_LIGHT_COLOR|color code in hexa||
 # API
 ## 1. Retrieve all products
 ### Request

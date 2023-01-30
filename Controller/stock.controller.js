@@ -159,12 +159,14 @@ async function getConfiguration(req, res) {
 }
 
 async function addStock(req, res) {
-    //   {
-    //     "barcode": "3467343908",
-    //     "extendVolume": false,
-    //     "mergeVolume": false,
-    //     "size": "20cm",
-    //     "mergeBarcode": "7862398125637"
+    // {
+    //     "userId": "Minh_Nhat",
+    //     "productId": "7104110382456",
+    //     "orderId": "590028/20/XT/QV/ABQ",
+    //     "arrangeMode": "default",
+    //     "binWidth": "20cm",
+    //     "lightColor": "00ff00",
+    //     "mergeId": "1347869093563"
     // }
     const arrangeMode = req.body.arrangeMode
     switch (arrangeMode) {
@@ -292,23 +294,24 @@ async function addStock(req, res) {
 
 async function putToLight(req, res) {
     // get all bin from db
-    const allBin = await StockCollection.find({ stocks: { $elemMatch: { binId: req.body.binId } } })
-    if (allBin == null) {
-        // empty stock, create new bin
+    console.log(req.body)
+    const allBin = await StockCollection.find({ binId: req.body.binId })
+    console.log(allBin)
+    if (allBin.length == 0)
         createBin(req, res)
-    }
-    if (allBin == null)
+    else if (allBin.length > 0)
+        updateBin(req, res)
+    else {
+        // log error here
         return res.status(500).json({
             status: 'fail',
             message: 'Stock is empty'
         })
-    else if (allBin.length == 0)
-        createBin(req, res)
-    else
-        updateBin(req, res)
+    }
 
     async function createBin(req, res) {
         //
+        console.log('create bin')
         const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER)
         const binWidthInCm = Number(req.body.binWidth.replace('cm', ''))
         //
@@ -362,6 +365,7 @@ async function putToLight(req, res) {
             rgbHub.emit(`W${binIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
             lightCursor = endPoint + 1
             binIndex_X += 1
+            binIndex += 1
             return res.status(201).json({
                 status: 'success',
                 data: newStock
@@ -378,6 +382,7 @@ async function putToLight(req, res) {
 
     async function updateBin(req, res) {
         // find match product in bin
+        console.log('update bin')
         const matchBin = allBin[allBin.length - 1]
         let ifProductMatch = false
         let ifOrderMatch = false
