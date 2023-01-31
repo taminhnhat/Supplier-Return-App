@@ -4,7 +4,7 @@ const BackupCollection = require('../Models/backup')
 const rgbHub = require('../rgbHub')
 
 let lightCursor = 0;
-let binIndex = 0;
+let binIndex_Default = 0;
 let binIndex_X = 0;
 let binIndex_Y = 0;
 const numOfLedPerStrip = process.env.NUM_OF_LED_PER_STRIP
@@ -73,7 +73,7 @@ async function searchProduct(req, res) {
     if (matchedOrderId != undefined) queryObj.stocks.$elemMatch.orderId = matchedOrderId
     try {
         // get matched bin
-        const allBin = await StockCollection.find(queryObj)
+        const allBin = await StockCollection.find(queryObj, { _id: 0, coordinate: 1, binId: 1, stocks: 1 })
         // if stock is empty
         if (allBin == null) {
             return res.status(500).json({
@@ -293,25 +293,69 @@ async function addStock(req, res) {
 }
 
 async function putToLight(req, res) {
-    // get all bin from db
-    console.log(req.body)
-    const allBin = await StockCollection.find({ binId: req.body.binId })
-    console.log(allBin)
-    if (allBin.length == 0)
-        createBin(req, res)
-    else if (allBin.length > 0)
-        updateBin(req, res)
-    else {
-        // log error here
+    // get bin with the same binId, productId, orderId
+    const binList_1 = await StockCollection.find({ binId: req.body.binId, stocks: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } })
+    console.log('binList_1:', binList_1)
+    try {
+        if (binList_1.length == 1) {
+            // update product quantity on this bin
+            const thisBin = binList_1[0]
+            updateProductQuantity(req, res, thisBin)
+        }
+        else if (binList_1.length == 0) {
+            // get bin with the same binId only
+            const binList_2 = await StockCollection.find({ binId: req.body.binId })
+            console.log('binList_2:', binList_2)
+            if (binList_2.length == 1) {
+                // push new product to this bin
+                const thisBin = binList_2[0]
+                pushNewProduct(req, res, thisBin)
+            }
+            else if (binList_2.length == 0) {
+                // create new bin
+                createBin(req, res)
+            }
+            else {
+                console.log('Not expected search from db, conflict data', binList_2)
+            }
+        }
+        else {
+            console.log('Not expected search from db, conflict data', binList_1)
+        }
+    }
+    catch (err) {
+        console.log(err.message)
         return res.status(500).json({
             status: 'fail',
-            message: 'Stock is empty'
+            message: err.message
         })
     }
+    // const allBin = await StockCollection.find({ binId: req.body.binId })
+    // console.log(allBin)
+    // if (allBin.length == 0) {
+    //     // if no bin have the same input binId, create new bin
+    //     createBin(req, res)
+    // }
+    // else if (allBin.length == 1) {
+    //     // if one bin matched, update that bin
+    //     updateBin(req, res)
+    // }
+    // else if (allBin.length > 1) {
+    //     // bad db
+    //     console.log('WARNING: SOME BINS HAVE SAME BINID', allBin)
+    //     updateBin(req, res)
+    // }
+    // else {
+    //     // log error here
+    //     return res.status(500).json({
+    //         status: 'fail',
+    //         message: 'Stock is empty'
+    //     })
+    // }
 
     async function createBin(req, res) {
         //
-        console.log('create bin')
+        console.log('create new bin')
         const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER)
         const binWidthInCm = Number(req.body.binWidth.replace('cm', ''))
         //
@@ -319,7 +363,7 @@ async function putToLight(req, res) {
         let startPoint
         let endPoint
         // if row is full, add new row
-        if (endPoint >= numOfLedPerStrip) {
+        if (lightCursor + deltaPoint >= numOfLedPerStrip) {
             // if no row to expand
             if (binIndex_Y + 1 >= numOfStrip)
                 return res.status(400).json({
@@ -328,7 +372,7 @@ async function putToLight(req, res) {
                 })
             else {
                 binIndex_Y += 1
-                binIndex_X += 1
+                binIndex_X = 0
                 startPoint = 0
                 endPoint = deltaPoint
             }
@@ -339,7 +383,7 @@ async function putToLight(req, res) {
         }
 
         const stock = new StockCollection({
-            binId: binIndex,
+            binId: binIndex_Default,
             coordinate: {
                 startPoint: startPoint,
                 endPoint: endPoint,
@@ -354,104 +398,137 @@ async function putToLight(req, res) {
         });
         let backup = await BackupCollection.findOne({})
         console.log('backup:', backup)
+        lightCursor = endPoint + 1
+        binIndex_X += 1
+        binIndex_Default += 1
         backup.lightCursor = lightCursor
-        backup.binIdex = binIndex
+        backup.binIndex = binIndex_Default
         backup.binIndex_X = binIndex_X
         backup.binIndex_Y = binIndex_Y
-        try {
-            const newStock = await stock.save()
-            const out = await backup.save()
-            rgbHub.emit(`F1:000000\n`)
-            rgbHub.emit(`W${binIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
-            lightCursor = endPoint + 1
-            binIndex_X += 1
-            binIndex += 1
-            return res.status(201).json({
-                status: 'success',
-                data: newStock
-            })
-
-        } catch (err) {
-            console.log(err.message)
-            return res.status(500).json({
-                status: 'fail',
-                message: err.message
-            })
-        }
+        const newStock = await stock.save()
+        const out = await backup.save()
+        rgbHub.emit(`F1:000000\n`)
+        rgbHub.emit(`W${binIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
+        return res.status(201).json({
+            status: 'success',
+            data: newStock
+        })
     }
 
-    async function updateBin(req, res) {
-        // find match product in bin
-        console.log('update bin')
-        const matchBin = allBin[allBin.length - 1]
-        let ifProductMatch = false
-        let ifOrderMatch = false
-        let temp
-        matchBin.stocks.forEach((eachProduct, productIndex) => {
-            if (eachProduct.productId == req.body.productId) {
-                temp = productIndex
-                // eachProduct.productQuantity += req.body.productQuantity // do this not work
-                ifProductMatch = true
+    // async function updateBin(req, res) {
+    //     // find match product in bin
+    //     console.log('update bin')
+    //     const matchBin = allBin[allBin.length - 1]
+    //     let ifProductMatch = false
+    //     let ifOrderMatch = false
+    //     let temp
+    //     matchBin.stocks.forEach((eachProduct, productIndex) => {
+    //         if (eachProduct.productId == req.body.productId) {
+    //             temp = productIndex
+    //             // eachProduct.productQuantity += req.body.productQuantity // do this not work
+    //             ifProductMatch = true
+    //             ifOrderMatch = eachProduct.orderId == req.body.orderId
+    //         }
+    //     })
+    //     // if no product matched, add new product
+    //     if (ifProductMatch == false) {
+    //         matchBin.stocks.push({
+    //             productId: req.body.productId,
+    //             orderId: req.body.orderId,
+    //             productQuantity: req.body.productQuantity
+    //         })
+    //     }
+    //     // if product matched, update product quantity
+    //     else if (ifProductMatch == true) {
+    //         if (ifOrderMatch == true) {
+    //             let matchProduct = matchBin.stocks[temp]
+    //             matchProduct.productQuantity += req.body.productQuantity
+    //             matchBin.stocks.push(matchProduct)
+    //             matchBin.stocks.splice(temp, 1)
+    //         }
+    //         else {
+    //             matchBin.stocks.push({
+    //                 productId: req.body.productId,
+    //                 orderId: req.body.orderId,
+    //                 productQuantity: req.body.productQuantity
+    //             })
+    //         }
+    //     }
+
+    //     try {
+    //         // save matched bin
+    //         const newBin = await matchBin.save()
+    //         rgbHub.emit(`F1:000000\n`)
+    //         rgbHub.emit(`W${matchBin.coordinate.Y_index + 1}:${matchBin.coordinate.startPoint}:${matchBin.coordinate.endPoint}:${req.body.lightColor}\n`)
+    //         return res.status(201).json({
+    //             status: 'success',
+    //             data: newBin
+    //         })
+    //     }
+    //     catch (err) {
+    //         console.log(err.message)
+    //         return res.status(500).json({
+    //             status: 'fail',
+    //             message: err.message
+    //         })
+    //     }
+    // }
+
+    async function updateProductQuantity(req, res, thisBin) {
+        console.log('update product quantity')
+        thisBin.stocks.forEach(async (eachProduct, productIndex) => {
+            if (eachProduct.productId == req.body.productId && eachProduct.orderId == req.body.orderId) {
+                let updateProduct = eachProduct
+                updateProduct.productQuantity += req.body.productQuantity
+                thisBin.stocks.push(updateProduct)
+                thisBin.stocks.splice(productIndex, 1)
+                const updatedBin = await thisBin.save()
+                rgbHub.emit(`F1:000000\n`)
+                rgbHub.emit(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${req.body.lightColor}\n`)
+                return res.status(201).json({
+                    status: 'success',
+                    data: updatedBin
+                })
             }
         })
-        // if no product matched, add new product
-        if (ifProductMatch == false) {
-            matchBin.stocks.push({
-                productId: req.body.productId,
-                orderId: req.body.orderId,
-                productQuantity: req.body.productQuantity
-            })
-        }
-        // if product matched, update product quantity
-        else if (ifProductMatch == true) {
-            let matchProduct = matchBin.stocks[temp]
-            matchProduct.productQuantity += req.body.productQuantity
-            matchBin.stocks.push(matchProduct)
-            matchBin.stocks.splice(temp, 1)
-        }
+    }
 
-        try {
-            // save matched bin
-            const newBin = await matchBin.save()
-            rgbHub.emit(`F1:000000\n`)
-            rgbHub.emit(`W${matchBin.coordinate.Y_index + 1}:${matchBin.coordinate.startPoint}:${matchBin.coordinate.endPoint}:${req.body.lightColor}\n`)
-            return res.status(201).json({
-                status: 'success',
-                data: newBin
-            })
-        }
-        catch (err) {
-            console.log(err.message)
-            return res.status(500).json({
-                status: 'fail',
-                message: err.message
-            })
-        }
+    async function pushNewProduct(req, res, thisBin) {
+        console.log('push new product')
+        thisBin.stocks.push({
+            productId: req.body.productId,
+            orderId: req.body.orderId,
+            productQuantity: req.body.productQuantity
+        })
+        const updatedBin = await thisBin.save()
+        rgbHub.emit(`F1:000000\n`)
+        rgbHub.emit(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${req.body.lightColor}\n`)
+        return res.status(201).json({
+            status: 'success',
+            data: updatedBin
+        })
     }
 }
 
 async function pickToLight(req, res) {
-    let result = [];
     try {
-        const allBin = await StockCollection.find({ stocks: { $elemMatch: { productId: req.body.productId } } })
-        if (allBin == null)
+        // find all bin with input productId
+        const allBin = await StockCollection.find({ stocks: { $elemMatch: { productId: req.body.productId } } }, { _id: 0, binId: 1, stocks: 1 })
+        if (allBin.length == 0) {
             return res.status(500).json({
                 status: 'fail',
-                message: 'Stock is empty'
+                message: 'ProductId not found'
             })
-
-        allBin.forEach(stock => {
-            stock.stocks.forEach(ele => {
-                if (ele.productId == req.body.productId) result.push(stock);
+        }
+        else {
+            allBin.forEach(element => {
+                rgbHub.emit(`W1:${element.coordinate.startPoint}:${element.coordinate.endPoint}:${element.lightColor}\n`)
+            });
+            return res.status(200).json({
+                status: 'success',
+                data: allBin
             })
-        });
-        result.forEach(element => {
-            rgbHub.emit(`W1:${element.coordinate.startPoint}:${element.coordinate.endPoint}:${element.lightColor}\n`)
-        });
-        return res.status(202).json({
-            status: 'success',
-            data: result
-        })
+        }
     } catch (err) {
         console.log(err.message)
         return res.status(500).json({
@@ -468,16 +545,19 @@ async function clearStock(req, res) {
             await stock.remove()
         })
         lightCursor = 0
-        binIndex = 0
+        binIndex_Default = 0
         binIndex_X = 0
         binIndex_Y = 0
-        const backup = BackupCollection({
+        const backup = await BackupCollection.find()
+        backup.forEach(async ele => {
+            await ele.remove()
+        })
+        await BackupCollection({
             lightCursor: lightCursor,
-            binIndex: binIndex,
+            binIndex: binIndex_Default,
             binIndex_X: binIndex_X,
             binIndex_Y: binIndex_Y
-        })
-        await backup.save()
+        }).save()
         res.status(200).json({
             status: 'success',
             message: 'Deleted stocks'
@@ -492,7 +572,7 @@ async function clearStock(req, res) {
 }
 
 async function reload(req, res) {
-    console.log(lightCursor, binIndex, binIndex_X, binIndex_Y)
+    console.log(lightCursor, binIndex_Default, binIndex_X, binIndex_Y)
 
     try {
         // const stocks = await StockCollection.find({}, {}, { sort: { coordinate: { Y_index: - 1 } } })
@@ -514,11 +594,11 @@ async function reload(req, res) {
         }
         else {
             lightCursor = backup[0].lightCursor
-            binIndex = backup[0].binIndex
+            binIndex_Default = backup[0].binIndex
             binIndex_X = backup[0].binIndex_X
             binIndex_Y = backup[0].binIndex_Y
         }
-        console.log(lightCursor, binIndex, binIndex_X, binIndex_Y)
+        console.log(lightCursor, binIndex_Default, binIndex_X, binIndex_Y)
 
         rgbHub.emit(`F1:000000\n`)
         rgbHub.emit(`F2:000000\n`)
@@ -549,7 +629,7 @@ async function _createVolume(req, res) {
     rgbHub.emit(`F${binIndex_Y}:000000\n`)
     rgbHub.emit(`W${binIndex_Y}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
     const newStock = {
-        binId: binIndex,
+        binId: binIndex_Default,
         coordinate: {
             startPoint: startPoint,
             endPoint: endPoint,
