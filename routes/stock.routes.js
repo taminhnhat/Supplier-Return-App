@@ -1,7 +1,8 @@
 const express = require('express')
 const router = express.Router()
+
 require('dotenv').config({ path: './.env' })
-const stockController = require('../Controller/stock.controller')
+const stockController = require('../controller/stock.controller')
 
 router
   .route('/products')

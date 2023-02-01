@@ -9,6 +9,11 @@ eachBin.stocks.forEach((eachProduct, idx) => {
 })
 console.log('result', JSON.stringify(eachBin))
 
+const out = eachBin_2.stocks.filter((value, index, array) => {
+    return value.productId != 23
+},)
+console.log('out', out)
+
 while (eachBin_2.stocks[1] == 23) {
     eachBin_2.stocks.splice(1, 1)
 }

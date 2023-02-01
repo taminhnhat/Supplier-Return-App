@@ -1,12 +1,13 @@
 require('dotenv').config({ path: './.env' })
-const StockCollection = require('../Models/stock')
-const BackupCollection = require('../Models/backup')
+const StockCollection = require('../models/stock')
+const BackupCollection = require('../models/backup')
 const rgbHub = require('../rgbHub')
 
-let lightCursor = 0;
-let binIndex_Default = 0;
-let binIndex_X = 0;
-let binIndex_Y = 0;
+let tempLightCursor = 0;
+let tempBinIndex = 0;
+let tempBinIndex_X = 0;
+let tempBinIndex_Y = 0;
+
 const numOfLedPerStrip = process.env.NUM_OF_LED_PER_STRIP
 const numOfStrip = process.env.NUM_OF_STRIP
 
@@ -62,34 +63,48 @@ async function deleteBin(req, res) {
 }
 
 async function searchProduct(req, res) {
-
-    const matchedProductId = req.query.productId
-    const matchedOrderId = req.query.orderId
+    const productIdFromRequest = req.query.productId
+    const orderIdFromRequest = req.query.orderId
     const lightOnFlag = req.query.lightOn || 'false'
-    console.log('lightOnFlag:', lightOnFlag)
+    const locationReturnFlag = req.query.locationReturn || 'false'
+
     // query
     let queryObj = { stocks: { $elemMatch: {} } }
-    if (matchedProductId != undefined) queryObj.stocks.$elemMatch.productId = matchedProductId
-    if (matchedOrderId != undefined) queryObj.stocks.$elemMatch.orderId = matchedOrderId
+    if (productIdFromRequest != undefined) queryObj.stocks.$elemMatch.productId = productIdFromRequest
+    if (orderIdFromRequest != undefined) queryObj.stocks.$elemMatch.orderId = orderIdFromRequest
+    // projection
+    let projectionObj = { _id: 0, binId: 1, stocks: 1 }
+    if (locationReturnFlag == 'true') projectionObj.coordinate = 1
+
     try {
-        // get matched bin
-        const allBin = await StockCollection.find(queryObj, { _id: 0, coordinate: 1, binId: 1, stocks: 1 })
+        // get all matched bins
+        let allMatchedBin = await StockCollection.find(queryObj, projectionObj)
         // if stock is empty
-        if (allBin == null) {
+        if (allMatchedBin == null) {
             return res.status(500).json({
                 status: 'fail',
                 message: 'Stock is empty'
             })
         }
-        // lightOn mode
-        if (lightOnFlag == 'true')
-            allBin.forEach(eachBin => {
+
+        // filering result
+        allMatchedBin.forEach(eachBin => {
+            eachBin.stocks = eachBin.stocks.filter(eachProduct => {
+                return eachProduct.productId == productIdFromRequest
+            })
+        });
+
+        // if lightOn mode is true
+        if (lightOnFlag == 'true') {
+            allMatchedBin.forEach(eachBin => {
                 rgbHub.emit(`F${eachBin.coordinate.Y_index}:000000\n`)
                 rgbHub.emit(`W${eachBin.coordinate.Y_index}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${process.env.FINDING_MODE_LIGHT_COLOR}\n`)
-            });
+            })
+        }
+
         return res.status(200).json({
             status: 'success',
-            data: allBin
+            data: allMatchedBin
         })
     } catch (err) {
         console.log(err.message)
@@ -103,32 +118,34 @@ async function searchProduct(req, res) {
 async function deleteProduct(req, res) {
     try {
         // get matched bin
-        const productId = String(req.params.productId)
-        const allBin = await StockCollection.find({ stocks: { $elemMatch: { productId: productId } } })
+        const inputProductId = String(req.params.productId)
+        const allMatchedBin = await StockCollection.find({ stocks: { $elemMatch: { productId: inputProductId } } }, { _id: 0, binId: 1, stocks: 1 })
         // if stock is empty
-        if (allBin == null)
+        if (allMatchedBin == null)
             return res.status(500).json({
                 status: 'fail',
                 message: 'Stock is empty'
             })
         // if no bin have matched product
-        if (allBin.length == 0)
+        if (allMatchedBin.length == 0)
             return res.status(404).json({
                 status: 'fail',
-                message: `Product ${productId} not found`
+                message: `Product ${inputProductId} not found`
             })
         // remove matched Product
-        allBin.forEach((eachBin, index) => {
-            eachBin.stocks.forEach((eachProduct, idx) => {
-                if (eachProduct.productId == productId) eachBin.stocks.splice(idx, 1)
+        allMatchedBin.forEach((eachBin, index) => {
+            const filteredBin = eachBin.stocks.filter(eachStock => {
+                return eachStock.productId != inputProductId
             })
+            eachBin.stocks = filteredBin
         })
+        return res.status(202).json(allMatchedBin)
         // update stock
         let result = []
-        allBin.forEach(async (stock, index) => {
+        allMatchedBin.forEach(async (stock, index) => {
             const out = await stock.save()
             result.push(out)
-            if (index == allBin.length - 1) return res.status(200).json({
+            if (index == allMatchedBin.length - 1) return res.status(200).json({
                 status: 'success',
                 data: result
             })
@@ -313,7 +330,7 @@ async function putToLight(req, res) {
             }
             else if (binList_2.length == 0) {
                 // create new bin
-                createBin(req, res)
+                createNewBin(req, res)
             }
             else {
                 console.log('Not expected search from db, conflict data', binList_2)
@@ -353,7 +370,7 @@ async function putToLight(req, res) {
     //     })
     // }
 
-    async function createBin(req, res) {
+    async function createNewBin(req, res) {
         //
         console.log('create new bin')
         const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER)
@@ -363,32 +380,32 @@ async function putToLight(req, res) {
         let startPoint
         let endPoint
         // if row is full, add new row
-        if (lightCursor + deltaPoint >= numOfLedPerStrip) {
+        if (tempLightCursor + deltaPoint >= numOfLedPerStrip) {
             // if no row to expand
-            if (binIndex_Y + 1 >= numOfStrip)
+            if (tempBinIndex_Y + 1 >= numOfStrip)
                 return res.status(400).json({
                     status: 'fail',
                     message: 'Not enough space, use exist bin instead'
                 })
             else {
-                binIndex_Y += 1
-                binIndex_X = 0
+                tempBinIndex_Y += 1
+                tempBinIndex_X = 0
                 startPoint = 0
                 endPoint = deltaPoint
             }
         }
         else {
-            startPoint = lightCursor
-            endPoint = lightCursor + deltaPoint
+            startPoint = tempLightCursor
+            endPoint = tempLightCursor + deltaPoint
         }
 
         const stock = new StockCollection({
-            binId: binIndex_Default,
+            binId: tempBinIndex,
             coordinate: {
                 startPoint: startPoint,
                 endPoint: endPoint,
-                X_index: binIndex_X,
-                Y_index: binIndex_Y
+                X_index: tempBinIndex_X,
+                Y_index: tempBinIndex_Y
             },
             stocks: [{
                 productId: req.body.productId,
@@ -398,81 +415,22 @@ async function putToLight(req, res) {
         });
         let backup = await BackupCollection.findOne({})
         console.log('backup:', backup)
-        lightCursor = endPoint + 1
-        binIndex_X += 1
-        binIndex_Default += 1
-        backup.lightCursor = lightCursor
-        backup.binIndex = binIndex_Default
-        backup.binIndex_X = binIndex_X
-        backup.binIndex_Y = binIndex_Y
+        tempLightCursor = endPoint + 1
+        tempBinIndex_X += 1
+        tempBinIndex += 1
+        backup.lightCursor = tempLightCursor
+        backup.binIndex = tempBinIndex
+        backup.binIndex_X = tempBinIndex_X
+        backup.binIndex_Y = tempBinIndex_Y
         const newStock = await stock.save()
         const out = await backup.save()
         rgbHub.emit(`F1:000000\n`)
-        rgbHub.emit(`W${binIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
+        rgbHub.emit(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
         return res.status(201).json({
             status: 'success',
             data: newStock
         })
     }
-
-    // async function updateBin(req, res) {
-    //     // find match product in bin
-    //     console.log('update bin')
-    //     const matchBin = allBin[allBin.length - 1]
-    //     let ifProductMatch = false
-    //     let ifOrderMatch = false
-    //     let temp
-    //     matchBin.stocks.forEach((eachProduct, productIndex) => {
-    //         if (eachProduct.productId == req.body.productId) {
-    //             temp = productIndex
-    //             // eachProduct.productQuantity += req.body.productQuantity // do this not work
-    //             ifProductMatch = true
-    //             ifOrderMatch = eachProduct.orderId == req.body.orderId
-    //         }
-    //     })
-    //     // if no product matched, add new product
-    //     if (ifProductMatch == false) {
-    //         matchBin.stocks.push({
-    //             productId: req.body.productId,
-    //             orderId: req.body.orderId,
-    //             productQuantity: req.body.productQuantity
-    //         })
-    //     }
-    //     // if product matched, update product quantity
-    //     else if (ifProductMatch == true) {
-    //         if (ifOrderMatch == true) {
-    //             let matchProduct = matchBin.stocks[temp]
-    //             matchProduct.productQuantity += req.body.productQuantity
-    //             matchBin.stocks.push(matchProduct)
-    //             matchBin.stocks.splice(temp, 1)
-    //         }
-    //         else {
-    //             matchBin.stocks.push({
-    //                 productId: req.body.productId,
-    //                 orderId: req.body.orderId,
-    //                 productQuantity: req.body.productQuantity
-    //             })
-    //         }
-    //     }
-
-    //     try {
-    //         // save matched bin
-    //         const newBin = await matchBin.save()
-    //         rgbHub.emit(`F1:000000\n`)
-    //         rgbHub.emit(`W${matchBin.coordinate.Y_index + 1}:${matchBin.coordinate.startPoint}:${matchBin.coordinate.endPoint}:${req.body.lightColor}\n`)
-    //         return res.status(201).json({
-    //             status: 'success',
-    //             data: newBin
-    //         })
-    //     }
-    //     catch (err) {
-    //         console.log(err.message)
-    //         return res.status(500).json({
-    //             status: 'fail',
-    //             message: err.message
-    //         })
-    //     }
-    // }
 
     async function updateProductQuantity(req, res, thisBin) {
         console.log('update product quantity')
@@ -513,20 +471,26 @@ async function putToLight(req, res) {
 async function pickToLight(req, res) {
     try {
         // find all bin with input productId
-        const allBin = await StockCollection.find({ stocks: { $elemMatch: { productId: req.body.productId } } }, { _id: 0, binId: 1, stocks: 1 })
-        if (allBin.length == 0) {
+        let allMatchedBin = await StockCollection.find({ stocks: { $elemMatch: { productId: req.body.productId } } }, { _id: 0, binId: 1, stocks: 1 })
+        if (allMatchedBin.length == 0) {
             return res.status(500).json({
                 status: 'fail',
                 message: 'ProductId not found'
             })
         }
         else {
-            allBin.forEach(element => {
-                rgbHub.emit(`W1:${element.coordinate.startPoint}:${element.coordinate.endPoint}:${element.lightColor}\n`)
+            allMatchedBin.forEach(eachBin => {
+                // filering result
+                eachBin.stocks = eachBin.stocks.filter(eachProduct => {
+                    return eachProduct.productId == req.body.productId
+                })
+                // turn the light on
+                rgbHub.emit(`W1:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${eachBin.lightColor}\n`)
             });
+
             return res.status(200).json({
                 status: 'success',
-                data: allBin
+                data: allMatchedBin
             })
         }
     } catch (err) {
@@ -544,19 +508,19 @@ async function clearStock(req, res) {
         stocks.forEach(async stock => {
             await stock.remove()
         })
-        lightCursor = 0
-        binIndex_Default = 0
-        binIndex_X = 0
-        binIndex_Y = 0
+        tempLightCursor = 0
+        tempBinIndex = 0
+        tempBinIndex_X = 0
+        tempBinIndex_Y = 0
         const backup = await BackupCollection.find()
         backup.forEach(async ele => {
             await ele.remove()
         })
         await BackupCollection({
-            lightCursor: lightCursor,
-            binIndex: binIndex_Default,
-            binIndex_X: binIndex_X,
-            binIndex_Y: binIndex_Y
+            lightCursor: tempLightCursor,
+            binIndex: tempBinIndex,
+            binIndex_X: tempBinIndex_X,
+            binIndex_Y: tempBinIndex_Y
         }).save()
         res.status(200).json({
             status: 'success',
@@ -572,8 +536,6 @@ async function clearStock(req, res) {
 }
 
 async function reload(req, res) {
-    console.log(lightCursor, binIndex_Default, binIndex_X, binIndex_Y)
-
     try {
         // const stocks = await StockCollection.find({}, {}, { sort: { coordinate: { Y_index: - 1 } } })
         // console.log(stocks)
@@ -593,12 +555,12 @@ async function reload(req, res) {
             await backup.save()
         }
         else {
-            lightCursor = backup[0].lightCursor
-            binIndex_Default = backup[0].binIndex
-            binIndex_X = backup[0].binIndex_X
-            binIndex_Y = backup[0].binIndex_Y
+            tempLightCursor = backup[0].lightCursor
+            tempBinIndex = backup[0].binIndex
+            tempBinIndex_X = backup[0].binIndex_X
+            tempBinIndex_Y = backup[0].binIndex_Y
         }
-        console.log(lightCursor, binIndex_Default, binIndex_X, binIndex_Y)
+        console.log(tempLightCursor, tempBinIndex, tempBinIndex_X, tempBinIndex_Y)
 
         rgbHub.emit(`F1:000000\n`)
         rgbHub.emit(`F2:000000\n`)
@@ -611,12 +573,12 @@ async function reload(req, res) {
 }
 
 async function _createVolume(req, res) {
-    let startPoint = lightCursor;
+    let startPoint = tempLightCursor;
     const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER);
-    let endPoint = lightCursor + Math.floor(Number(req.body.binWidth.replace('cm', '')) / 100 * ledsPerMetterOfLedStrip) - 1;
+    let endPoint = tempLightCursor + Math.floor(Number(req.body.binWidth.replace('cm', '')) / 100 * ledsPerMetterOfLedStrip) - 1;
     const lightColor = req.body.lightColor;
     if (endPoint >= numOfLedPerStrip) {
-        if (binIndex_Y + 1 >= numOfStrip)
+        if (tempBinIndex_Y + 1 >= numOfStrip)
             return res.status(500).json({
                 status: 'fail',
                 message: 'Not enough space, use merge stock instead'
@@ -626,15 +588,15 @@ async function _createVolume(req, res) {
             startPoint = 0
         }
     }
-    rgbHub.emit(`F${binIndex_Y}:000000\n`)
-    rgbHub.emit(`W${binIndex_Y}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
+    rgbHub.emit(`F${tempBinIndex_Y}:000000\n`)
+    rgbHub.emit(`W${tempBinIndex_Y}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
     const newStock = {
-        binId: binIndex_Default,
+        binId: tempBinIndex,
         coordinate: {
             startPoint: startPoint,
             endPoint: endPoint,
-            X_index: binIndex_X,
-            Y_index: binIndex_Y
+            X_index: tempBinIndex_X,
+            Y_index: tempBinIndex_Y
         },
         stocks: [{
             productId: req.body.productId,
@@ -669,15 +631,6 @@ async function _getStockByBarcode(req, res) {
         throw err
         return null
     }
-}
-
-function _deleteByBarcode(stocks, matchProductId) {
-    stocks.forEach((stock, index) => {
-        stock.stocks.forEach((pro, idx) => {
-            if (pro.productId == matchProductId) stock.stocks.splice(idx, 1)
-        })
-    })
-    return stocks
 }
 
 module.exports = { getStock, addStock, clearStock, reload, putToLight, pickToLight, getConfiguration, searchProduct, deleteProduct, getBin, deleteBin };
