@@ -142,8 +142,8 @@ async function deleteProduct(req, res) {
         return res.status(202).json(allMatchedBin)
         // update stock
         let result = []
-        allMatchedBin.forEach(async (stock, index) => {
-            const out = await stock.save()
+        allMatchedBin.forEach(async (eachBin, index) => {
+            const out = await eachBin.save()
             result.push(out)
             if (index == allMatchedBin.length - 1) return res.status(200).json({
                 status: 'success',
