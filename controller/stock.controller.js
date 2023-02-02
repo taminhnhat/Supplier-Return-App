@@ -63,8 +63,6 @@ async function deleteBin(req, res) {
 }
 
 async function searchProduct(req, res) {
-    clearLight()
-
     const productIdFromRequest = req.query.productId
     const orderIdFromRequest = req.query.orderId
     const lightOnFlag = req.query.lightOn || 'false'
@@ -98,7 +96,8 @@ async function searchProduct(req, res) {
         // if lightOn mode is true
         if (lightOnFlag == 'true') {
             allMatchedBin.forEach(eachBin => {
-                rgbHub.emit(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
+                clearLight()
+                // rgbHub.emit(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.emit(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${process.env.FINDING_MODE_LIGHT_COLOR}\n`)
             })
         }
@@ -226,8 +225,8 @@ async function addStock(req, res) {
                 productId: req.body.productId,
                 orderId: req.body.orderId
             })
-
-            rgbHub.emit(`F${tempBinIndex_Y + 1}:000000\n`);
+            clearLight()
+            // rgbHub.emit(`F${tempBinIndex_Y + 1}:000000\n`);
             rgbHub.emit(`W${tempBinIndex_Y + 1}:${matchedBin.coordinate.startPoint}:${matchedBin.coordinate.endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
             return res.status(200).json({
                 status: 'success',
@@ -295,7 +294,8 @@ async function addStock(req, res) {
                 // else {
                 // }
                 const tempRes = allBin[allBin.length - 1]
-                rgbHub.emit(`F${tempRes.coordinate.Y_index + 1}:000000\n`)
+                clearLight()
+                // rgbHub.emit(`F${tempRes.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.emit(`W${tempRes.coordinate.Y_index + 1}:${tempRes.coordinate.startPoint}:${tempRes.coordinate.endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
                 return res.status(200).json({
                     status: 'success',
@@ -313,8 +313,6 @@ async function addStock(req, res) {
 }
 
 async function putToLight(req, res) {
-    clearLight()
-
     // get bin with the same binId, productId, orderId
     const binList_1 = await StockCollection.find({ binId: req.body.binId, stocks: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } })
     try {
@@ -427,7 +425,8 @@ async function putToLight(req, res) {
             backup.binIndex_Y = tempBinIndex_Y
             const newStock = await stock.save()
             const out = await backup.save()
-            rgbHub.emit(`F${tempBinIndex_Y + 1}:000000\n`)
+            clearLight()
+            // rgbHub.emit(`F${tempBinIndex_Y + 1}:000000\n`)
             rgbHub.emit(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
             return res.status(201).json({
                 status: 'success',
@@ -451,7 +450,8 @@ async function putToLight(req, res) {
                 thisBin.stocks.push(updateProduct)
                 thisBin.stocks.splice(productIndex, 1)
                 const updatedBin = await thisBin.save()
-                rgbHub.emit(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
+                clearLight()
+                // rgbHub.emit(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.emit(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${req.body.lightColor}\n`)
                 return res.status(201).json({
                     status: 'success',
@@ -469,7 +469,8 @@ async function putToLight(req, res) {
             productQuantity: req.body.productQuantity
         })
         const updatedBin = await thisBin.save()
-        rgbHub.emit(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
+        clearLight()
+        // rgbHub.emit(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
         rgbHub.emit(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${req.body.lightColor}\n`)
         return res.status(201).json({
             status: 'success',
@@ -479,8 +480,6 @@ async function putToLight(req, res) {
 }
 
 async function pickToLight(req, res) {
-    clearLight()
-
     try {
         // find all bin with input productId
         let allMatchedBin = await StockCollection.find({ stocks: { $elemMatch: { productId: req.body.productId } } }, { _id: 0, binId: 1, stocks: 1 })
@@ -497,6 +496,7 @@ async function pickToLight(req, res) {
                     return eachProduct.productId == req.body.productId
                 })
                 // turn the light on
+                clearLight()
                 rgbHub.emit(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${eachBin.lightColor}\n`)
             });
 
@@ -603,7 +603,8 @@ async function _createVolume(req, res) {
             startPoint = 0
         }
     }
-    rgbHub.emit(`F${tempBinIndex_Y + 1}:000000\n`)
+    clearLight()
+    // rgbHub.emit(`F${tempBinIndex_Y + 1}:000000\n`)
     rgbHub.emit(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
     const newStock = {
         binId: tempBinIndex,

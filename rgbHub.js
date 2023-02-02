@@ -2,7 +2,7 @@
  * This file used to interact serial device on USB port
  * Scanners are configured
  */
-
+const fs = require("fs");
 require('dotenv').config({ path: './.env' });
 const SerialPort = require('serialport');
 const event = require('./event');
@@ -29,6 +29,9 @@ rgbHub.on('open', function () {
 
 rgbHub.on('data', function (data) {
   const value = String(data).trim();
+  fs.writeFile('../rgbHub.log', value, (err) => {
+    if (err) console.log(err)
+  })
   event.emit(`rgbHub:data`, { message: 'rgb hub data', value: value });
 });
 
