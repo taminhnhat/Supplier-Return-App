@@ -63,6 +63,8 @@ async function deleteBin(req, res) {
 }
 
 async function searchProduct(req, res) {
+    clearLight()
+
     const productIdFromRequest = req.query.productId
     const orderIdFromRequest = req.query.orderId
     const lightOnFlag = req.query.lightOn || 'false'
@@ -175,6 +177,8 @@ async function getConfiguration(req, res) {
 }
 
 async function addStock(req, res) {
+    clearLight()
+
     // {
     //     "userId": "Minh_Nhat",
     //     "productId": "7104110382456",
@@ -309,6 +313,8 @@ async function addStock(req, res) {
 }
 
 async function putToLight(req, res) {
+    clearLight()
+
     // get bin with the same binId, productId, orderId
     const binList_1 = await StockCollection.find({ binId: req.body.binId, stocks: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } })
     try {
@@ -473,6 +479,8 @@ async function putToLight(req, res) {
 }
 
 async function pickToLight(req, res) {
+    clearLight()
+
     try {
         // find all bin with input productId
         let allMatchedBin = await StockCollection.find({ stocks: { $elemMatch: { productId: req.body.productId } } }, { _id: 0, binId: 1, stocks: 1 })
@@ -572,11 +580,7 @@ async function reload(req, res) {
         rgbHub.emit(`F4:969600\n`)
         rgbHub.emit(`F5:969600\n`)
         setTimeout(() => {
-            rgbHub.emit(`F1:000000\n`)
-            rgbHub.emit(`F2:000000\n`)
-            rgbHub.emit(`F3:000000\n`)
-            rgbHub.emit(`F4:000000\n`)
-            rgbHub.emit(`F5:000000\n`)
+            clearLight()
         }, 600)
     } catch (err) {
         console.log(err.message)
@@ -642,6 +646,14 @@ async function _getStockByBarcode(req, res) {
         throw err
         return null
     }
+}
+
+function clearLight() {
+    rgbHub.emit(`F1:000000\n`)
+    rgbHub.emit(`F2:000000\n`)
+    rgbHub.emit(`F3:000000\n`)
+    rgbHub.emit(`F4:000000\n`)
+    rgbHub.emit(`F5:000000\n`)
 }
 
 module.exports = { getStock, addStock, clearStock, reload, putToLight, pickToLight, getConfiguration, searchProduct, deleteProduct, getBin, deleteBin };
