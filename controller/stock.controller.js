@@ -81,6 +81,7 @@ async function searchProduct(req, res) {
         // if stock is empty
         if (allMatchedBin == null) {
             return res.status(500).json({
+                emit
                 status: 'fail',
                 message: 'Stock is empty'
             })
@@ -410,23 +411,26 @@ async function putToLight(req, res) {
                 productQuantity: req.body.productQuantity
             }]
         });
-        let backup = await BackupCollection.findOne({})
-        console.log('backup:', backup)
-        tempLightCursor = endPoint + 1
-        tempBinIndex_X += 1
-        tempBinIndex += 1
-        backup.lightCursor = tempLightCursor
-        backup.binIndex = tempBinIndex
-        backup.binIndex_X = tempBinIndex_X
-        backup.binIndex_Y = tempBinIndex_Y
-        const newStock = await stock.save()
-        const out = await backup.save()
-        rgbHub.emit(`F${tempBinIndex_Y + 1}:000000\n`)
-        rgbHub.emit(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
-        return res.status(201).json({
-            status: 'success',
-            data: newStock
-        })
+        try {
+            let backup = await BackupCollection.findOne({})
+            tempLightCursor = endPoint + 1
+            tempBinIndex_X += 1
+            tempBinIndex += 1
+            backup.lightCursor = tempLightCursor
+            backup.binIndex = tempBinIndex
+            backup.binIndex_X = tempBinIndex_X
+            backup.binIndex_Y = tempBinIndex_Y
+            const newStock = await stock.save()
+            const out = await backup.save()
+            rgbHub.emit(`F${tempBinIndex_Y + 1}:000000\n`)
+            rgbHub.emit(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
+            return res.status(201).json({
+                status: 'success',
+                data: newStock
+            })
+        } catch (err) {
+            throw err
+        }
     }
 
     async function updateProductQuantity(req, res, thisBin) {
@@ -559,11 +563,18 @@ async function reload(req, res) {
         }
         console.log(tempLightCursor, tempBinIndex, tempBinIndex_X, tempBinIndex_Y)
 
-        rgbHub.emit(`F1:000000\n`)
-        rgbHub.emit(`F2:000000\n`)
-        rgbHub.emit(`F3:000000\n`)
-        rgbHub.emit(`F4:000000\n`)
-        rgbHub.emit(`F5:000000\n`)
+        rgbHub.emit(`F1:969600\n`)
+        rgbHub.emit(`F2:969600\n`)
+        rgbHub.emit(`F3:969600\n`)
+        rgbHub.emit(`F4:969600\n`)
+        rgbHub.emit(`F5:969600\n`)
+        setTimeout(() => {
+            rgbHub.emit(`F1:000000\n`)
+            rgbHub.emit(`F2:000000\n`)
+            rgbHub.emit(`F3:000000\n`)
+            rgbHub.emit(`F4:000000\n`)
+            rgbHub.emit(`F5:000000\n`)
+        }, 600)
     } catch (err) {
         console.log(err.message)
     }
