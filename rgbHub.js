@@ -29,6 +29,7 @@ rgbHub.on('open', function () {
 
 rgbHub.on('data', function (data) {
   const value = String(data).trim();
+  console.log(value)
   fs.writeFile('../rgbHub.log', value, (err) => {
     if (err) console.log(err)
   })
