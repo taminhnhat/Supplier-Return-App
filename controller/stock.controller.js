@@ -665,15 +665,12 @@ async function _getStockByBarcode(req, res) {
 }
 
 function testLight(req, res) {
-    const lightColor = req.query.lightColor || '969600'
+    const lightColor = req.query.lightColor || '000000'
     rgbHub.emit(`F1:${lightColor}\n`)
     rgbHub.emit(`F2:${lightColor}\n`)
     rgbHub.emit(`F3:${lightColor}\n`)
     rgbHub.emit(`F4:${lightColor}\n`)
     rgbHub.emit(`F5:${lightColor}\n`)
-    setTimeout(() => {
-        clearLight()
-    }, 2000)
     return res.status(202).json({
         status: 'accepted'
     })
