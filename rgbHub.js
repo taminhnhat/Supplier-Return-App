@@ -16,6 +16,8 @@ const rgbHubBaudrate = Number(process.env.RGB_HUB_BAUDRATE) || 115200;
 const rgbHubCycle = Number(process.env.RGB_HUB_SERIAL_CYCLE) || 100;
 const rgbHubDebugMode = process.env.RGB_DEBUG_MODE;
 
+let messageBufferFromRgbHub = ''
+
 //  NEED TO CONFIG SERIAL PORT FIRST, READ 'README.md'
 const rgbHub = new SerialPort(rgbHubPath, {
   baudRate: rgbHubBaudrate,
@@ -24,24 +26,31 @@ const rgbHub = new SerialPort(rgbHubPath, {
 
 rgbHub.on('open', function () {
   logger.debug({ message: 'rgb hub opened', location: FILE_NAME })
-  event.emit('rgbHub:opened', { message: 'RGB Hub opened' })
+  // event.emit('rgbHub:opened', { message: 'RGB Hub opened' })
 });
 
 rgbHub.on('data', function (data) {
-  const value = String(data).trim().replace('\n', '')
-  console.log(value)
+  const value = String(data).trim()
+  if (messageBufferFromRgbHub == '\n') {
+    console.log(messageBufferFromRgbHub)
+    messageBufferFromRgbHub = ''
+  }
+  else
+    messageBufferFromRgbHub += value
   fs.writeFile('../rgbHub.log', value, (err) => {
     if (err) console.log(err)
   })
-  event.emit(`rgbHub:data`, { message: 'rgb hub data', value: value });
+  // event.emit(`rgbHub:data`, { message: 'rgb hub data', value: value });
 });
 
 rgbHub.on('close', () => {
-  event.emit('rgbHub:closed', { message: 'Back scanner closed' });
+  console.log('Rgb hub closed')
+  // event.emit('rgbHub:closed', { message: 'Back scanner closed' });
 });
 
 rgbHub.on('error', (err) => {
-  event.emit('rgbHub:error', { message: 'Rgb hub error', value: err.message });
+  console.log('Rgb hub error', err.message)
+  // event.emit('rgbHub:error', { message: 'Rgb hub error', value: err.message });
 });
 
 let lastTimeEmitToRgbHub = Date.now();
