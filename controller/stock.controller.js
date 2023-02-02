@@ -117,8 +117,8 @@ async function searchProduct(req, res) {
 
         // if lightOn mode is true
         if (lightOnFlag == 'true') {
+            clearLight()
             allMatchedBin.forEach(eachBin => {
-                clearLight()
                 // rgbHub.emit(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.emit(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${process.env.FINDING_MODE_LIGHT_COLOR}\n`)
             })
@@ -512,13 +512,13 @@ async function pickToLight(req, res) {
             })
         }
         else {
+            clearLight()
             allMatchedBin.forEach(eachBin => {
                 // filering result
                 eachBin.stocks = eachBin.stocks.filter(eachProduct => {
                     return eachProduct.productId == req.body.productId
                 })
                 // turn the light on
-                clearLight()
                 rgbHub.emit(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${eachBin.lightColor}\n`)
             });
 
