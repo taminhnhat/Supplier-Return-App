@@ -14,24 +14,44 @@ const numOfStrip = process.env.NUM_OF_STRIP
 reload()
 
 async function getStock(req, res) {
-    try {
-        const result = await StockCollection.find()
-        if (result == null)
+    const binIdFromRequest = req.query.binId || false
+
+    if (binIdFromRequest === false) {
+        try {
+            const result = await StockCollection.find()
+            if (result == null)
+                return res.status(500).json({
+                    status: 'fail',
+                    message: 'Stock is empty'
+                })
+            else
+                return res.status(200).json({
+                    status: 'success',
+                    data: result
+                })
+        } catch (err) {
+            console.log(err.message)
             return res.status(500).json({
                 status: 'fail',
-                message: 'Stock is empty'
+                message: err.message
             })
-        else
+        }
+    }
+    else {
+        try {
+            const result = await StockCollection.find({ binId: binIdFromRequest })
             return res.status(200).json({
                 status: 'success',
                 data: result
             })
-    } catch (err) {
-        console.log(err.message)
-        return res.status(500).json({
-            status: 'fail',
-            message: err.message
-        })
+        }
+        catch (err) {
+            console.log(err.message)
+            return res.status(500).json({
+                status: 'fail',
+                message: err.message
+            })
+        }
     }
 }
 
