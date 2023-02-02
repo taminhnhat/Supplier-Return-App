@@ -73,8 +73,7 @@ async function searchProduct(req, res) {
     if (productIdFromRequest != undefined) queryObj.stocks.$elemMatch.productId = productIdFromRequest
     if (orderIdFromRequest != undefined) queryObj.stocks.$elemMatch.orderId = orderIdFromRequest
     // projection
-    let projectionObj = { _id: 0, binId: 1, stocks: 1 }
-    if (locationReturnFlag == 'true') projectionObj.coordinate = 1
+    let projectionObj = { _id: 0, coordinate: 1, binId: 1, stocks: 1 }
 
     try {
         // get all matched bins
@@ -312,7 +311,6 @@ async function addStock(req, res) {
 async function putToLight(req, res) {
     // get bin with the same binId, productId, orderId
     const binList_1 = await StockCollection.find({ binId: req.body.binId, stocks: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } })
-    console.log('binList_1:', binList_1)
     try {
         if (binList_1.length == 1) {
             // update product quantity on this bin
@@ -322,7 +320,6 @@ async function putToLight(req, res) {
         else if (binList_1.length == 0) {
             // get bin with the same binId only
             const binList_2 = await StockCollection.find({ binId: req.body.binId })
-            console.log('binList_2:', binList_2)
             if (binList_2.length == 1) {
                 // push new product to this bin
                 const thisBin = binList_2[0]
@@ -374,7 +371,7 @@ async function putToLight(req, res) {
         //
         console.log('create new bin')
         const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER)
-        const binWidthInCm = Number(req.body.binWidth.replace('cm', ''))
+        const binWidthInCm = Number(req.body.binWidth.replace('cm', 'Cm', ''))
         //
         const deltaPoint = Math.floor(binWidthInCm / 100 * ledsPerMetterOfLedStrip) - 1
         let startPoint
