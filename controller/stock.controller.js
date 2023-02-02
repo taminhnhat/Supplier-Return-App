@@ -81,7 +81,6 @@ async function searchProduct(req, res) {
         // if stock is empty
         if (allMatchedBin == null) {
             return res.status(500).json({
-                emit
                 status: 'fail',
                 message: 'Stock is empty'
             })
