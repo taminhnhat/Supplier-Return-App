@@ -1,5 +1,4 @@
 const auth = async (req, res, next) => {
-    console.log(req.headers)
     try {
         if (req.headers.api_key === process.env.TOKEN_SECRET)
             next()
