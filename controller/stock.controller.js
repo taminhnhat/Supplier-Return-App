@@ -371,7 +371,7 @@ async function putToLight(req, res) {
         //
         console.log('create new bin')
         const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER)
-        const binWidthInCm = Number(req.body.binWidth.replace('cm', 'Cm', ''))
+        const binWidthInCm = Number(req.body.binWidth.replace('cm', '').replace('Cm', '').replace('CM', ''))
         //
         const deltaPoint = Math.floor(binWidthInCm / 100 * ledsPerMetterOfLedStrip) - 1
         let startPoint
@@ -396,21 +396,21 @@ async function putToLight(req, res) {
             endPoint = tempLightCursor + deltaPoint
         }
 
-        const stock = new StockCollection({
-            binId: tempBinIndex,
-            coordinate: {
-                startPoint: startPoint,
-                endPoint: endPoint,
-                X_index: tempBinIndex_X,
-                Y_index: tempBinIndex_Y
-            },
-            stocks: [{
-                productId: req.body.productId,
-                orderId: req.body.orderId,
-                productQuantity: req.body.productQuantity
-            }]
-        });
         try {
+            const stock = new StockCollection({
+                binId: tempBinIndex,
+                coordinate: {
+                    startPoint: startPoint,
+                    endPoint: endPoint,
+                    X_index: tempBinIndex_X,
+                    Y_index: tempBinIndex_Y
+                },
+                stocks: [{
+                    productId: req.body.productId,
+                    orderId: req.body.orderId,
+                    productQuantity: req.body.productQuantity
+                }]
+            });
             let backup = await BackupCollection.findOne({})
             tempLightCursor = endPoint + 1
             tempBinIndex_X += 1
@@ -428,7 +428,11 @@ async function putToLight(req, res) {
                 data: newStock
             })
         } catch (err) {
-            throw err
+            console.log(err.message)
+            return res.status(500).json({
+                status: 'fail',
+                message: err.message
+            })
         }
     }
 
