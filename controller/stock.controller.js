@@ -574,14 +574,7 @@ async function reload(req, res) {
         }
         console.log(tempLightCursor, tempBinIndex, tempBinIndex_X, tempBinIndex_Y)
 
-        rgbHub.emit(`F1:969600\n`)
-        rgbHub.emit(`F2:969600\n`)
-        rgbHub.emit(`F3:969600\n`)
-        rgbHub.emit(`F4:969600\n`)
-        rgbHub.emit(`F5:969600\n`)
-        setTimeout(() => {
-            clearLight()
-        }, 1000)
+        clearLight()
     } catch (err) {
         console.log(err.message)
     }
@@ -649,6 +642,18 @@ async function _getStockByBarcode(req, res) {
     }
 }
 
+function testLight(req, res) {
+    const lightColor = req.params.lightColor || '969600'
+    rgbHub.emit(`F1:${lightColor}\n`)
+    rgbHub.emit(`F2:${lightColor}\n`)
+    rgbHub.emit(`F3:${lightColor}\n`)
+    rgbHub.emit(`F4:${lightColor}\n`)
+    rgbHub.emit(`F5:${lightColor}\n`)
+    setTimeout(() => {
+        clearLight()
+    }, 2000)
+}
+
 function clearLight() {
     rgbHub.emit(`F1:000000\n`)
     rgbHub.emit(`F2:000000\n`)
@@ -657,4 +662,4 @@ function clearLight() {
     rgbHub.emit(`F5:000000\n`)
 }
 
-module.exports = { getStock, addStock, clearStock, reload, putToLight, pickToLight, getConfiguration, searchProduct, deleteProduct, getBin, deleteBin };
+module.exports = { getStock, addStock, clearStock, reload, putToLight, pickToLight, getConfiguration, searchProduct, testLight, deleteProduct, getBin, deleteBin };
