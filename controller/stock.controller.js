@@ -85,6 +85,7 @@ async function deleteBin(req, res) {
 async function searchProduct(req, res) {
     const productIdFromRequest = req.query.productId
     const orderIdFromRequest = req.query.orderId
+    const binIdFromRequest = req.query.binId
     const lightOnFlag = req.query.lightOn || 'false'
     const locationReturnFlag = req.query.locationReturn || 'false'
 
@@ -92,6 +93,7 @@ async function searchProduct(req, res) {
     let queryObj = { stocks: { $elemMatch: {} } }
     if (productIdFromRequest != undefined) queryObj.stocks.$elemMatch.productId = productIdFromRequest
     if (orderIdFromRequest != undefined) queryObj.stocks.$elemMatch.orderId = orderIdFromRequest
+    if (binIdFromRequest != undefined) queryObj.binId = binIdFromRequest
     // projection
     let projectionObj = { _id: 0, coordinate: 1, binId: 1, stocks: 1 }
 
