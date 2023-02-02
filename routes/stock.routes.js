@@ -18,7 +18,10 @@ router.get('/products/search', stockController.searchProduct)
 
 router.delete('/products/:productId', stockController.deleteProduct)
 
-router.get('/configurations', stockController.getConfiguration)
+router
+  .route('/configurations')
+  .get(stockController.getConfiguration)
+  .patch(stockController.config)
 
 router.get('/testLight', stockController.testLight)
 

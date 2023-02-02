@@ -197,6 +197,14 @@ async function getConfiguration(req, res) {
     }
 }
 
+async function config(req, res) {
+    const rgbHubBrightness = Number(req.query.brightness) || 150
+    rgbHub.emit(`CFG:B${rgbHubBrightness}\n`)
+    return res.status(202).json({
+        status: 'accepted',
+    })
+}
+
 async function addStock(req, res) {
     clearLight()
 
@@ -684,4 +692,4 @@ function clearLight() {
     rgbHub.emit(`F5:000000\n`)
 }
 
-module.exports = { getStock, addStock, clearStock, reload, putToLight, pickToLight, getConfiguration, searchProduct, testLight, deleteProduct, getBin, deleteBin };
+module.exports = { getStock, addStock, clearStock, reload, putToLight, pickToLight, getConfiguration, config, searchProduct, testLight, deleteProduct, getBin, deleteBin };
