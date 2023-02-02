@@ -581,7 +581,7 @@ async function reload(req, res) {
         rgbHub.emit(`F5:969600\n`)
         setTimeout(() => {
             clearLight()
-        }, 600)
+        }, 1000)
     } catch (err) {
         console.log(err.message)
     }
