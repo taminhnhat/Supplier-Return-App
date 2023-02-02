@@ -20,7 +20,7 @@ router.delete('/products/:productId', stockController.deleteProduct)
 
 router.get('/configurations', stockController.getConfiguration)
 
-route.get('/testLight', stockController.testLight)
+router.get('/testLight', stockController.testLight)
 
 router
   .route('/bins/:id')
