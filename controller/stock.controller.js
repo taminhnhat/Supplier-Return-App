@@ -717,11 +717,9 @@ function setLightTimeout() {
 }
 
 function clearLightTimeout() {
+    clearLight()
     if (lightTimeout != undefined)
         clearTimeout(lightTimeout)
-    else {
-        clearLight()
-    }
 }
 
 
