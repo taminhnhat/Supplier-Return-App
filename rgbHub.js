@@ -5,7 +5,6 @@
 const fs = require("fs");
 require('dotenv').config({ path: './.env' });
 const SerialPort = require('serialport');
-const event = require('./event');
 
 const logger = require('./logger/logger');
 
@@ -16,6 +15,8 @@ const rgbHubBaudrate = Number(process.env.RGB_HUB_BAUDRATE) || 115200;
 const rgbHubCycle = Number(process.env.RGB_HUB_SERIAL_CYCLE) || 100;
 const rgbHubDebugMode = process.env.RGB_DEBUG_MODE;
 
+let isRgbHubOpen = false
+
 let messageBufferFromRgbHub = ''
 
 //  NEED TO CONFIG SERIAL PORT FIRST, READ 'README.md'
@@ -25,8 +26,8 @@ const rgbHub = new SerialPort(rgbHubPath, {
 });
 
 rgbHub.on('open', function () {
+  isRgbHubOpen = true
   logger.debug({ message: 'rgb hub opened', location: FILE_NAME })
-  // event.emit('rgbHub:opened', { message: 'RGB Hub opened' })
 });
 
 rgbHub.on('data', function (data) {
@@ -40,27 +41,24 @@ rgbHub.on('data', function (data) {
   fs.writeFile('../rgbHub.log', value, (err) => {
     if (err) console.log(err)
   })
-  // event.emit(`rgbHub:data`, { message: 'rgb hub data', value: value });
 });
 
 rgbHub.on('close', () => {
   console.log('Rgb hub closed')
-  // event.emit('rgbHub:closed', { message: 'Back scanner closed' });
 });
 
 rgbHub.on('error', (err) => {
   console.log('Rgb hub error', err.message)
-  // event.emit('rgbHub:error', { message: 'Rgb hub error', value: err.message });
 });
 
 let lastTimeEmitToRgbHub = Date.now();
 let emitTorgbHubComplete = true;
-event.on('rgbHub:emit', rgbHubEmit);
 /**
  * 
  * @param {String} message 
  */
 function rgbHubEmit(message) {
+  if (isRgbHubOpen == false) return
   const deltaTime = Date.now() - lastTimeEmitToRgbHub;
 
   if (deltaTime > rgbHubCycle && emitTorgbHubComplete == true) {
@@ -93,7 +91,6 @@ function rgbHubCheckHealth() {
   // rgbHub.open((err) => {
   //   if (err) {
   //     if (err.message !== 'Port is already open')
-  //       event.emit('rgbHub:error', { message: 'Rgb hub error', value: err.message });
   //   }
   // });
   rgbHubEmit('STT\n');
