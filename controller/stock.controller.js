@@ -712,7 +712,7 @@ function clearLight() {
 
 function setLightTimeout() {
     lightTimeout = setTimeout(() => {
-        console.log('clear light _2')
+        clearLight()
     }, holdingLightInSeconds * 1000)
 }
 
