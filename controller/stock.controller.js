@@ -3,6 +3,7 @@ const path = require('path')
 const StockCollection = require('../models/stock')
 const BackupCollection = require('../models/backup')
 const rgbHub = require('../rgbHub')
+const { set } = require('mongoose')
 
 let tempLightCursor = 0;
 let tempBinIndex = 0;
@@ -556,8 +557,8 @@ async function pickToLight(req, res) {
                 })
                 // turn the light on
                 rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${eachBin.lightColor}\n`)
-                setLightTimeout()
             });
+            setLightTimeout()
 
             return res.status(200).json({
                 status: 'success',
@@ -658,6 +659,7 @@ async function _createVolume(req, res) {
     clearLightTimeout()
     // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
     rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.ADDING_MODE_LIGHT_COLOR}\n`)
+    setLightTimeout()
     const newStock = {
         binId: tempBinIndex,
         coordinate: {
