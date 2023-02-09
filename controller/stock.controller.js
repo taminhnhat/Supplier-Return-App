@@ -269,8 +269,8 @@ async function addStock(req, res) {
                 orderId: req.body.orderId
             })
             _clearLightTimeout()
-            // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`);
-            rgbHub.write(`W${tempBinIndex_Y + 1}:${matchedBin.coordinate.startPoint}:${matchedBin.coordinate.endPoint}:${addingLightColor}\n`)
+            // rgbHub.write(`F${matchedBin.coordinate.Y_index + 1}:000000\n`);
+            rgbHub.write(`W${matchedBin.coordinate.Y_index + 1}:${matchedBin.coordinate.startPoint}:${matchedBin.coordinate.endPoint}:${addingLightColor}\n`)
             _setLightTimeout(holdingLightInSeconds)
             return res.status(200).json({
                 status: 'success',
@@ -337,7 +337,7 @@ async function addStock(req, res) {
             }
         }
         _clearLightTimeout()
-        // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
+        // rgbHub.write(`F${lightRow}:000000\n`)
         rgbHub.write(`W${lightRow}:${startPoint}:${endPoint}:${addingLightColor}\n`)
         _setLightTimeout(holdingLightInSeconds)
         const newStock = {
