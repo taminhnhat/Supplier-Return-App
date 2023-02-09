@@ -26,7 +26,7 @@ router
 router.get('/testLight', stockController.testLight)
 
 router
-  .route('/bins/:id')
+  .route('/bins/:binId')
   .get(stockController.getBin)
   .delete(stockController.deleteBin)
 

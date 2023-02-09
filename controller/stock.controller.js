@@ -91,7 +91,7 @@ async function getBin(req, res) {
 }
 
 async function deleteBin(req, res) {
-    //
+    return res.status()
 }
 
 async function searchProduct(req, res) {
@@ -323,8 +323,9 @@ async function addStock(req, res) {
         const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER);
         let endPoint = tempLightCursor + Math.floor(Number(req.body.binWidth.replace('cm', '')) / 100 * ledsPerMetterOfLedStrip) - 1;
         const lightColor = req.body.lightColor;
+        let lightRow = tempBinIndex_Y + 1
         if (endPoint >= numOfLedPerStrip) {
-            if (tempBinIndex_Y + 1 >= numOfStrip)
+            if (lightRow >= numOfStrip)
                 return res.status(500).json({
                     status: 'fail',
                     message: 'Not enough space, use merge stock instead'
@@ -332,11 +333,12 @@ async function addStock(req, res) {
             else {
                 endPoint = endPoint - startPoint
                 startPoint = 0
+                lightRow += 1
             }
         }
         _clearLightTimeout()
         // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
-        rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${addingLightColor}\n`)
+        rgbHub.write(`W${lightRow}:${startPoint}:${endPoint}:${addingLightColor}\n`)
         _setLightTimeout(holdingLightInSeconds)
         const newStock = {
             binId: tempBinIndex,
@@ -688,4 +690,4 @@ function _clearLightTimeout() {
 }
 
 
-module.exports = { getStock, addStock, clearStock, reload, putToLight, pickToLight, getConfiguration, config, searchProduct, testLight, deleteProduct, getBin, deleteBin };
+module.exports = { getStock, addStock, clearStock, putToLight, pickToLight, getConfiguration, config, searchProduct, testLight, deleteProduct, getBin, deleteBin };
