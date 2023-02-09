@@ -14,6 +14,11 @@ const numOfLedPerStrip = process.env.NUM_OF_LED_PER_STRIP
 const numOfStrip = process.env.NUM_OF_STRIP
 
 const holdingLightInSeconds = process.env.HOLDING_LIGHT_IN_SECONDS || 180
+const searchingLightColor = process.env.SEARCHING_MODE_LIGHT_COLOR || 'ffff00'
+const addingLightColor = process.env.ADDING_MODE_LIGHT_COLOR || '00ffff'
+const puttingLightColor = process.env.PUTTING_MODE_LIGHT_COLOR || '00ff00'
+const pickingLightColor = process.env.PICKING_MODE_LIGHT_COLOR || 'ffff00'
+
 
 let lightTimeout
 let lightTimeout_2
@@ -127,7 +132,7 @@ async function searchProduct(req, res) {
             clearLightTimeout()
             allMatchedBin.forEach(eachBin => {
                 // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
-                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${process.env.SEARCHING_MODE_LIGHT_COLOR}\n`)
+                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
             })
             setLightTimeout()
         }
@@ -265,7 +270,7 @@ async function addStock(req, res) {
             })
             clearLightTimeout()
             // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`);
-            rgbHub.write(`W${tempBinIndex_Y + 1}:${matchedBin.coordinate.startPoint}:${matchedBin.coordinate.endPoint}:${process.env.ADDING_MODE_LIGHT_COLOR}\n`)
+            rgbHub.write(`W${tempBinIndex_Y + 1}:${matchedBin.coordinate.startPoint}:${matchedBin.coordinate.endPoint}:${addingLightColor}\n`)
             setLightTimeout()
             return res.status(200).json({
                 status: 'success',
@@ -309,7 +314,7 @@ async function addStock(req, res) {
                 const tempRes = allBin[allBin.length - 1]
                 clearLightTimeout()
                 // rgbHub.write(`F${tempRes.coordinate.Y_index + 1}:000000\n`)
-                rgbHub.write(`W${tempRes.coordinate.Y_index + 1}:${tempRes.coordinate.startPoint}:${tempRes.coordinate.endPoint}:${process.env.ADDING_MODE_LIGHT_COLOR}\n`)
+                rgbHub.write(`W${tempRes.coordinate.Y_index + 1}:${tempRes.coordinate.startPoint}:${tempRes.coordinate.endPoint}:${addingLightColor}\n`)
                 setLightTimeout()
                 return res.status(200).json({
                     status: 'success',
@@ -441,7 +446,7 @@ async function putToLight(req, res) {
             const out = await backup.save()
             clearLightTimeout()
             // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
-            rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
+            rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${puttingLightColor}\n`)
             setLightTimeout()
             return res.status(201).json({
                 status: 'success',
@@ -468,7 +473,7 @@ async function putToLight(req, res) {
                     const updatedBin = await thisBin.save()
                     clearLightTimeout()
                     // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
-                    rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
+                    rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${puttingLightColor}\n`)
                     setLightTimeout()
                     return res.status(201).json({
                         status: 'success',
@@ -496,7 +501,7 @@ async function putToLight(req, res) {
             const updatedBin = await thisBin.save()
             clearLightTimeout()
             // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
-            rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
+            rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${puttingLightColor}\n`)
             setLightTimeout()
             return res.status(201).json({
                 status: 'success',
@@ -530,7 +535,7 @@ async function pickToLight(req, res) {
                     return eachProduct.productId == req.body.productId
                 })
                 // turn the light on
-                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${process.env.PICKING_MODE_LIGHT_COLOR}\n`)
+                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${pickingLightColor}\n`)
             });
             setLightTimeout()
 
@@ -632,7 +637,7 @@ async function _createVolume(req, res) {
     }
     clearLightTimeout()
     // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
-    rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.ADDING_MODE_LIGHT_COLOR}\n`)
+    rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${addingLightColor}\n`)
     setLightTimeout()
     const newStock = {
         binId: tempBinIndex,
