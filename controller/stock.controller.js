@@ -272,32 +272,6 @@ async function addStock(req, res) {
                 data: matchedBin
             })
 
-            // let result = []
-            // let a = new Promise((resolve, reject) => {
-            //     allBin.forEach((stock, index) => {
-            //         stock.stocks.forEach(ele => {
-            //             if (ele.productId == req.body.mergeId) {
-            //                 result.push(stock)
-            //             }
-            //         })
-            //         if (index == allBin.length - 1) resolve(result)
-            //     });
-            // })
-            // a.then(async (result) => {
-            //     // take the last bin
-            //     const stock = result[result.length - 1]
-            //     stock.stocks.push({
-            //         productId: req.body.productId,
-            //         orderId: req.body.orderId
-            //     })
-
-            //     rgbHub.write(`W1:${stock.coordinate.startPoint}:${stock.coordinate.endPoint}:${stock.lightColor}\n`)
-            //     return res.status(201).json({ stock })
-
-            // }, (err) => {
-            //     return res.status(500).json({ message: err })
-            // })
-
         } catch (err) {
             console.log(err)
             return res.status(500).json({
@@ -556,7 +530,7 @@ async function pickToLight(req, res) {
                     return eachProduct.productId == req.body.productId
                 })
                 // turn the light on
-                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${eachBin.lightColor}\n`)
+                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${process.env.PICKING_MODE_LIGHT_COLOR}\n`)
             });
             setLightTimeout()
 
