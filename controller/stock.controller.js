@@ -134,7 +134,7 @@ async function searchProduct(req, res) {
                 // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
             })
-            setLightTimeout()
+            setLightTimeout(holdingLightInSeconds)
         }
 
         return res.status(200).json({
@@ -271,7 +271,7 @@ async function addStock(req, res) {
             clearLightTimeout()
             // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`);
             rgbHub.write(`W${tempBinIndex_Y + 1}:${matchedBin.coordinate.startPoint}:${matchedBin.coordinate.endPoint}:${addingLightColor}\n`)
-            setLightTimeout()
+            setLightTimeout(holdingLightInSeconds)
             return res.status(200).json({
                 status: 'success',
                 data: matchedBin
@@ -300,17 +300,6 @@ async function addStock(req, res) {
             }
             else if (allBin.length == 0) _createVolume(req, res)
             else {
-                // let result = new Array
-                // allBin.forEach(eachBin => {
-                //     eachBin.stocks.forEach(pro => {
-                //         if (pro.productId == req.body.productId) result.push(eachBin)
-                //     })
-                // });
-                // if (result.length == 0) {
-                //     _createVolume(req, res)
-                // }
-                // else {
-                // }
                 const tempRes = allBin[allBin.length - 1]
                 clearLightTimeout()
                 // rgbHub.write(`F${tempRes.coordinate.Y_index + 1}:000000\n`)
@@ -328,6 +317,46 @@ async function addStock(req, res) {
                 message: err.message
             })
         }
+    }
+    async function _createVolume(req, res) {
+        let startPoint = tempLightCursor;
+        const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER);
+        let endPoint = tempLightCursor + Math.floor(Number(req.body.binWidth.replace('cm', '')) / 100 * ledsPerMetterOfLedStrip) - 1;
+        const lightColor = req.body.lightColor;
+        if (endPoint >= numOfLedPerStrip) {
+            if (tempBinIndex_Y + 1 >= numOfStrip)
+                return res.status(500).json({
+                    status: 'fail',
+                    message: 'Not enough space, use merge stock instead'
+                })
+            else {
+                endPoint = endPoint - startPoint
+                startPoint = 0
+            }
+        }
+        clearLightTimeout()
+        // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
+        rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${addingLightColor}\n`)
+        setLightTimeout(holdingLightInSeconds)
+        const newStock = {
+            binId: tempBinIndex,
+            coordinate: {
+                startPoint: startPoint,
+                endPoint: endPoint,
+                X_index: tempBinIndex_X,
+                Y_index: tempBinIndex_Y
+            },
+            stocks: [{
+                productId: req.body.productId,
+                orderId: req.body.orderId
+            }]
+        }
+        return res.status(201).json({
+            status: 'success',
+            url: '/api/v1',
+            object: 'review_result',
+            data: newStock
+        });
     }
 }
 
@@ -447,7 +476,7 @@ async function putToLight(req, res) {
             clearLightTimeout()
             // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
             rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${puttingLightColor}\n`)
-            setLightTimeout()
+            setLightTimeout(holdingLightInSeconds)
             return res.status(201).json({
                 status: 'success',
                 data: newStock
@@ -474,7 +503,7 @@ async function putToLight(req, res) {
                     clearLightTimeout()
                     // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
                     rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${puttingLightColor}\n`)
-                    setLightTimeout()
+                    setLightTimeout(holdingLightInSeconds)
                     return res.status(201).json({
                         status: 'success',
                         data: updatedBin
@@ -502,7 +531,7 @@ async function putToLight(req, res) {
             clearLightTimeout()
             // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
             rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${puttingLightColor}\n`)
-            setLightTimeout()
+            setLightTimeout(holdingLightInSeconds)
             return res.status(201).json({
                 status: 'success',
                 data: updatedBin
@@ -537,7 +566,7 @@ async function pickToLight(req, res) {
                 // turn the light on
                 rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${pickingLightColor}\n`)
             });
-            setLightTimeout()
+            setLightTimeout(holdingLightInSeconds)
 
             return res.status(200).json({
                 status: 'success',
@@ -619,68 +648,7 @@ async function reload(req, res) {
     }
 }
 
-async function _createVolume(req, res) {
-    let startPoint = tempLightCursor;
-    const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER);
-    let endPoint = tempLightCursor + Math.floor(Number(req.body.binWidth.replace('cm', '')) / 100 * ledsPerMetterOfLedStrip) - 1;
-    const lightColor = req.body.lightColor;
-    if (endPoint >= numOfLedPerStrip) {
-        if (tempBinIndex_Y + 1 >= numOfStrip)
-            return res.status(500).json({
-                status: 'fail',
-                message: 'Not enough space, use merge stock instead'
-            })
-        else {
-            endPoint = endPoint - startPoint
-            startPoint = 0
-        }
-    }
-    clearLightTimeout()
-    // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
-    rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${addingLightColor}\n`)
-    setLightTimeout()
-    const newStock = {
-        binId: tempBinIndex,
-        coordinate: {
-            startPoint: startPoint,
-            endPoint: endPoint,
-            X_index: tempBinIndex_X,
-            Y_index: tempBinIndex_Y
-        },
-        stocks: [{
-            productId: req.body.productId,
-            orderId: req.body.orderId
-        }]
-    }
-    return res.status(201).json({
-        status: 'success',
-        url: '/api/v1',
-        object: 'review_result',
-        data: newStock
-    });
-}
 
-async function _getStockByBarcode(req, res) {
-    try {
-        let result = [];
-        const stocks = await StockCollection.find()
-        if (stocks == null) {
-            return res.status(500).json({
-                status: 'fail',
-                message: 'Stock is empty'
-            })
-        }
-        stocks.forEach(stock => {
-            stock.stocks.forEach(ele => {
-                if (ele.productId == req.params.id) result.push(stock);
-            })
-        });
-        return result
-    } catch (err) {
-        throw err
-        return null
-    }
-}
 
 function testLight(req, res) {
     const lightColor = req.query.lightColor || '000000'
@@ -689,6 +657,7 @@ function testLight(req, res) {
     rgbHub.write(`F3:${lightColor}\n`)
     rgbHub.write(`F4:${lightColor}\n`)
     rgbHub.write(`F5:${lightColor}\n`)
+    setLightTimeout(5)
     return res.status(202).json({
         status: 'accepted'
     })
@@ -702,13 +671,13 @@ function clearLight() {
     rgbHub.write(`F5:000000\n`)
 }
 
-function setLightTimeout(data) {
+function setLightTimeout(dur) {
     lightTimeout = setTimeout(() => {
         // data.forEach((value) => {
         //     rgbHub.write(`F${value}:000000\n`)
         // })
         clearLight()
-    }, holdingLightInSeconds * 1000)
+    }, dur * 1000)
 }
 
 function clearLightTimeout() {
