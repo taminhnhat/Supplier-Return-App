@@ -657,7 +657,8 @@ function testLight(req, res) {
     rgbHub.write(`F3:${lightColor}\n`)
     rgbHub.write(`F4:${lightColor}\n`)
     rgbHub.write(`F5:${lightColor}\n`)
-    _setLightTimeout(5)
+    if (lightColor != '000000')
+        _setLightTimeout(5)
     return res.status(202).json({
         status: 'accepted'
     })
