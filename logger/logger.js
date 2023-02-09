@@ -1,15 +1,12 @@
 require('dotenv').config({ path: './.env' });
+const logMode = process.env.LOG_MODE
 
 class Logger {
     constructor() {
         //
     }
     #createLog(message, location, level, value) {
-        if (process.env.LOG_MODE == 'console') {
-            console.log(message);
-            if (value != null) console.log(value);
-        }
-        else {
+        if (logMode == 'production') {
             let logtext = `${Date(Date.now())}\t${level.toUpperCase()}`;
             if (location != null) {
                 logtext += `\tat:${location}`;
@@ -19,6 +16,10 @@ class Logger {
             if (value != null) {
                 console.log(value);
             }
+        }
+        else {
+            console.log(message);
+            if (value != null) console.log(value);
         }
     }
     info(obj) {

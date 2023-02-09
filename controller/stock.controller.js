@@ -25,10 +25,10 @@ async function getStock(req, res) {
     if (binIdFromRequest === false) {
         try {
             const result = await StockCollection.find()
-            if (result == null)
+            if (result == undefined)
                 return res.status(500).json({
                     status: 'fail',
-                    message: 'Stock is empty'
+                    message: 'Internal Server Error'
                 })
             else
                 return res.status(200).json({
@@ -36,7 +36,7 @@ async function getStock(req, res) {
                     data: result
                 })
         } catch (err) {
-            console.log(err.message)
+            console.log(err)
             return res.status(500).json({
                 status: 'fail',
                 message: err.message
@@ -52,7 +52,7 @@ async function getStock(req, res) {
             })
         }
         catch (err) {
-            console.log(err.message)
+            console.log(err)
             return res.status(500).json({
                 status: 'fail',
                 message: err.message
@@ -72,7 +72,7 @@ async function getBin(req, res) {
             })
         }
     } catch (err) {
-        console.log(err.message)
+        console.log(err)
         return res.status(500).json({
             status: 'fail',
             message: err.message
@@ -123,16 +123,11 @@ async function searchProduct(req, res) {
 
         // if lightOn mode is true
         if (lightOnFlag == 'true') {
-            // clearTimeout(lightTimeout)
             clearLightTimeout()
-            // clearLight()
             allMatchedBin.forEach(eachBin => {
-                // rgbHub.emit(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
-                rgbHub.emit(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${process.env.SEARCHING_MODE_LIGHT_COLOR}\n`)
+                // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
+                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${process.env.SEARCHING_MODE_LIGHT_COLOR}\n`)
             })
-            // lightTimeout = setTimeout(() => {
-            //     console.log('turn off light')
-            // }, 2000)
             setLightTimeout()
         }
 
@@ -141,7 +136,7 @@ async function searchProduct(req, res) {
             data: allMatchedBin
         })
     } catch (err) {
-        console.log(err.message)
+        console.log(err)
         return res.status(500).json({
             status: 'fail',
             message: err.message
@@ -173,7 +168,7 @@ async function deleteProduct(req, res) {
             })
             eachBin.stocks = filteredBin
         })
-        return res.status(202).json(allMatchedBin)
+        // return res.status(202).json(allMatchedBin)
         // update stock
         let result = []
         allMatchedBin.forEach(async (eachBin, index) => {
@@ -185,7 +180,7 @@ async function deleteProduct(req, res) {
             })
         })
     } catch (err) {
-        console.log(err.message)
+        console.log(err)
         return res.status(500).json({
             status: 'fail',
             message: err.message
@@ -211,7 +206,7 @@ async function getConfiguration(req, res) {
 
 async function config(req, res) {
     const rgbHubBrightness = Number(req.query.brightness) || 150
-    rgbHub.emit(`CFG:B${rgbHubBrightness}\n`)
+    rgbHub.write(`CFG:B${rgbHubBrightness}\n`)
     return res.status(202).json({
         status: 'accepted',
     })
@@ -268,8 +263,8 @@ async function addStock(req, res) {
                 orderId: req.body.orderId
             })
             clearLightTimeout()
-            // rgbHub.emit(`F${tempBinIndex_Y + 1}:000000\n`);
-            rgbHub.emit(`W${tempBinIndex_Y + 1}:${matchedBin.coordinate.startPoint}:${matchedBin.coordinate.endPoint}:${process.env.ADDING_MODE_LIGHT_COLOR}\n`)
+            // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`);
+            rgbHub.write(`W${tempBinIndex_Y + 1}:${matchedBin.coordinate.startPoint}:${matchedBin.coordinate.endPoint}:${process.env.ADDING_MODE_LIGHT_COLOR}\n`)
             setLightTimeout()
             return res.status(200).json({
                 status: 'success',
@@ -295,7 +290,7 @@ async function addStock(req, res) {
             //         orderId: req.body.orderId
             //     })
 
-            //     rgbHub.emit(`W1:${stock.coordinate.startPoint}:${stock.coordinate.endPoint}:${stock.lightColor}\n`)
+            //     rgbHub.write(`W1:${stock.coordinate.startPoint}:${stock.coordinate.endPoint}:${stock.lightColor}\n`)
             //     return res.status(201).json({ stock })
 
             // }, (err) => {
@@ -303,7 +298,7 @@ async function addStock(req, res) {
             // })
 
         } catch (err) {
-            console.log(err.message)
+            console.log(err)
             return res.status(500).json({
                 status: 'fail',
                 message: err.message
@@ -338,8 +333,8 @@ async function addStock(req, res) {
                 // }
                 const tempRes = allBin[allBin.length - 1]
                 clearLightTimeout()
-                // rgbHub.emit(`F${tempRes.coordinate.Y_index + 1}:000000\n`)
-                rgbHub.emit(`W${tempRes.coordinate.Y_index + 1}:${tempRes.coordinate.startPoint}:${tempRes.coordinate.endPoint}:${process.env.ADDING_MODE_LIGHT_COLOR}\n`)
+                // rgbHub.write(`F${tempRes.coordinate.Y_index + 1}:000000\n`)
+                rgbHub.write(`W${tempRes.coordinate.Y_index + 1}:${tempRes.coordinate.startPoint}:${tempRes.coordinate.endPoint}:${process.env.ADDING_MODE_LIGHT_COLOR}\n`)
                 setLightTimeout()
                 return res.status(200).json({
                     status: 'success',
@@ -347,7 +342,7 @@ async function addStock(req, res) {
                 })
             }
         } catch (err) {
-            console.log(err.message)
+            console.log(err)
             return res.status(500).json({
                 status: 'fail',
                 message: err.message
@@ -386,7 +381,7 @@ async function putToLight(req, res) {
         }
     }
     catch (err) {
-        console.log(err.message)
+        console.log(err)
         return res.status(500).json({
             status: 'fail',
             message: err.message
@@ -470,15 +465,15 @@ async function putToLight(req, res) {
             const newStock = await stock.save()
             const out = await backup.save()
             clearLightTimeout()
-            // rgbHub.emit(`F${tempBinIndex_Y + 1}:000000\n`)
-            rgbHub.emit(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
+            // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
+            rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
             setLightTimeout()
             return res.status(201).json({
                 status: 'success',
                 data: newStock
             })
         } catch (err) {
-            console.log(err.message)
+            console.log(err)
             return res.status(500).json({
                 status: 'fail',
                 message: err.message
@@ -488,41 +483,57 @@ async function putToLight(req, res) {
 
     async function updateProductQuantity(req, res, thisBin) {
         console.log('update product quantity')
-        thisBin.stocks.forEach(async (eachProduct, productIndex) => {
-            if (eachProduct.productId == req.body.productId && eachProduct.orderId == req.body.orderId) {
-                let updateProduct = eachProduct
-                updateProduct.productQuantity += req.body.productQuantity
-                thisBin.stocks.push(updateProduct)
-                thisBin.stocks.splice(productIndex, 1)
-                const updatedBin = await thisBin.save()
-                clearLightTimeout()
-                // rgbHub.emit(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
-                rgbHub.emit(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
-                setLightTimeout()
-                return res.status(201).json({
-                    status: 'success',
-                    data: updatedBin
-                })
-            }
-        })
+        try {
+            thisBin.stocks.forEach(async (eachProduct, productIndex) => {
+                if (eachProduct.productId == req.body.productId && eachProduct.orderId == req.body.orderId) {
+                    let updateProduct = eachProduct
+                    updateProduct.productQuantity += req.body.productQuantity
+                    thisBin.stocks.push(updateProduct)
+                    thisBin.stocks.splice(productIndex, 1)
+                    const updatedBin = await thisBin.save()
+                    clearLightTimeout()
+                    // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
+                    rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
+                    setLightTimeout()
+                    return res.status(201).json({
+                        status: 'success',
+                        data: updatedBin
+                    })
+                }
+            })
+        } catch (err) {
+            console.log(err)
+            return res.status(500).json({
+                status: 'fail',
+                message: err.message
+            })
+        }
     }
 
     async function pushNewProduct(req, res, thisBin) {
         console.log('push new product')
-        thisBin.stocks.push({
-            productId: req.body.productId,
-            orderId: req.body.orderId,
-            productQuantity: req.body.productQuantity
-        })
-        const updatedBin = await thisBin.save()
-        clearLightTimeout()
-        // rgbHub.emit(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
-        rgbHub.emit(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
-        setLightTimeout()
-        return res.status(201).json({
-            status: 'success',
-            data: updatedBin
-        })
+        try {
+            thisBin.stocks.push({
+                productId: req.body.productId,
+                orderId: req.body.orderId,
+                productQuantity: req.body.productQuantity
+            })
+            const updatedBin = await thisBin.save()
+            clearLightTimeout()
+            // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
+            rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${process.env.PUTTING_MODE_LIGHT_COLOR}\n`)
+            setLightTimeout()
+            return res.status(201).json({
+                status: 'success',
+                data: updatedBin
+            })
+        } catch (err) {
+            console.log(err)
+            return res.status(500).json({
+                status: 'fail',
+                message: err.message
+            })
+        }
     }
 }
 
@@ -544,7 +555,7 @@ async function pickToLight(req, res) {
                     return eachProduct.productId == req.body.productId
                 })
                 // turn the light on
-                rgbHub.emit(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${eachBin.lightColor}\n`)
+                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${eachBin.lightColor}\n`)
                 setLightTimeout()
             });
 
@@ -554,7 +565,7 @@ async function pickToLight(req, res) {
             })
         }
     } catch (err) {
-        console.log(err.message)
+        console.log(err)
         return res.status(500).json({
             status: 'fail',
             message: err.message
@@ -587,7 +598,7 @@ async function clearStock(req, res) {
             message: 'Deleted stocks'
         })
     } catch (err) {
-        console.log(err.message)
+        console.log(err)
         res.status(500).json({
             status: 'fail',
             message: err.message
@@ -624,7 +635,7 @@ async function reload(req, res) {
 
         clearLight()
     } catch (err) {
-        console.log(err.message)
+        console.log(err)
     }
 }
 
@@ -645,8 +656,8 @@ async function _createVolume(req, res) {
         }
     }
     clearLightTimeout()
-    // rgbHub.emit(`F${tempBinIndex_Y + 1}:000000\n`)
-    rgbHub.emit(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.ADDING_MODE_LIGHT_COLOR}\n`)
+    // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
+    rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${process.env.ADDING_MODE_LIGHT_COLOR}\n`)
     const newStock = {
         binId: tempBinIndex,
         coordinate: {
@@ -692,26 +703,29 @@ async function _getStockByBarcode(req, res) {
 
 function testLight(req, res) {
     const lightColor = req.query.lightColor || '000000'
-    rgbHub.emit(`F1:${lightColor}\n`)
-    rgbHub.emit(`F2:${lightColor}\n`)
-    rgbHub.emit(`F3:${lightColor}\n`)
-    rgbHub.emit(`F4:${lightColor}\n`)
-    rgbHub.emit(`F5:${lightColor}\n`)
+    rgbHub.write(`F1:${lightColor}\n`)
+    rgbHub.write(`F2:${lightColor}\n`)
+    rgbHub.write(`F3:${lightColor}\n`)
+    rgbHub.write(`F4:${lightColor}\n`)
+    rgbHub.write(`F5:${lightColor}\n`)
     return res.status(202).json({
         status: 'accepted'
     })
 }
 
 function clearLight() {
-    rgbHub.emit(`F1:000000\n`)
-    rgbHub.emit(`F2:000000\n`)
-    rgbHub.emit(`F3:000000\n`)
-    rgbHub.emit(`F4:000000\n`)
-    rgbHub.emit(`F5:000000\n`)
+    rgbHub.write(`F1:000000\n`)
+    rgbHub.write(`F2:000000\n`)
+    rgbHub.write(`F3:000000\n`)
+    rgbHub.write(`F4:000000\n`)
+    rgbHub.write(`F5:000000\n`)
 }
 
-function setLightTimeout() {
+function setLightTimeout(data) {
     lightTimeout = setTimeout(() => {
+        // data.forEach((value) => {
+        //     rgbHub.write(`F${value}:000000\n`)
+        // })
         clearLight()
     }, holdingLightInSeconds * 1000)
 }

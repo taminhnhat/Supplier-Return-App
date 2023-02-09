@@ -57,7 +57,7 @@ let emitTorgbHubComplete = true;
  * 
  * @param {String} message 
  */
-function rgbHubEmit(message) {
+function rgbHubWrite(message) {
   if (isRgbHubOpen == false) return
   const deltaTime = Date.now() - lastTimeEmitToRgbHub;
 
@@ -74,7 +74,7 @@ function rgbHubEmit(message) {
   }
   else {
     setTimeout(() => {
-      rgbHubEmit(message);
+      rgbHubWrite(message);
     }, rgbHubCycle - deltaTime);
   }
 };
@@ -93,9 +93,9 @@ function rgbHubCheckHealth() {
   //     if (err.message !== 'Port is already open')
   //   }
   // });
-  rgbHubEmit('STT\n');
+  rgbHubWrite('STT\n');
 }
 
 // setInterval(rgbHubCheckHealth, 60000);
 
-module.exports = { emit: rgbHubEmit }
+module.exports = { write: rgbHubWrite }

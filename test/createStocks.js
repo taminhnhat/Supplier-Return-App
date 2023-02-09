@@ -1,4 +1,6 @@
 const axios = require('axios');
+require('dotenv').config({ path: '../.env' })
+const token = process.env.TOKEN_SECRET
 const productList = [
     '0100876534276',
     '0200710478546',
@@ -42,9 +44,13 @@ function putToLight(binId, productId, orderId, productQuantity) {
         productQuantity: productQuantity,
         binWidth: "5cm",
         lightColor: "00ff00"
+    }, {
+        headers: {
+            api_key: 'mgw_cEfRlzOgO2EwRe9ha7Ho'
+        }
     })
         .then(response => {
-            // console.log(response.data)
+            console.log(response.data)
         })
         .catch(error => {
             console.log(error.message);
