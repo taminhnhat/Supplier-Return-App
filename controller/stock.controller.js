@@ -520,7 +520,7 @@ async function putToLight(req, res) {
 async function pickToLight(req, res) {
     try {
         // find all bin with input productId
-        let allMatchedBin = await StockCollection.find({ stocks: { $elemMatch: { productId: req.body.productId } } }, { _id: 0, binId: 1, stocks: 1 })
+        let allMatchedBin = await StockCollection.find({ stocks: { $elemMatch: { productId: req.body.productId } } }, { _id: 0, coordinate: 1, binId: 1, stocks: 1 })
         if (allMatchedBin.length == 0) {
             return res.status(500).json({
                 status: 'fail',
