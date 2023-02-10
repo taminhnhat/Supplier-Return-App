@@ -5,6 +5,10 @@ const stockSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    binWidth: {
+        type: String,
+        required: false
+    },
     coordinate: {
         startPoint: {
             type: Number,
