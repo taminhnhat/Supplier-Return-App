@@ -130,7 +130,11 @@ async function searchProduct(req, res) {
         // if lightOn mode is true
         if (lightOnFlag == 'true') {
             _clearLightTimeout()
-            const tmp = _clearLight()
+            rgbHub.write(`F1:000000\n`)
+            rgbHub.write(`F2:000000\n`)
+            rgbHub.write(`F3:000000\n`)
+            rgbHub.write(`F4:000000\n`)
+            rgbHub.write(`F5:000000\n`)
             allMatchedBin.forEach(eachBin => {
                 // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
@@ -675,13 +679,11 @@ function testLight(req, res) {
 }
 
 function _clearLight() {
-    let a = []
-    a.push = rgbHub.write(`F1:000000\n`)
-    a.push = rgbHub.write(`F2:000000\n`)
-    a.push = rgbHub.write(`F3:000000\n`)
-    a.push = rgbHub.write(`F4:000000\n`)
-    a.push = rgbHub.write(`F5:000000\n`)
-    return a
+    rgbHub.write(`F1:000000\n`)
+    rgbHub.write(`F2:000000\n`)
+    rgbHub.write(`F3:000000\n`)
+    rgbHub.write(`F4:000000\n`)
+    rgbHub.write(`F5:000000\n`)
 }
 
 function _setLightTimeout(dur) {
