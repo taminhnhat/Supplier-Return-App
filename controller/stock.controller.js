@@ -95,7 +95,6 @@ async function deleteBin(req, res) {
 }
 
 async function searchProduct(req, res) {
-    _clearLight()
     const productIdFromRequest = req.query.productId
     const orderIdFromRequest = req.query.orderId
     const binIdFromRequest = req.query.binId
@@ -131,7 +130,7 @@ async function searchProduct(req, res) {
         // if lightOn mode is true
         if (lightOnFlag == 'true') {
             _clearLightTimeout()
-            // _clearLight()
+            _clearLight()
             allMatchedBin.forEach(eachBin => {
                 // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
