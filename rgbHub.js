@@ -77,6 +77,7 @@ function rgbHubWrite(message) {
       rgbHubWrite(message);
     }, rgbHubCycle - deltaTime);
   }
+  return true
 };
 
 rgbHub.open((err) => {
