@@ -675,12 +675,12 @@ function testLight(req, res) {
 }
 
 function _clearLight() {
-    let a
-    a[0] = rgbHub.write(`F1:000000\n`)
-    a[1] = rgbHub.write(`F2:000000\n`)
-    a[2] = rgbHub.write(`F3:000000\n`)
-    a[3] = rgbHub.write(`F4:000000\n`)
-    a[4] = rgbHub.write(`F5:000000\n`)
+    let a = []
+    a.push = rgbHub.write(`F1:000000\n`)
+    a.push = rgbHub.write(`F2:000000\n`)
+    a.push = rgbHub.write(`F3:000000\n`)
+    a.push = rgbHub.write(`F4:000000\n`)
+    a.push = rgbHub.write(`F5:000000\n`)
     return a
 }
 
