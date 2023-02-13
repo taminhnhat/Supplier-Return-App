@@ -52,14 +52,17 @@ rgbHub.on('error', (err) => {
 });
 
 let lastTimeEmitToRgbHub = Date.now();
+let lastMessageTime = Date.now()
 let emitTorgbHubComplete = true;
 /**
  * 
  * @param {String} message 
  */
 function rgbHubWrite(message) {
-  if (isRgbHubOpen == false) return
   const deltaTime = Date.now() - lastTimeEmitToRgbHub;
+  lastMessageTime = Date.now()
+  let delayTime = 0
+  if (isRgbHubOpen == false) return
 
   if (deltaTime > rgbHubCycle && emitTorgbHubComplete == true) {
     emitTorgbHubComplete = false;
@@ -77,6 +80,7 @@ function rgbHubWrite(message) {
       rgbHubWrite(message);
     }, rgbHubCycle - deltaTime);
   }
+  return true
 };
 
 rgbHub.open((err) => {
