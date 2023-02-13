@@ -12,12 +12,15 @@ const FILE_NAME = 'serial.js  ';
 
 const rgbHubPath = process.env.RGB_HUB_PATH;
 const rgbHubBaudrate = Number(process.env.RGB_HUB_BAUDRATE) || 115200;
-const rgbHubCycle = Number(process.env.RGB_HUB_SERIAL_CYCLE) || 100;
+const rgbHubCycleInMilis = Number(process.env.RGB_HUB_SERIAL_CYCLE) || 100;
 const rgbHubDebugMode = process.env.RGB_DEBUG_MODE;
 
 let isRgbHubOpen = false
 
 let messageBufferFromRgbHub = ''
+
+let messageInQueue = []
+let lastCallInMilis = 0
 
 //  NEED TO CONFIG SERIAL PORT FIRST, READ 'README.md'
 const rgbHub = new SerialPort(rgbHubPath, {
@@ -59,12 +62,13 @@ let emitTorgbHubComplete = true;
  * @param {String} message 
  */
 function rgbHubWrite(message) {
+  const temp = Date.now()
+  const triggerTime = Date.now() - lastMessageTime
   const deltaTime = Date.now() - lastTimeEmitToRgbHub;
-  lastMessageTime = Date.now()
   let delayTime = 0
   if (isRgbHubOpen == false) return
 
-  if (deltaTime > rgbHubCycle && emitTorgbHubComplete == true) {
+  if (deltaTime > rgbHubCycleInMilis && emitTorgbHubComplete == true) {
     emitTorgbHubComplete = false;
     const messageToRgbHub = message;
     rgbHub.write(messageToRgbHub, (err, res) => {
@@ -78,10 +82,51 @@ function rgbHubWrite(message) {
   else {
     setTimeout(() => {
       rgbHubWrite(message);
-    }, rgbHubCycle - deltaTime);
+    }, rgbHubCycleInMilis - deltaTime);
   }
   return true
 };
+
+function queue(message) {
+  messageInQueue.push(message)
+  next()
+}
+
+function next() {
+  let loadingQueue = messageInQueue
+  // messageInQueue.forEach((value, index) => {
+  //   //
+  // })
+  // while (loadingQueue.length > 0) {
+  // }
+  const messageToRgbHub = loadingQueue[loadingQueue.length - 1]
+  if (messageToRgbHub == undefined) {
+    return
+  }
+  const presentInMilis = Date.now()
+  const delayTimeInMilis = lastCallInMilis + rgbHubCycleInMilis - presentInMilis
+  if (delayTimeInMilis > 0) {
+    setTimeout(() => {
+      rgbHub.write(messageToRgbHub, (err, res) => {
+        if (err) logger.error({ message: 'Cannot write to rgb hub', value: err, location: FILE_NAME });
+        if (rgbHubDebugMode == 'true');
+        console.log(`${Date.now()}-emit to rgb hub:${String(messageToRgbHub).trim()}`);
+      });
+    }, delayTimeInMilis)
+    lastCallInMilis += rgbHubCycleInMilis
+  }
+  else {
+    setImmediate(() => {
+      rgbHub.write(messageToRgbHub, (err, res) => {
+        if (err) logger.error({ message: 'Cannot write to rgb hub', value: err, location: FILE_NAME });
+        if (rgbHubDebugMode == 'true');
+        console.log(`${Date.now()}-emit to rgb hub:${String(messageToRgbHub).trim()}`);
+      });
+    })
+    lastCallInMilis = presentInMilis
+  }
+  messageInQueue.pop()
+}
 
 rgbHub.open((err) => {
   if (err) logger.error({ message: 'Can not open rgbHub', value: err, location: FILE_NAME });
@@ -102,4 +147,4 @@ function rgbHubCheckHealth() {
 
 // setInterval(rgbHubCheckHealth, 60000);
 
-module.exports = { write: rgbHubWrite }
+module.exports = { write: queue }

@@ -130,11 +130,7 @@ async function searchProduct(req, res) {
         // if lightOn mode is true
         if (lightOnFlag == 'true') {
             _clearLightTimeout()
-            rgbHub.write(`F1:000000\n`)
-            rgbHub.write(`F2:000000\n`)
-            rgbHub.write(`F3:000000\n`)
-            rgbHub.write(`F4:000000\n`)
-            rgbHub.write(`F5:000000\n`)
+            _clearLight()
             allMatchedBin.forEach(eachBin => {
                 // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
@@ -274,11 +270,7 @@ async function addStock(req, res) {
                 orderId: req.body.orderId
             })
             _clearLightTimeout()
-            rgbHub.write(`F1:000000\n`)
-            rgbHub.write(`F2:000000\n`)
-            rgbHub.write(`F3:000000\n`)
-            rgbHub.write(`F4:000000\n`)
-            rgbHub.write(`F5:000000\n`)
+            _clearLight()
             // rgbHub.write(`F${matchedBin.coordinate.Y_index + 1}:000000\n`);
             rgbHub.write(`W${matchedBin.coordinate.Y_index + 1}:${matchedBin.coordinate.startPoint}:${matchedBin.coordinate.endPoint}:${addingLightColor}\n`)
             _setLightTimeout(holdingLightInSeconds)
@@ -312,11 +304,7 @@ async function addStock(req, res) {
             else {
                 const tempRes = allBin[allBin.length - 1]
                 _clearLightTimeout()
-                rgbHub.write(`F1:000000\n`)
-                rgbHub.write(`F2:000000\n`)
-                rgbHub.write(`F3:000000\n`)
-                rgbHub.write(`F4:000000\n`)
-                rgbHub.write(`F5:000000\n`)
+                _clearLight()
                 // rgbHub.write(`F${tempRes.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.write(`W${tempRes.coordinate.Y_index + 1}:${tempRes.coordinate.startPoint}:${tempRes.coordinate.endPoint}:${addingLightColor}\n`)
                 _setLightTimeout()
@@ -352,11 +340,7 @@ async function addStock(req, res) {
             }
         }
         _clearLightTimeout()
-        rgbHub.write(`F1:000000\n`)
-        rgbHub.write(`F2:000000\n`)
-        rgbHub.write(`F3:000000\n`)
-        rgbHub.write(`F4:000000\n`)
-        rgbHub.write(`F5:000000\n`)
+        _clearLight()
         // rgbHub.write(`F${lightRow}:000000\n`)
         rgbHub.write(`W${lightRow}:${startPoint}:${endPoint}:${addingLightColor}\n`)
         _setLightTimeout(holdingLightInSeconds)
@@ -498,11 +482,7 @@ async function putToLight(req, res) {
             const newStock = await stock.save()
             const out = await backup.save()
             _clearLightTimeout()
-            rgbHub.write(`F1:000000\n`)
-            rgbHub.write(`F2:000000\n`)
-            rgbHub.write(`F3:000000\n`)
-            rgbHub.write(`F4:000000\n`)
-            rgbHub.write(`F5:000000\n`)
+            _clearLight()
             // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
             rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${puttingLightColor}\n`)
             _setLightTimeout(holdingLightInSeconds)
@@ -530,11 +510,7 @@ async function putToLight(req, res) {
                     thisBin.stocks.splice(productIndex, 1)
                     const updatedBin = await thisBin.save()
                     _clearLightTimeout()
-                    rgbHub.write(`F1:000000\n`)
-                    rgbHub.write(`F2:000000\n`)
-                    rgbHub.write(`F3:000000\n`)
-                    rgbHub.write(`F4:000000\n`)
-                    rgbHub.write(`F5:000000\n`)
+                    _clearLight()
                     // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
                     rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${puttingLightColor}\n`)
                     _setLightTimeout(holdingLightInSeconds)
@@ -563,11 +539,7 @@ async function putToLight(req, res) {
             })
             const updatedBin = await thisBin.save()
             _clearLightTimeout()
-            rgbHub.write(`F1:000000\n`)
-            rgbHub.write(`F2:000000\n`)
-            rgbHub.write(`F3:000000\n`)
-            rgbHub.write(`F4:000000\n`)
-            rgbHub.write(`F5:000000\n`)
+            _clearLight()
             // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
             rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${puttingLightColor}\n`)
             _setLightTimeout(holdingLightInSeconds)
@@ -597,11 +569,7 @@ async function pickToLight(req, res) {
         }
         else {
             _clearLightTimeout()
-            rgbHub.write(`F1:000000\n`)
-            rgbHub.write(`F2:000000\n`)
-            rgbHub.write(`F3:000000\n`)
-            rgbHub.write(`F4:000000\n`)
-            rgbHub.write(`F5:000000\n`)
+            _clearLight()
             allMatchedBin.forEach(eachBin => {
                 // filering result
                 eachBin.stocks = eachBin.stocks.filter(eachProduct => {
