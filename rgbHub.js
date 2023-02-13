@@ -21,6 +21,7 @@ let messageBufferFromRgbHub = ''
 
 let messageInQueue = []
 let lastCallInMilis = 0
+let reconnectHubInterval
 
 //  NEED TO CONFIG SERIAL PORT FIRST, READ 'README.md'
 const rgbHub = new SerialPort(rgbHubPath, {
@@ -30,6 +31,7 @@ const rgbHub = new SerialPort(rgbHubPath, {
 
 rgbHub.on('open', function () {
   isRgbHubOpen = true
+  clearInterval(reconnectHubInterval)
   logger.debug({ message: 'rgb hub opened', location: FILE_NAME })
 });
 
@@ -48,45 +50,21 @@ rgbHub.on('data', function (data) {
 
 rgbHub.on('close', () => {
   console.log('Rgb hub closed')
+  reconnectHubInterval = setInterval(() => {
+    rgbHub.open((err) => {
+      //
+    });
+  }, 10000)
 });
 
 rgbHub.on('error', (err) => {
   console.log('Rgb hub error', err.message)
 });
 
-let lastTimeEmitToRgbHub = Date.now();
-let lastMessageTime = Date.now()
-let emitTorgbHubComplete = true;
 /**
  * 
  * @param {String} message 
  */
-function rgbHubWrite(message) {
-  const temp = Date.now()
-  const triggerTime = Date.now() - lastMessageTime
-  const deltaTime = Date.now() - lastTimeEmitToRgbHub;
-  let delayTime = 0
-  if (isRgbHubOpen == false) return
-
-  if (deltaTime > rgbHubCycleInMilis && emitTorgbHubComplete == true) {
-    emitTorgbHubComplete = false;
-    const messageToRgbHub = message;
-    rgbHub.write(messageToRgbHub, (err, res) => {
-      if (err) logger.error({ message: 'Cannot write to rgb hub', value: err, location: FILE_NAME });
-      lastTimeEmitToRgbHub = Date.now();
-      emitTorgbHubComplete = true;
-      if (rgbHubDebugMode == 'true');
-      console.log(`${Date.now()}-emit to rgb hub:${String(messageToRgbHub).trim()}`);
-    });
-  }
-  else {
-    setTimeout(() => {
-      rgbHubWrite(message);
-    }, rgbHubCycleInMilis - deltaTime);
-  }
-  return true
-};
-
 function queue(message) {
   messageInQueue.push(message)
   next()
@@ -130,21 +108,11 @@ function next() {
 
 rgbHub.open((err) => {
   if (err) logger.error({ message: 'Can not open rgbHub', value: err, location: FILE_NAME });
+  reconnectHubInterval = setInterval(() => {
+    rgbHub.open((err) => {
+      //
+    });
+  }, 10000)
 });
-
-/**
- * Reconnecting to serial port every 5 seconds after loosing connection
- */
-
-function rgbHubCheckHealth() {
-  // rgbHub.open((err) => {
-  //   if (err) {
-  //     if (err.message !== 'Port is already open')
-  //   }
-  // });
-  rgbHubWrite('STT\n');
-}
-
-// setInterval(rgbHubCheckHealth, 60000);
 
 module.exports = { write: queue }

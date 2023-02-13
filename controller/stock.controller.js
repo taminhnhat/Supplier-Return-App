@@ -45,7 +45,7 @@ async function getStock(req, res) {
             console.log(err)
             return res.status(500).json({
                 status: 'fail',
-                message: err.message
+                error: 'Internal Server Error'
             })
         }
     }
@@ -61,7 +61,7 @@ async function getStock(req, res) {
             console.log(err)
             return res.status(500).json({
                 status: 'fail',
-                message: err.message
+                error: 'Internal Server Error'
             })
         }
     }
@@ -81,7 +81,7 @@ async function getBin(req, res) {
         console.log(err)
         return res.status(500).json({
             status: 'fail',
-            message: err.message
+            error: 'Internal Server Error'
         })
     }
     return res.status(200).json({
@@ -146,7 +146,7 @@ async function searchProduct(req, res) {
         console.log(err)
         return res.status(500).json({
             status: 'fail',
-            message: err.message
+            error: 'Internal Server Error'
         })
     }
 }
@@ -190,7 +190,7 @@ async function deleteProduct(req, res) {
         console.log(err)
         return res.status(500).json({
             status: 'fail',
-            message: err.message
+            error: 'Internal Server Error'
         })
     }
 }
@@ -283,7 +283,7 @@ async function addStock(req, res) {
             console.log(err)
             return res.status(500).json({
                 status: 'fail',
-                message: err.message
+                error: 'Internal Server Error'
             })
         }
     }
@@ -317,7 +317,7 @@ async function addStock(req, res) {
             console.log(err)
             return res.status(500).json({
                 status: 'fail',
-                message: err.message
+                error: 'Internal Server Error'
             })
         }
     }
@@ -400,7 +400,7 @@ async function putToLight(req, res) {
         console.log(err)
         return res.status(500).json({
             status: 'fail',
-            message: err.message
+            error: 'Internal Server Error'
         })
     }
     // const allBin = await StockCollection.find({ binId: req.body.binId })
@@ -494,7 +494,7 @@ async function putToLight(req, res) {
             console.log(err)
             return res.status(500).json({
                 status: 'fail',
-                message: err.message
+                error: 'Internal Server Error'
             })
         }
     }
@@ -524,7 +524,7 @@ async function putToLight(req, res) {
             console.log(err)
             return res.status(500).json({
                 status: 'fail',
-                message: err.message
+                error: 'Internal Server Error'
             })
         }
     }
@@ -551,7 +551,7 @@ async function putToLight(req, res) {
             console.log(err)
             return res.status(500).json({
                 status: 'fail',
-                message: err.message
+                error: 'Internal Server Error'
             })
         }
     }
@@ -589,7 +589,7 @@ async function pickToLight(req, res) {
         console.log(err)
         return res.status(500).json({
             status: 'fail',
-            message: err.message
+            error: 'Internal Server Error'
         })
     }
 }
@@ -622,7 +622,7 @@ async function clearStock(req, res) {
         console.log(err)
         res.status(500).json({
             status: 'fail',
-            message: err.message
+            error: 'Internal Server Error'
         })
     }
 }
@@ -652,8 +652,6 @@ async function reload(req, res) {
             tempBinIndex_X = backup[0].binIndex_X
             tempBinIndex_Y = backup[0].binIndex_Y
         }
-        console.log(tempLightCursor, tempBinIndex, tempBinIndex_X, tempBinIndex_Y)
-
         _clearLight()
     } catch (err) {
         console.log(err)
