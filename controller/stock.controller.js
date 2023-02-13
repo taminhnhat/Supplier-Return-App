@@ -352,14 +352,11 @@ async function addStock(req, res) {
             }
         }
         _clearLightTimeout()
-<<<<<<< HEAD
-=======
         rgbHub.write(`F1:000000\n`)
         rgbHub.write(`F2:000000\n`)
         rgbHub.write(`F3:000000\n`)
         rgbHub.write(`F4:000000\n`)
         rgbHub.write(`F5:000000\n`)
->>>>>>> timeoutLight
         // rgbHub.write(`F${lightRow}:000000\n`)
         rgbHub.write(`W${lightRow}:${startPoint}:${endPoint}:${addingLightColor}\n`)
         _setLightTimeout(holdingLightInSeconds)
