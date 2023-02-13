@@ -19,9 +19,7 @@ const addingLightColor = process.env.ADDING_MODE_LIGHT_COLOR || '00ffff'
 const puttingLightColor = process.env.PUTTING_MODE_LIGHT_COLOR || '00ff00'
 const pickingLightColor = process.env.PICKING_MODE_LIGHT_COLOR || 'ffff00'
 
-
-let lightTimeout
-let lightTimeout_2
+let lightOffTimeout
 
 reload()
 
@@ -683,7 +681,7 @@ function _clearLight() {
 }
 
 function _setLightTimeout(dur) {
-    lightTimeout = setTimeout(() => {
+    lightOffTimeout = setTimeout(() => {
         // data.forEach((value) => {
         //     rgbHub.write(`F${value}:000000\n`)
         // })
@@ -693,8 +691,8 @@ function _setLightTimeout(dur) {
 
 function _clearLightTimeout() {
     // _clearLight()
-    if (lightTimeout != undefined)
-        clearTimeout(lightTimeout)
+    if (lightOffTimeout != undefined)
+        clearTimeout(lightOffTimeout)
 }
 
 
