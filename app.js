@@ -24,7 +24,7 @@ else
     app.use(morgan('common'))
 
 // authorization
-const auth = require('./middleware/auth')
+const auth = require('./middlewares/auth')
 app.use(auth)
 
 // routing
