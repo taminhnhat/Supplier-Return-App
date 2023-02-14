@@ -10,3 +10,7 @@ exports.validate = (method) => {
             break;
     }
 }
+
+exports.productValidator = function productIdValidator() {
+    //
+}
