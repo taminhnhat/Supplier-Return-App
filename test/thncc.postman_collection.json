@@ -1,0 +1,1222 @@
+{
+	"info": {
+		"_postman_id": "1abe3f15-37a8-498c-93a2-d87efc91ab05",
+		"name": "Ke tra hang NCC",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15047142"
+	},
+	"item": [
+		{
+			"name": "Get Stock",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let template1 = `\r",
+							"    <table bgcolor=\"#FFFFFF\">\r",
+							"        <tr>\r",
+							"            <th></th>\r",
+							"            <th>index</th>\r",
+							"            <th>stocks</th>\r",
+							"            <th>startPoint</th>\r",
+							"            <th>endPoint</th>\r",
+							"            <th>X</th>\r",
+							"            <th>Y</th>\r",
+							"        </tr>\r",
+							"\r",
+							"        {{#each response}}\r",
+							"            <tr>\r",
+							"                <td>{{name}}</td>\r",
+							"                <td>{{binId}}</td>\r",
+							"                <td>{{stocks}}</td>\r",
+							"                <td>{{startPoint}}</td>\r",
+							"                <td>{{endPoint}}</td>\r",
+							"                <td>{{XCoordinate}}</td>\r",
+							"                <td>{{YCoordinate}}</td>\r",
+							"            </tr>\r",
+							"        {{/each}}\r",
+							"    </table>\r",
+							"`;\r",
+							"\r",
+							"let template2 = `\r",
+							"    <table bgcolor=\"#FFFFFF\">\r",
+							"        <tr>\r",
+							"            <th></th>\r",
+							"            <th>Column 1</th>\r",
+							"            <th>Column 2</th>\r",
+							"            <th>Column 3</th>\r",
+							"            <th>Column 4</th>\r",
+							"            <th>Column 5</th>\r",
+							"            <th>Column 6</th>\r",
+							"        </tr>\r",
+							"\r",
+							"            <tr>\r",
+							"                <th>Row 1</th>\r",
+							"                <td>{{response.name}}</td>\r",
+							"                <td>{{response.location}}</td>\r",
+							"                <td>{{response.frontLight}}</td>\r",
+							"                <td>{{response.backLight}}</td>\r",
+							"                <td>{{response.importTote}}</td>\r",
+							"                <td>{{response.exportTote}}</td>\r",
+							"            </tr>\r",
+							"    </table>\r",
+							"`;\r",
+							"\r",
+							"let template3 = `\r",
+							"    <table bgcolor=\"#FFFFFF\">\r",
+							"        <tr>\r",
+							"            <th>binId</th>\r",
+							"            <th>startPoint</th>\r",
+							"            <th>endPoint</th>\r",
+							"            <th>productId</th>\r",
+							"            <th>orderId</th>\r",
+							"            <th>quantity</th>\r",
+							"        </tr>\r",
+							"\r",
+							"        {{#each response.data}}\r",
+							"            <td>{{binId}}</td>\r",
+							"            <td>{{coordinate.startPoint}}</td>\r",
+							"            <td>{{coordinate.endPoint}}</td>\r",
+							"            {{#each stocks}}\r",
+							"                <tr>\r",
+							"                    <td>{{binId}}</td>\r",
+							"                    <td></td>\r",
+							"                    <td></td>\r",
+							"                    <td>{{productId}}</td>\r",
+							"                    <td>{{orderId}}</td>\r",
+							"                    <td>{{productQuantity}}</td>\r",
+							"                </tr>\r",
+							"            {{/each}}\r",
+							"        {{/each}}\r",
+							"    </table>\r",
+							"`;\r",
+							"const response = pm.response.json();\r",
+							"let tableTemplate = `\r",
+							"<style>\r",
+							"    td{\r",
+							"        width: 360px;\r",
+							"        border: 1px solid;\r",
+							"        padding: 5px;\r",
+							"        vertical-align: top;\r",
+							"    }\r",
+							"    th {\r",
+							"        background-color: #04AA6D;\r",
+							"        padding: 5px;\r",
+							"        color: white;\r",
+							"    }\r",
+							"</style>\r",
+							"{{#each response}}\r",
+							"    <table>\r",
+							"        <tr>\r",
+							"            {{#each data}}\r",
+							"            <th>\r",
+							"                {{binId}}&emsp;{{binWidth}}<br>\r",
+							"            </th>\r",
+							"            {{/each}}\r",
+							"        <tr>\r",
+							"        <tr align=\"left\">\r",
+							"            {{#each data}}\r",
+							"                <td>\r",
+							"                {{#each stocks}}\r",
+							"                    {{productId}}&emsp;{{productQuantity}}<br>\r",
+							"                {{/each}}\r",
+							"                </td>\r",
+							"            {{/each}}\r",
+							"        </tr>\r",
+							"    </table>\r",
+							"{{/each}}\r",
+							"`\r",
+							"//                    {{productId}}&emsp;{{orderId}}&emsp;{{productQuantity}}<br>\r",
+							"\r",
+							"const res_1 = response.data.filter(eachBin => {\r",
+							"                    return eachBin.coordinate.Y_index == 0\r",
+							"                })\r",
+							"const res_2 = response.data.filter(eachBin => {\r",
+							"                    return eachBin.coordinate.Y_index == 1\r",
+							"                })\r",
+							"const wallStatus = [];\r",
+							"// pm.visualizer.set(template3, {response: pm.response.json()});\r",
+							"pm.visualizer.set(tableTemplate, {response: [{data:res_1},{data:res_2}]});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{api_key}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "api_key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server_url}}/api/v1/products",
+					"host": [
+						"{{server_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"products"
+					],
+					"query": [
+						{
+							"key": "binId",
+							"value": "7",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Lấy thông tin tất cả sản phẩm trên tường\n\n### Respond\n\n```\n{\n    \"status\": \"success\",\n    \"object\": \"search_result\",\n    \"url\": \"/api/v1/stocks\",\n    \"data\":[\n        {\n            \"_id\": \"633bf712bdafab0fb7c336ef\",\n            \"startPoint\": 0,\n            \"endPoint\": 5,\n            \"index\": 0,\n            \"lightColor\": \"00ff00\",\n            \"stocks\": [\n                \"34519736549\",\n                \"265827364\"\n            ],\n            \"dateCreated\": \"2022-10-04T09:04:18.929Z\",\n            \"__v\": 1\n        },\n        {...},\n        {...}\n    ]\n}\n\n```"
+			},
+			"response": [
+				{
+					"name": "Get Stock",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/products",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "X-Powered-By",
+							"value": "Express"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "1550"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"60e-AUng0g8+vzl7DIL1YJMWZdddSsg\""
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 04 Jan 2023 07:35:30 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=5"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"data\": [\n        {\n            \"coordinate\": {\n                \"startPoint\": 0,\n                \"endPoint\": 11,\n                \"X_index\": 0,\n                \"Y_index\": 0\n            },\n            \"_id\": \"63ad5f9221a51b696af83429\",\n            \"binId\": 0,\n            \"stocks\": [\n                {\n                    \"productId\": \"4147775101058\",\n                    \"orderId\": \"590028/20/XT/QV/ABQ\",\n                    \"productQuantity\": 4\n                },\n                {\n                    \"productId\": \"1342760987632\",\n                    \"orderId\": \"590028/20/XT/QV/ABQ\",\n                    \"productQuantity\": 3\n                }\n            ],\n            \"dateCreated\": \"2022-12-29T09:36:18.507Z\",\n            \"__v\": 1\n        },\n        {\n            \"coordinate\": {\n                \"startPoint\": 0,\n                \"endPoint\": 11,\n                \"X_index\": 1,\n                \"Y_index\": 1\n            },\n            \"_id\": \"63ad6488bd3c86b01cbe5435\",\n            \"binId\": 1,\n            \"stocks\": [\n                {\n                    \"productId\": \"7863445673400\",\n                    \"orderId\": \"590028/20/XT/QV/ABQ\",\n                    \"productQuantity\": 6\n                },\n                {\n                    \"productId\": \"1347869093563\",\n                    \"orderId\": \"590028/20/XT/QV/ABQ\",\n                    \"productQuantity\": 1\n                },\n                {\n                    \"productId\": \"7104110382456\",\n                    \"orderId\": \"3007676/20/XT/QV/ABQ\",\n                    \"productQuantity\": 2\n                }\n            ],\n            \"dateCreated\": \"2022-12-29T09:57:28.565Z\",\n            \"__v\": 2\n        },\n        {\n            \"coordinate\": {\n                \"startPoint\": 0,\n                \"endPoint\": 5,\n                \"X_index\": 0,\n                \"Y_index\": 1\n            },\n            \"_id\": \"63b3d7f957bfaed2e3a000eb\",\n            \"binId\": 2,\n            \"stocks\": [\n                {\n                    \"productId\": \"1347869093563\",\n                    \"orderId\": \"590028/20/XT/QV/ABQ\",\n                    \"productQuantity\": 2\n                }\n            ],\n            \"dateCreated\": \"2023-01-03T07:23:37.049Z\",\n            \"__v\": 0\n        },\n        {\n            \"coordinate\": {\n                \"startPoint\": 0,\n                \"endPoint\": 5,\n                \"X_index\": 0,\n                \"Y_index\": 1\n            },\n            \"_id\": \"63b3e7610c1ff5775e4b79c0\",\n            \"binId\": 3,\n            \"stocks\": [\n                {\n                    \"productId\": \"7863445673400\",\n                    \"orderId\": \"3007676/20/XT/QV/ABQ\",\n                    \"productQuantity\": 2\n                }\n            ],\n            \"dateCreated\": \"2023-01-03T08:29:21.639Z\",\n            \"__v\": 0\n        },\n        {\n            \"coordinate\": {\n                \"startPoint\": 0,\n                \"endPoint\": 5,\n                \"X_index\": 0,\n                \"Y_index\": 1\n            },\n            \"_id\": \"63b4e9bf44486114a33c6a5d\",\n            \"binId\": 4,\n            \"stocks\": [\n                {\n                    \"productId\": \"7104110382456\",\n                    \"orderId\": \"3007676/20/XT/QV/ABQ\",\n                    \"productQuantity\": 6\n                }\n            ],\n            \"dateCreated\": \"2023-01-04T02:51:43.310Z\",\n            \"__v\": 0\n        }\n    ]\n}"
+				}
+			]
+		},
+		{
+			"name": "Add Stock",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{api_key}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "api_key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"userId\": \"Minh_Nhat\",\r\n  \"productId\": \"9786042271547\",\r\n  \"orderId\": \"590028/20/XT/QV/ABQ\",\r\n  \"arrangeMode\": \"merge\",\r\n  \"binWidth\": \"10cm\",\r\n  \"mergeId\": \"8935244877434\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{server_url}}/api/v1/products",
+					"host": [
+						"{{server_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"products"
+					]
+				},
+				"description": "Xin cấp chỗ cho sản phẩm mới\n\n| Property | **Type** | Description |\n| --- | --- | --- |\n| userId | String | id của user đang đăng nhập fhub/idem |\n| productId | String | id của sản phẩm |\n| orderId | String | id của phiếu vận chuyển nội bộ |\n| arrangeMode | String | chế độ cấp ô: \"default\", \"merge\", \"extend\" |\n| binWidth | String | độ rộng ô: \"20cm\", \"30cm\", ... |\n| lightColor | String | màu đèn sáng trên ô: \"00ff00\" |\n| mergeId | String | id của ô cần gộp  <br> |  |\n\n### Respond\n\n```\n{\n    \"status\": \"success\",\n    \"object\": \"add_result\",\n    \"url\": \"/api/v1/stocks\",\n    \"data\":{\n        \"startPoint\": 48,\n        \"endPoint\": 59,\n        \"index\": 7,\n        \"lightColor\": \"00ff00\",\n        \"stocks\": [\n            \"98732645865\",\n            \"34523t8ouiy\"\n        ],\n        \"_id\": \"6371be1456a2294204bf8ec4\",\n        \"dateCreated\": \"2022-11-14T04:03:32.884Z\",\n        \"__v\": 0\n    }\n}\n\n```"
+			},
+			"response": [
+				{
+					"name": "Add Stock",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"userId\": \"Minh_Nhat\",\r\n  \"productId\": \"7104110382456\",\r\n  \"orderId\": \"590028/20/XT/QV/ABQ\",\r\n  \"arrangeMode\": \"default\",\r\n  \"binWidth\": \"10cm\",\r\n  \"lightColor\": \"00ff00\",\r\n  \"mergeId\": \"1347869093563\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/products",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "X-Powered-By",
+							"value": "Express"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "282"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"11a-V6cTaeF7Iz3fpw8Tr7BhcLnWses\""
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 04 Jan 2023 07:29:03 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=5"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"data\": {\n        \"coordinate\": {\n            \"startPoint\": 0,\n            \"endPoint\": 5,\n            \"X_index\": 0,\n            \"Y_index\": 1\n        },\n        \"_id\": \"63b4e9bf44486114a33c6a5d\",\n        \"binId\": 4,\n        \"stocks\": [\n            {\n                \"productId\": \"7104110382456\",\n                \"orderId\": \"3007676/20/XT/QV/ABQ\",\n                \"productQuantity\": 6\n            }\n        ],\n        \"dateCreated\": \"2023-01-04T02:51:43.310Z\",\n        \"__v\": 0\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Clear Stock",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{api_key}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "api_key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{server_url}}/api/v1/products",
+					"host": [
+						"{{server_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"products"
+					]
+				},
+				"description": "Xoá tất cả sản phẩm trên tường\n\n### Respond\n\n```\n{\n    \"status\": \"success\",\n    \"object\": \"delete_result\",\n    \"url\": \"/api/v1/stocks/books\"\n}\n\n```"
+			},
+			"response": [
+				{
+					"name": "Clear Stock",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/products",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "X-Powered-By",
+							"value": "Express"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "47"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"2f-j2CO5XgNpI5E5HN/u752AEDqK2M\""
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 06 Jan 2023 03:21:46 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=5"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"message\": \"Deleted stocks\"\n}"
+				}
+			]
+		},
+		{
+			"name": "putToLight",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{api_key}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "api_key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"userId\": \"Minh_Nhat\",\r\n    \"productId\": \"0100876534276\",\r\n    \"orderId\": \"989722/20/XT/QV/ABQ\",\r\n    \"binId\": 4,\r\n    \"productQuantity\": 4,\r\n    \"binWidth\": \"15cm\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{server_url}}/api/v1/putToLight/",
+					"host": [
+						"{{server_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"putToLight",
+						""
+					]
+				},
+				"description": "Đưa sản phẩm lên tường\n\nBody\n\n| Property | **Type** | Description |\n| --- | --- | --- |\n| userId | String | id của user đang đăng nhập fhub/idem |\n| productId | String | id của sản phẩm |\n| orderId | String | id của phiếu vận chuyển nội bộ |\n| binId | String | id của ô cần đưa sản phẩm vào  <br> |\n| productQuantity | String | chế độ cấp ô: \"default\", \"merge\", \"extend\" |\n| binWidth | String | độ rộng ô: \"20cm\", \"30cm\", ... |\n| lightColor | String | màu đèn sáng trên ô: \"00ff00\" |"
+			},
+			"response": [
+				{
+					"name": "Put To Light",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userId\": \"Minh_Nhat\",\r\n    \"productId\": \"srtbedsrbv\",\r\n    \"orderId\": \"590028/20/XT/QV/ABQ\",\r\n    \"binId\": 1,\r\n    \"productQuantity\": 3,\r\n    \"binWidth\": \"20cm\",\r\n    \"lightColor\": \"00ff00\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/putToLight/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"putToLight",
+								""
+							]
+						}
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "X-Powered-By",
+							"value": "Express"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "301"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"12d-GcNO2IexjG9zghCBDaWErevF/DM\""
+						},
+						{
+							"key": "Date",
+							"value": "Mon, 26 Dec 2022 07:46:06 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=5"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"object\": \"add_result\",\n    \"data\": {\n        \"binId\": 1,\n        \"coordinate\": {\n            \"startPoint\": 0,\n            \"endPoint\": 11,\n            \"X_index\": 0,\n            \"Y_index\": 0\n        },\n        \"stocks\": [\n            {\n                \"productId\": \"srtbedsrbv\",\n                \"orderId\": \"590028/20/XT/QV/ABQ\",\n                \"productQuantity\": 3\n            }\n        ],\n        \"_id\": \"63a9513ef50434e4826bd65e\",\n        \"dateCreated\": \"2022-12-26T07:46:06.918Z\",\n        \"__v\": 0\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Cancel Put To Light",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"userId\": \"Minh_Nhat\",\r\n    \"productId\": \"srtbedsrbv\",\r\n    \"orderId\": \"590028/20/XT/QV/ABQ\",\r\n    \"binId\": 1,\r\n    \"productQuantity\": 30,\r\n    \"binWidth\": \"20cm\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{server_url}}/api/v1/putToLight/",
+					"host": [
+						"{{server_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"putToLight",
+						""
+					]
+				},
+				"description": "Huỷ đưa sản phẩm lên tường"
+			},
+			"response": []
+		},
+		{
+			"name": "pickToLight",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let template = `\r",
+							"    <table bgcolor=\"#FFFFFF\">\r",
+							"        <tr>\r",
+							"            <th>binId</th>\r",
+							"            <th>startPoint</th>\r",
+							"            <th>endPoint</th>\r",
+							"            <th>productId</th>\r",
+							"            <th>orderId</th>\r",
+							"            <th>quantity</th>\r",
+							"        </tr>\r",
+							"\r",
+							"        {{#each response.data}}\r",
+							"            <td>{{binId}}</td>\r",
+							"            <td>{{coordinate.startPoint}}</td>\r",
+							"            <td>{{coordinate.endPoint}}</td>\r",
+							"            {{#each stocks}}\r",
+							"                <tr>\r",
+							"                    <td>{{binId}}</td>\r",
+							"                    <td></td>\r",
+							"                    <td></td>\r",
+							"                    <td>{{productId}}</td>\r",
+							"                    <td>{{orderId}}</td>\r",
+							"                    <td>{{productQuantity}}</td>\r",
+							"                </tr>\r",
+							"            {{/each}}\r",
+							"        {{/each}}\r",
+							"    </table>\r",
+							"`;\r",
+							"const response = pm.response.json();\r",
+							"for(i in response){\r",
+							"    \r",
+							"}\r",
+							"const wallStatus = [];\r",
+							"pm.visualizer.set(template, {response: pm.response.json()});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{api_key}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "api_key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"userId\": \"Minh_Nhat\",\r\n    \"productId\": \"0100876534276\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{server_url}}/api/v1/pickToLight/",
+					"host": [
+						"{{server_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"pickToLight",
+						""
+					]
+				},
+				"description": "Đưa sản phẩm xuống tường"
+			},
+			"response": [
+				{
+					"name": "Pick To Light",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userId\": \"Minh_Nhat\",\r\n    \"productId\": \"7104110382456\",\r\n    \"lightColor\": \"00ff00\",\r\n    \"productQuantity\": 34\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/pickToLight/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"pickToLight",
+								""
+							]
+						}
+					},
+					"status": "Accepted",
+					"code": 202,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "X-Powered-By",
+							"value": "Express"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "704"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"2c0-fUa81rFnO19pDKT1qVU6uVASxfc\""
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 04 Jan 2023 07:32:47 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=5"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"data\": [\n        {\n            \"coordinate\": {\n                \"startPoint\": 0,\n                \"endPoint\": 11,\n                \"X_index\": 1,\n                \"Y_index\": 1\n            },\n            \"_id\": \"63ad6488bd3c86b01cbe5435\",\n            \"binId\": 1,\n            \"stocks\": [\n                {\n                    \"productId\": \"7863445673400\",\n                    \"orderId\": \"590028/20/XT/QV/ABQ\",\n                    \"productQuantity\": 6\n                },\n                {\n                    \"productId\": \"1347869093563\",\n                    \"orderId\": \"590028/20/XT/QV/ABQ\",\n                    \"productQuantity\": 1\n                },\n                {\n                    \"productId\": \"7104110382456\",\n                    \"orderId\": \"3007676/20/XT/QV/ABQ\",\n                    \"productQuantity\": 2\n                }\n            ],\n            \"dateCreated\": \"2022-12-29T09:57:28.565Z\",\n            \"__v\": 2\n        },\n        {\n            \"coordinate\": {\n                \"startPoint\": 0,\n                \"endPoint\": 5,\n                \"X_index\": 0,\n                \"Y_index\": 1\n            },\n            \"_id\": \"63b4e9bf44486114a33c6a5d\",\n            \"binId\": 4,\n            \"stocks\": [\n                {\n                    \"productId\": \"7104110382456\",\n                    \"orderId\": \"3007676/20/XT/QV/ABQ\",\n                    \"productQuantity\": 6\n                }\n            ],\n            \"dateCreated\": \"2023-01-04T02:51:43.310Z\",\n            \"__v\": 0\n        }\n    ]\n}"
+				}
+			]
+		},
+		{
+			"name": "Cancel Pick To Light",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"userId\": \"Minh_Nhat\",\r\n    \"productId\": \"34t2345623467\",\r\n    \"lightColor\": \"00ff00\",\r\n    \"productQuantity\": 34\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{server_url}}/api/v1/pickToLight/",
+					"host": [
+						"{{server_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"pickToLight",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let template = `\r",
+							"    <table bgcolor=\"#FFFFFF\">\r",
+							"        <tr>\r",
+							"            <th>binId</th>\r",
+							"            <th>startPoint</th>\r",
+							"            <th>endPoint</th>\r",
+							"            <th>productId</th>\r",
+							"            <th>orderId</th>\r",
+							"            <th>quantity</th>\r",
+							"        </tr>\r",
+							"\r",
+							"        {{#each response.data}}\r",
+							"            <td>{{binId}}</td>\r",
+							"            <td>{{coordinate.startPoint}}</td>\r",
+							"            <td>{{coordinate.endPoint}}</td>\r",
+							"            {{#each stocks}}\r",
+							"                <tr>\r",
+							"                    <td>{{binId}}</td>\r",
+							"                    <td></td>\r",
+							"                    <td></td>\r",
+							"                    <td>{{productId}}</td>\r",
+							"                    <td>{{orderId}}</td>\r",
+							"                    <td>{{productQuantity}}</td>\r",
+							"                </tr>\r",
+							"            {{/each}}\r",
+							"        {{/each}}\r",
+							"    </table>\r",
+							"`\r",
+							"let tableTemplate = `\r",
+							"<style>\r",
+							"    td{\r",
+							"        width: 360px;\r",
+							"        border: 1px solid;\r",
+							"        padding: 5px;\r",
+							"        vertical-align: top;\r",
+							"    }\r",
+							"    th {\r",
+							"        background-color: #04AA6D;\r",
+							"        padding: 5px;\r",
+							"        color: white;\r",
+							"    }\r",
+							"</style>\r",
+							"{{#each response}}\r",
+							"    <table>\r",
+							"        <tr>\r",
+							"            {{#each data}}\r",
+							"            <th>\r",
+							"                {{binId}}&emsp;{{binWidth}}<br>\r",
+							"            </th>\r",
+							"            {{/each}}\r",
+							"        <tr>\r",
+							"        <tr align=\"left\">\r",
+							"            {{#each data}}\r",
+							"                <td>\r",
+							"                {{#each stocks}}\r",
+							"                    {{productId}}&emsp;{{productQuantity}}<br>\r",
+							"                {{/each}}\r",
+							"                </td>\r",
+							"            {{/each}}\r",
+							"        </tr>\r",
+							"    </table>\r",
+							"{{/each}}\r",
+							"`\r",
+							"const response = pm.response.json();\r",
+							"for(i in response){\r",
+							"    \r",
+							"}\r",
+							"const wallStatus = [];\r",
+							"pm.visualizer.set(template, {response: pm.response.json()});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{api_key}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "api_key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server_url}}/api/v1/products/search?productId=0100876534276&lightOn=true",
+					"host": [
+						"{{server_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"products",
+						"search"
+					],
+					"query": [
+						{
+							"key": "orderId",
+							"value": "3007676/20/XT/QV/ABQ",
+							"disabled": true
+						},
+						{
+							"key": "productId",
+							"value": "0100876534276"
+						},
+						{
+							"key": "lightOn",
+							"value": "true"
+						},
+						{
+							"key": "binId",
+							"value": "6",
+							"disabled": true
+						},
+						{
+							"key": "locationReturn",
+							"value": "false",
+							"disabled": true
+						}
+					]
+				},
+				"description": "### Respond\n```\n{\n    \"status\": \"success\",\n    \"object\": \"search_result\",\n    \"url\": \"/api/v1/stocks/books\",\n    \"results\": 3,\n    \"data\": [\n        {\n            \"_id\": \"633bf71fbdafab0fb7c336f6\",\n            \"startPoint\": 12,\n            \"endPoint\": 17,\n            \"index\": 2,\n            \"lightColor\": \"00ff00\",\n            \"stocks\": [],\n            \"dateCreated\": \"2022-10-04T09:04:31.802Z\",\n            \"__v\": 3\n        },\n        {...},\n        {...}\n    ]\n}\n```"
+			},
+			"response": [
+				{
+					"name": "Search Products",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/products/search?orderId=3007676/20/XT/QV/ABQ&productId=7863445673400&lightOn=false",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products",
+								"search"
+							],
+							"query": [
+								{
+									"key": "orderId",
+									"value": "3007676/20/XT/QV/ABQ"
+								},
+								{
+									"key": "productId",
+									"value": "7863445673400"
+								},
+								{
+									"key": "lightOn",
+									"value": "false"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "X-Powered-By",
+							"value": "Express"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "284"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"11c-z5INgJntQ+7Ks2+K6qpArlcWR6U\""
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 04 Jan 2023 07:34:10 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=5"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"data\": [\n        {\n            \"coordinate\": {\n                \"startPoint\": 0,\n                \"endPoint\": 5,\n                \"X_index\": 0,\n                \"Y_index\": 1\n            },\n            \"_id\": \"63b3e7610c1ff5775e4b79c0\",\n            \"binId\": 3,\n            \"stocks\": [\n                {\n                    \"productId\": \"7863445673400\",\n                    \"orderId\": \"3007676/20/XT/QV/ABQ\",\n                    \"productQuantity\": 2\n                }\n            ],\n            \"dateCreated\": \"2023-01-03T08:29:21.639Z\",\n            \"__v\": 0\n        }\n    ]\n}"
+				}
+			]
+		},
+		{
+			"name": "Delele Product",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{api_key}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "api_key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{server_url}}/api/v1/products/:productId",
+					"host": [
+						"{{server_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"products",
+						":productId"
+					],
+					"variable": [
+						{
+							"key": "productId",
+							"value": "1019610513865"
+						}
+					]
+				},
+				"description": "### Respond\n```\n{\n    \"status\": \"success\",\n    \"object\": \"delete_result\",\n    \"url\": \"/api/v1/stocks/books\",\n    \"results\": 4,\n    \"data\": [\n        {\n            \"_id\": \"633bf71fbdafab0fb7c336f6\",\n            \"startPoint\": 12,\n            \"endPoint\": 17,\n            \"index\": 2,\n            \"lightColor\": \"00ff00\",\n            \"stocks\": [],\n            \"dateCreated\": \"2022-10-04T09:04:31.802Z\",\n            \"__v\": 3\n        },\n        {...},\n        {...}\n    ]\n}\n```"
+			},
+			"response": []
+		},
+		{
+			"name": "configurations",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{api_key}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "api_key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server_url}}/api/v1/configurations",
+					"host": [
+						"{{server_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"configurations"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Get Configurations",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/configurations",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"configurations"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "X-Powered-By",
+							"value": "Express"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "84"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"54-dudEMmN3VKYma+iMOv3eJdFCkA0\""
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 04 Jan 2023 07:35:12 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=5"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"data\": {\n        \"binWidth\": [\n            \"15cm\",\n            \"20cm\",\n            \"25cm\",\n            \"30cm\",\n            \"35cm\",\n            \"40cm\"\n        ]\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Config",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{api_key}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "api_key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{server_url}}/api/v1/configurations?brightness=50",
+					"host": [
+						"{{server_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"configurations"
+					],
+					"query": [
+						{
+							"key": "brightness",
+							"value": "50"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test Light",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{api_key}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "api_key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server_url}}/api/v1/testLight?lightColor=000000",
+					"host": [
+						"{{server_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"testLight"
+					],
+					"query": [
+						{
+							"key": "lightColor",
+							"value": "000000",
+							"description": "màu đèn"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "server_url",
+			"value": "http://192.168.1.42:3000",
+			"disabled": true
+		}
+	]
+}
