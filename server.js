@@ -12,11 +12,7 @@ db.on('error', (error) => console.error(error))
 db.once('open', () => console.log('Connected to Database'))
 
 const port = Number(process.env.HTTP_PORT)
-const https_port = port + 1
 
 app.httpServer.listen(port, () => {
     console.log(`HTTP Server started at port ${port}`)
-})
-app.httpsServer.listen(https_port, () => {
-    console.log(`HTTPS Server started at port ${https_port}`)
 })
