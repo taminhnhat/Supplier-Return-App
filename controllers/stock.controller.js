@@ -1,5 +1,5 @@
 require('dotenv').config({ path: './.env' })
-const path = require('path')
+const logger = require('../logger/logger')
 const StockCollection = require('../models/stock')
 const BackupCollection = require('../models/backup')
 const rgbHub = require('../rgbHub')
@@ -29,21 +29,25 @@ async function getStock(req, res) {
     if (binIdFromRequest === false) {
         try {
             const result = await StockCollection.find()
-            if (result == undefined)
+            if (result == undefined || result == null) {
+                logger.error('Cannot retrieve from database', { req: req.query, value: result })
                 return res.status(500).json({
                     status: 'fail',
-                    message: 'Internal Server Error'
+                    message: 'Loi he thong',
+                    error: 'Khong truy xuat duoc database'
                 })
+            }
             else
                 return res.status(200).json({
                     status: 'success',
                     data: result
                 })
         } catch (err) {
-            console.log(err)
+            logger.error('Catch unknown error', { req: req.query, err: err })
             return res.status(500).json({
                 status: 'fail',
-                error: 'Internal Server Error'
+                message: 'Loi he thong',
+                error: err
             })
         }
     }
@@ -56,10 +60,11 @@ async function getStock(req, res) {
             })
         }
         catch (err) {
-            console.log(err)
+            logger.error('Catch unknown error', { req: req.query, err: err })
             return res.status(500).json({
                 status: 'fail',
-                error: 'Internal Server Error'
+                message: 'Loi he thong',
+                error: err
             })
         }
     }
@@ -69,17 +74,20 @@ async function getBin(req, res) {
     let result
     try {
         result = await StockCollection.findById(req.params.id)
-        if (result == null) {
+        if (result == null || result == undefined) {
+            logger.error('Cannot retrieve from database', { req: req.params, value: result })
             return res.status(500).json({
                 status: 'fail',
-                message: 'Stock is empty'
+                message: 'Loi he thong',
+                error: 'Khong truy xuat duoc database'
             })
         }
     } catch (err) {
-        console.log(err)
+        logger.error('Catch unknown error', { req: req.params, err: err })
         return res.status(500).json({
             status: 'fail',
-            error: 'Internal Server Error'
+            message: 'Loi he thong',
+            error: err
         })
     }
     return res.status(200).json({
@@ -111,10 +119,12 @@ async function searchProduct(req, res) {
         // get all matched bins
         let allMatchedBin = await StockCollection.find(queryObj, projectionObj)
         // if stock is empty
-        if (allMatchedBin == null) {
+        if (allMatchedBin == null || allMatchedBin == undefined) {
+            logger.error('Cannot retrieve from database', { req: req.query, value: allMatchedBin })
             return res.status(500).json({
                 status: 'fail',
-                message: 'Stock is empty'
+                message: 'Loi he thong',
+                error: 'Khong truy xuat duoc database'
             })
         }
 
@@ -141,10 +151,11 @@ async function searchProduct(req, res) {
             data: allMatchedBin
         })
     } catch (err) {
-        console.log(err)
+        logger.error('Catch unknown error', { req: req.query, err: err })
         return res.status(500).json({
             status: 'fail',
-            error: 'Internal Server Error'
+            message: 'Loi he thong',
+            error: err
         })
     }
 }
@@ -155,16 +166,19 @@ async function deleteProduct(req, res) {
         const inputProductId = String(req.params.productId)
         const allMatchedBin = await StockCollection.find({ stocks: { $elemMatch: { productId: inputProductId } } }, { _id: 0, binId: 1, stocks: 1 })
         // if stock is empty
-        if (allMatchedBin == null)
+        if (allMatchedBin == null || allMatchedBin == undefined) {
+            logger.error('Cannot retrieve from database', { req: req.query, value: allMatchedBin })
             return res.status(500).json({
                 status: 'fail',
-                message: 'Stock is empty'
+                message: 'Loi he thong',
+                error: 'Khong truy xuat duoc database'
             })
+        }
         // if no bin have matched product
         if (allMatchedBin.length == 0)
-            return res.status(404).json({
+            return res.status(400).json({
                 status: 'fail',
-                message: `Product ${inputProductId} not found`
+                message: `Khong tim thay san pham co id:${inputProductId}`
             })
         // remove matched Product
         allMatchedBin.forEach((eachBin, index) => {
@@ -185,20 +199,23 @@ async function deleteProduct(req, res) {
             })
         })
     } catch (err) {
-        console.log(err)
+        logger.error('Catch unknown error', { req: req.query, err: err })
         return res.status(500).json({
             status: 'fail',
-            error: 'Internal Server Error'
+            message: 'Loi he thong',
+            error: err
         })
     }
 }
 
 async function getConfiguration(req, res) {
     const result = JSON.parse(process.env.BIN_WIDTH_VALUE_ARRAY_IN_CM)
-    if (result == null) {
+    if (result == null || result == undefined) {
+        logger.error('Cannot retrieve from configuration', { req: req.query, value: allMatchedBin })
         return res.status(500).json({
             status: 'fail',
-            message: 'Cannot find configurations'
+            message: 'Loi he thong',
+            error: 'Khong truy xuat duoc database'
         })
     }
     else {
@@ -218,8 +235,6 @@ async function config(req, res) {
 }
 
 async function addStock(req, res) {
-
-
     // {
     //     "userId": "Minh_Nhat",
     //     "productId": "7104110382456",
@@ -230,6 +245,20 @@ async function addStock(req, res) {
     //     "mergeId": "1347869093563"
     // }
     const arrangeMode = req.body.arrangeMode
+    if (req.body.productId == '' || req.body.productId == undefined) {
+        logger.error('Invalid productId', { body: req.body })
+        return res.status(400).json({
+            status: 'fail',
+            message: 'Gia tri productId khong hop le'
+        });
+    }
+    if (req.body.orderId == '' || req.body.orderId == undefined) {
+        logger.error('Invalid orderId', { body: req.body })
+        return res.status(400).json({
+            status: 'fail',
+            message: 'Gia tri orderId khong hop le'
+        });
+    }
     switch (arrangeMode) {
         case 'default':
             handleDefaultMode(req, res)
@@ -241,9 +270,10 @@ async function addStock(req, res) {
             handleMergeMode(req, res)
             break
         default:
+            logger.error('Invalid arrangeMode', { body: req.body })
             return res.status(400).json({
                 status: 'fail',
-                message: 'Not a valid api'
+                message: 'Gia tri arrangeMode khong hop le'
             });
     }
 
@@ -251,15 +281,18 @@ async function addStock(req, res) {
         try {
             const queryObj = { stocks: { $elemMatch: { productId: req.body.mergeId } } }
             const allBin = await StockCollection.find(queryObj)
-            if (allBin == null)
+            if (allBin == null || allBin == undefined) {
+                logger.error('Cannot retrieve from database', { req: req.body, value: allBin })
                 return res.status(500).json({
                     status: 'fail',
-                    message: 'Stock is empty'
+                    message: 'Loi he thong',
+                    error: 'Khong truy xuat duoc database'
                 })
+            }
             if (allBin.length == 0)
-                return res.status(404).json({
+                return res.status(400).json({
                     status: 'fail',
-                    message: 'Not found mergeId'
+                    message: `Khong tim thay mergeId:${req.body.mergeId}`
                 })
 
             const matchedBin = allBin[allBin.length - 1]
@@ -278,10 +311,11 @@ async function addStock(req, res) {
             })
 
         } catch (err) {
-            console.log(err)
+            logger.error('Catch unknown error', { req: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
-                error: 'Internal Server Error'
+                message: 'Loi he thong',
+                error: err
             })
         }
     }
@@ -292,10 +326,12 @@ async function addStock(req, res) {
         try {
             const queryObj = { stocks: { $elemMatch: { productId: req.body.productId } } }
             const allBin = await StockCollection.find(queryObj)
-            if (allBin == null) {
+            if (allBin == null || allBin == undefined) {
+                logger.error('Cannot retrieve from database', { req: req.body, value: allBin })
                 return res.status(500).json({
                     status: 'fail',
-                    message: 'Stock is empty'
+                    message: 'Loi he thong',
+                    error: 'Khong truy xuat duoc database'
                 })
             }
             else if (allBin.length == 0) _createVolume(req, res)
@@ -312,10 +348,11 @@ async function addStock(req, res) {
                 })
             }
         } catch (err) {
-            console.log(err)
+            logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
-                error: 'Internal Server Error'
+                message: 'Loi he thong',
+                error: err
             })
         }
     }
@@ -326,11 +363,13 @@ async function addStock(req, res) {
         const lightColor = req.body.lightColor;
         let lightRow = tempBinIndex_Y + 1
         if (endPoint >= numOfLedPerStrip) {
-            if (lightRow >= numOfStrip)
-                return res.status(500).json({
+            if (lightRow >= numOfStrip) {
+                logger.error('Not enough space to create new bin', { body: req.body })
+                return res.status(400).json({
                     status: 'fail',
-                    message: 'Not enough space, use merge stock instead'
+                    message: 'Khong con cho trong tren tuong, vui long chon che do \'arrangeMode:merge\''
                 })
+            }
             else {
                 endPoint = endPoint - startPoint
                 startPoint = 0
@@ -387,46 +426,29 @@ async function putToLight(req, res) {
                 createNewBin(req, res)
             }
             else {
-                console.log('Not expected search from db, conflict data', binList_2)
+                logger.error('Unexpected search from db, conflict data', { body: req.body, value: binList_2 })
+                return res.status(500).json({
+                    status: 'fail',
+                    message: 'Loi he thong',
+                    value: binList_2
+                })
             }
         }
         else {
-            console.log('Not expected search from db, conflict data', binList_1)
+            logger.error('Unexpected search from db, conflict data', { body: req.body, value: binList_1 })
         }
     }
     catch (err) {
-        console.log(err)
+        logger.error('Catch unknown error', { body: req.body, err: err })
         return res.status(500).json({
             status: 'fail',
-            error: 'Internal Server Error'
+            message: 'Loi he thong',
+            error: err
         })
     }
-    // const allBin = await StockCollection.find({ binId: req.body.binId })
-    // console.log(allBin)
-    // if (allBin.length == 0) {
-    //     // if no bin have the same input binId, create new bin
-    //     createBin(req, res)
-    // }
-    // else if (allBin.length == 1) {
-    //     // if one bin matched, update that bin
-    //     updateBin(req, res)
-    // }
-    // else if (allBin.length > 1) {
-    //     // bad db
-    //     console.log('WARNING: SOME BINS HAVE SAME BINID', allBin)
-    //     updateBin(req, res)
-    // }
-    // else {
-    //     // log error here
-    //     return res.status(500).json({
-    //         status: 'fail',
-    //         message: 'Stock is empty'
-    //     })
-    // }
 
     async function createNewBin(req, res) {
         //
-        console.log('create new bin')
         const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER)
         const binWidthInCm = Number(req.body.binWidth.replace('cm', '').replace('Cm', '').replace('CM', ''))
         //
@@ -439,7 +461,7 @@ async function putToLight(req, res) {
             if (tempBinIndex_Y + 1 >= numOfStrip)
                 return res.status(400).json({
                     status: 'fail',
-                    message: 'Not enough space, use exist bin instead'
+                    message: `Khong con o trong, vui long dung api \'addStock\' o che do \'arrangeMode\'=\'merge\' de tim o khac`
                 })
             else {
                 tempBinIndex_Y += 1
@@ -489,16 +511,16 @@ async function putToLight(req, res) {
                 data: newStock
             })
         } catch (err) {
-            console.log(err)
+            logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
-                error: 'Internal Server Error'
+                message: 'Loi he thong',
+                error: err
             })
         }
     }
 
     async function updateProductQuantity(req, res, thisBin) {
-        console.log('update product quantity')
         try {
             thisBin.stocks.forEach(async (eachProduct, productIndex) => {
                 if (eachProduct.productId == req.body.productId && eachProduct.orderId == req.body.orderId) {
@@ -519,16 +541,16 @@ async function putToLight(req, res) {
                 }
             })
         } catch (err) {
-            console.log(err)
+            logger.error('Catch unknown error', { req: req.query, err: err })
             return res.status(500).json({
                 status: 'fail',
-                error: 'Internal Server Error'
+                message: 'Loi he thong',
+                error: err
             })
         }
     }
 
     async function pushNewProduct(req, res, thisBin) {
-        console.log('push new product')
         try {
             thisBin.stocks.push({
                 productId: req.body.productId,
@@ -546,10 +568,11 @@ async function putToLight(req, res) {
                 data: updatedBin
             })
         } catch (err) {
-            console.log(err)
+            logger.error('Catch unknown error', { req: req.query, err: err })
             return res.status(500).json({
                 status: 'fail',
-                error: 'Internal Server Error'
+                message: 'Loi he thong',
+                error: err
             })
         }
     }
@@ -560,9 +583,10 @@ async function pickToLight(req, res) {
         // find all bin with input productId
         let allMatchedBin = await StockCollection.find({ stocks: { $elemMatch: { productId: req.body.productId } } }, { _id: 0, coordinate: 1, binId: 1, stocks: 1 })
         if (allMatchedBin.length == 0) {
-            return res.status(500).json({
+            logger.error('ProductId not found', { req: req.body, value: allMatchedBin })
+            return res.status(400).json({
                 status: 'fail',
-                message: 'ProductId not found'
+                message: `Khong tim thay san pham co productId:${req.body.productId}`
             })
         }
         else {
@@ -584,10 +608,11 @@ async function pickToLight(req, res) {
             })
         }
     } catch (err) {
-        console.log(err)
+        logger.error('Catch unknown error', { req: req.query, err: err })
         return res.status(500).json({
             status: 'fail',
-            error: 'Internal Server Error'
+            message: 'Loi he thong',
+            error: err
         })
     }
 }
@@ -617,23 +642,17 @@ async function clearStock(req, res) {
             message: 'Deleted stocks'
         })
     } catch (err) {
-        console.log(err)
+        logger.error('Catch unknown error', { req: req.query, err: err })
         res.status(500).json({
             status: 'fail',
-            error: 'Internal Server Error'
+            message: 'Loi he thong',
+            error: err
         })
     }
 }
 
 async function reload(req, res) {
     try {
-        // const stocks = await StockCollection.find({}, {}, { sort: { coordinate: { Y_index: - 1 } } })
-        // console.log(stocks)
-        // // stocks.forEach(stock => {
-        // //     if (stock.endPoint >= lightCursor) lightCursor = stock.coordinate.endPoint + 1
-        // //     if (stock.coordinate.Y_index >= binIndex_Y) binIndex_Y = stock.coordinate.Y_index
-        // //     if (stock.binId >= binIndex) binIndex = stock.binId + 1
-        // // })
         const backup = await BackupCollection.find()
         if (backup.length == 0) {
             const backup = new BackupCollection({
@@ -652,7 +671,7 @@ async function reload(req, res) {
         }
         _clearLight()
     } catch (err) {
-        console.log(err)
+        logger.error('Catch unknown error', { err: err })
     }
 }
 

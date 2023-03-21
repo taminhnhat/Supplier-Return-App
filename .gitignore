@@ -4,3 +4,4 @@ route.rest
 package-lock.json
 sslcert
 .env
+logs

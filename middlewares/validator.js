@@ -11,6 +11,6 @@ exports.validate = (method) => {
     }
 }
 
-exports.productValidator = function productIdValidator() {
-    //
+exports.productValidator = function validate(req, res, next) {
+    next()
 }

@@ -1,16 +1,21 @@
+const logger = require('../logger/logger')
 const auth = async (req, res, next) => {
     try {
         if (req.headers.api_key === process.env.TOKEN_SECRET)
             next()
-        else
+        else {
+            logger.error('Invalid token', { headers: req.headers })
             return res.status(401).json({
                 status: 'fail',
                 message: 'Invalid token'
             })
-    } catch (error) {
-        res.status(500).json({
+        }
+    } catch (err) {
+        logger.error('Catch unknown error', { err: err })
+        return res.status(500).json({
             status: 'fail',
-            message: error.message
+            message: 'Loi he thong',
+            err: err
         })
     }
 

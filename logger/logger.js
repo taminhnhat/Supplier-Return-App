@@ -1,54 +1,59 @@
 require('dotenv').config({ path: './.env' });
-const logMode = process.env.LOG_MODE
 
-class Logger {
-    constructor() {
+const winston = require('winston');
+
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json()
+    ),
+    defaultMeta: { service: 'user-service' },
+    transports: [
         //
-    }
-    #createLog(message, location, level, value) {
-        if (logMode == 'production') {
-            let logtext = `${Date(Date.now())}\t${level.toUpperCase()}`;
-            if (location != null) {
-                logtext += `\tat:${location}`;
-            }
-            logtext += `\t\tmessage:${message}`;
-            console.log(logtext);
-            if (value != null) {
-                console.log(value);
-            }
-        }
-        else {
-            console.log(message);
-            if (value != null) console.log(value);
-        }
-    }
-    info(obj) {
-        const { message, location = null, value = null } = obj;
-        this.#createLog(message, location, 'info', value);
-        //if(value != undefined) console.log(JSON.stringify(value));
-    }
-    debug(obj) {
-        const { message, location = null, value = null } = obj;
-        this.#createLog(message, location, 'debug', value);
-        //if(value != undefined) console.log(JSON.stringify(value));
-    }
-    waring(obj) {
-        const { message, location = null, value = null } = obj;
-        this.#createLog(message, location, 'warning', value);
-        //if(value != undefined) console.log(JSON.stringify(value));
-    }
-    error(obj) {
-        const { message, location = null, value = null } = obj;
-        this.#createLog(message, location, 'error', value);
-        //if(value != undefined) console.log(JSON.stringify(value));
-    }
-    fatal(obj) {
-        const { message, location = null, value = null } = obj;
-        this.#createLog(message, location, 'fatal', value);
-        //if(value != undefined) console.log(JSON.stringify(value));
-    }
+        // - Write all logs with importance level of `error` or less to `error.log`
+        // - Write all logs with importance level of `info` or less to `combined.log`
+        //
+        new winston.transports.File({ filename: './logs/error.log', level: 'error' }),
+        new winston.transports.File({ filename: './logs/combined.log' }),
+    ],
+});
+
+//
+// If we're not in production then log to the `console` with the format:
+// `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
+//
+if (process.env.NODE_ENV !== 'production') {
+    logger.add(new winston.transports.Console({
+        format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.timestamp(),
+            winston.format.splat(),
+            winston.format.simple()
+        ),
+    }));
 }
 
-const logger = new Logger();
+logger.exceptions.handle(
+    new winston.transports.File({ filename: './logs/exceptions.log' })
+);
+// const options = {
+//     from: new Date() - (1 * 1000),
+//     until: new Date(),
+//     limit: 100,
+//     start: 0,
+//     order: 'desc',
+//     fields: ['level', 'message']
+// };
+
+
+// logger.query(options, function (err, results) {
+//     if (err) {
+//         /* TODO: handle me */
+//         throw err;
+//     }
+
+//     console.log(results);
+// });
 
 module.exports = logger;
