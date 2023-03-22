@@ -41,4 +41,4 @@ const httpServer = http.createServer(app)
 const httpsServer = https.createServer(credentials, app)
 
 // export
-module.exports = { httpServer, httpsServer }
+module.exports = httpServer

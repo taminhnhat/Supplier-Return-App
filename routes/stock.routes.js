@@ -1,6 +1,5 @@
 const express = require('express')
 const router = express.Router()
-const { body } = require('express-validator')
 
 require('dotenv').config({ path: './.env' })
 const stockController = require('../controllers/stock.controller')

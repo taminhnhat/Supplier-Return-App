@@ -9,11 +9,12 @@ mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true })
     })
 
 const db = mongoose.connection
-db.on('error', (error) => console.error(error))
-db.once('open', () => console.log('Connected to Database'))
+db.on('error', (err) => logger.error('Database unknown error', { err: err }))
+db.once('open', () => logger.info('Connected to Database'))
 
 const port = Number(process.env.HTTP_PORT)
 
-app.httpServer.listen(port, () => {
+app.listen(port, (err) => {
+    if (err) console.log(err)
     logger.info(`HTTP Server started at port ${port}`)
 })
