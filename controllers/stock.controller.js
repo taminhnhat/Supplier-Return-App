@@ -30,7 +30,7 @@ async function getStock(req, res) {
         try {
             const result = await StockCollection.find()
             if (result == undefined || result == null) {
-                logger.error('Cannot retrieve from database', { req: req.query, value: result })
+                logger.error('Cannot retrieve from database', { query: req.query, value: result })
                 return res.status(500).json({
                     status: 'fail',
                     message: 'Loi he thong',
@@ -43,7 +43,7 @@ async function getStock(req, res) {
                     data: result
                 })
         } catch (err) {
-            logger.error('Catch unknown error', { req: req.query, err: err })
+            logger.error('Catch unknown error', { query: req.query, err: err })
             return res.status(500).json({
                 status: 'fail',
                 message: 'Loi he thong',
@@ -60,7 +60,7 @@ async function getStock(req, res) {
             })
         }
         catch (err) {
-            logger.error('Catch unknown error', { req: req.query, err: err })
+            logger.error('Catch unknown error', { query: req.query, err: err })
             return res.status(500).json({
                 status: 'fail',
                 message: 'Loi he thong',
@@ -75,7 +75,7 @@ async function getBin(req, res) {
     try {
         result = await StockCollection.findById(req.params.id)
         if (result == null || result == undefined) {
-            logger.error('Cannot retrieve from database', { req: req.params, value: result })
+            logger.error('Cannot retrieve from database', { params: req.params, value: result })
             return res.status(500).json({
                 status: 'fail',
                 message: 'Loi he thong',
@@ -83,7 +83,7 @@ async function getBin(req, res) {
             })
         }
     } catch (err) {
-        logger.error('Catch unknown error', { req: req.params, err: err })
+        logger.error('Catch unknown error', { params: req.params, err: err })
         return res.status(500).json({
             status: 'fail',
             message: 'Loi he thong',
@@ -120,7 +120,7 @@ async function searchProduct(req, res) {
         let allMatchedBin = await StockCollection.find(queryObj, projectionObj)
         // if stock is empty
         if (allMatchedBin == null || allMatchedBin == undefined) {
-            logger.error('Cannot retrieve from database', { req: req.query, value: allMatchedBin })
+            logger.error('Cannot retrieve from database', { query: req.query, value: allMatchedBin })
             return res.status(500).json({
                 status: 'fail',
                 message: 'Loi he thong',
@@ -151,7 +151,7 @@ async function searchProduct(req, res) {
             data: allMatchedBin
         })
     } catch (err) {
-        logger.error('Catch unknown error', { req: req.query, err: err })
+        logger.error('Catch unknown error', { query: req.query, err: err })
         return res.status(500).json({
             status: 'fail',
             message: 'Loi he thong',
@@ -167,7 +167,7 @@ async function deleteProduct(req, res) {
         const allMatchedBin = await StockCollection.find({ stocks: { $elemMatch: { productId: inputProductId } } }, { _id: 0, binId: 1, stocks: 1 })
         // if stock is empty
         if (allMatchedBin == null || allMatchedBin == undefined) {
-            logger.error('Cannot retrieve from database', { req: req.query, value: allMatchedBin })
+            logger.error('Cannot retrieve from database', { query: req.query, value: allMatchedBin })
             return res.status(500).json({
                 status: 'fail',
                 message: 'Loi he thong',
@@ -199,7 +199,7 @@ async function deleteProduct(req, res) {
             })
         })
     } catch (err) {
-        logger.error('Catch unknown error', { req: req.query, err: err })
+        logger.error('Catch unknown error', { query: req.query, err: err })
         return res.status(500).json({
             status: 'fail',
             message: 'Loi he thong',
@@ -211,7 +211,7 @@ async function deleteProduct(req, res) {
 async function getConfiguration(req, res) {
     const result = JSON.parse(process.env.BIN_WIDTH_VALUE_ARRAY_IN_CM)
     if (result == null || result == undefined) {
-        logger.error('Cannot retrieve from configuration', { req: req.query, value: allMatchedBin })
+        logger.error('Cannot retrieve from configuration', { query: req.query, value: allMatchedBin })
         return res.status(500).json({
             status: 'fail',
             message: 'Loi he thong',
@@ -234,7 +234,7 @@ async function config(req, res) {
     })
 }
 
-async function addStock(req, res) {
+async function getSuggestion(req, res) {
     // {
     //     "userId": "Minh_Nhat",
     //     "productId": "7104110382456",
@@ -282,18 +282,20 @@ async function addStock(req, res) {
             const queryObj = { stocks: { $elemMatch: { productId: req.body.mergeId } } }
             const allBin = await StockCollection.find(queryObj)
             if (allBin == null || allBin == undefined) {
-                logger.error('Cannot retrieve from database', { req: req.body, value: allBin })
+                logger.error('Cannot retrieve from database', { body: req.body, value: allBin })
                 return res.status(500).json({
                     status: 'fail',
                     message: 'Loi he thong',
                     error: 'Khong truy xuat duoc database'
                 })
             }
-            if (allBin.length == 0)
+            if (allBin.length == 0) {
+                logger.error('MergeId not found', { body: req.body })
                 return res.status(400).json({
                     status: 'fail',
                     message: `Khong tim thay mergeId:${req.body.mergeId}`
                 })
+            }
 
             const matchedBin = allBin[allBin.length - 1]
             matchedBin.stocks.push({
@@ -311,7 +313,7 @@ async function addStock(req, res) {
             })
 
         } catch (err) {
-            logger.error('Catch unknown error', { req: req.body, err: err })
+            logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
                 message: 'Loi he thong',
@@ -327,7 +329,7 @@ async function addStock(req, res) {
             const queryObj = { stocks: { $elemMatch: { productId: req.body.productId } } }
             const allBin = await StockCollection.find(queryObj)
             if (allBin == null || allBin == undefined) {
-                logger.error('Cannot retrieve from database', { req: req.body, value: allBin })
+                logger.error('Cannot retrieve from database', { body: req.body, value: allBin })
                 return res.status(500).json({
                     status: 'fail',
                     message: 'Loi he thong',
@@ -405,6 +407,20 @@ async function addStock(req, res) {
 }
 
 async function putToLight(req, res) {
+    if (req.body.productId == '' || req.body.productId == undefined) {
+        logger.error('Invalid productId', { body: req.body })
+        return res.status(400).json({
+            status: 'fail',
+            message: 'Gia tri productId khong hop le'
+        });
+    }
+    if (req.body.orderId == '' || req.body.orderId == undefined) {
+        logger.error('Invalid orderId', { body: req.body })
+        return res.status(400).json({
+            status: 'fail',
+            message: 'Gia tri orderId khong hop le'
+        });
+    }
     // get bin with the same binId, productId, orderId
     const binList_1 = await StockCollection.find({ binId: req.body.binId, stocks: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } })
     try {
@@ -541,7 +557,7 @@ async function putToLight(req, res) {
                 }
             })
         } catch (err) {
-            logger.error('Catch unknown error', { req: req.query, err: err })
+            logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
                 message: 'Loi he thong',
@@ -568,7 +584,7 @@ async function putToLight(req, res) {
                 data: updatedBin
             })
         } catch (err) {
-            logger.error('Catch unknown error', { req: req.query, err: err })
+            logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
                 message: 'Loi he thong',
@@ -583,7 +599,7 @@ async function pickToLight(req, res) {
         // find all bin with input productId
         let allMatchedBin = await StockCollection.find({ stocks: { $elemMatch: { productId: req.body.productId } } }, { _id: 0, coordinate: 1, binId: 1, stocks: 1 })
         if (allMatchedBin.length == 0) {
-            logger.error('ProductId not found', { req: req.body, value: allMatchedBin })
+            logger.error('ProductId not found', { body: req.body, value: allMatchedBin })
             return res.status(400).json({
                 status: 'fail',
                 message: `Khong tim thay san pham co productId:${req.body.productId}`
@@ -608,7 +624,7 @@ async function pickToLight(req, res) {
             })
         }
     } catch (err) {
-        logger.error('Catch unknown error', { req: req.query, err: err })
+        logger.error('Catch unknown error', { body: req.body, err: err })
         return res.status(500).json({
             status: 'fail',
             message: 'Loi he thong',
@@ -642,7 +658,7 @@ async function clearStock(req, res) {
             message: 'Deleted stocks'
         })
     } catch (err) {
-        logger.error('Catch unknown error', { req: req.query, err: err })
+        logger.error('Catch unknown error', { err: err })
         res.status(500).json({
             status: 'fail',
             message: 'Loi he thong',
@@ -715,4 +731,4 @@ function _clearLightTimeout() {
 }
 
 
-module.exports = { getStock, addStock, clearStock, putToLight, pickToLight, getConfiguration, config, searchProduct, testLight, deleteProduct, getBin, deleteBin };
+module.exports = { getStock, getSuggestion, clearStock, putToLight, pickToLight, getConfiguration, config, searchProduct, testLight, deleteProduct, getBin, deleteBin };

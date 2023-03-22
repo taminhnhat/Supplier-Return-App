@@ -28,8 +28,10 @@ const auth = require('./middlewares/auth')
 app.use(auth)
 
 // routing
-const stockRouter = require('./routes/stock.routes')
-app.use('/api/v1', stockRouter)
+const productRouter = require('./routes/product.route')
+const stockRouter = require('./routes/stock.route')
+app.use('/api/v1', productRouter)
+app.use('/api/v2', stockRouter)
 
 // enable ssl
 const privateKey = fs.readFileSync('sslcert/key.pem', 'utf8');
