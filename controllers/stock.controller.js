@@ -249,14 +249,14 @@ async function getSuggestion(req, res) {
         logger.error('Invalid productId', { body: req.body })
         return res.status(400).json({
             status: 'fail',
-            message: 'Gia tri productId khong hop le'
+            message: 'Mã sản phẩm không hợp lệ'
         });
     }
     if (req.body.orderId == '' || req.body.orderId == undefined) {
         logger.error('Invalid orderId', { body: req.body })
         return res.status(400).json({
             status: 'fail',
-            message: 'Gia tri orderId khong hop le'
+            message: 'Mã phiếu không hợp lệ'
         });
     }
     switch (arrangeMode) {
@@ -273,7 +273,7 @@ async function getSuggestion(req, res) {
             logger.error('Invalid arrangeMode', { body: req.body })
             return res.status(400).json({
                 status: 'fail',
-                message: 'Gia tri arrangeMode khong hop le'
+                message: 'Chế độ không hợp lệ'
             });
     }
 
@@ -285,15 +285,15 @@ async function getSuggestion(req, res) {
                 logger.error('Cannot retrieve from database', { body: req.body, value: allBin })
                 return res.status(500).json({
                     status: 'fail',
-                    message: 'Loi he thong',
-                    error: 'Khong truy xuat duoc database'
+                    message: 'Lỗi hệ thống',
+                    error: 'Cannot retrieve from database'
                 })
             }
             if (allBin.length == 0) {
                 logger.error('MergeId not found', { body: req.body })
                 return res.status(400).json({
                     status: 'fail',
-                    message: `Khong tim thay mergeId:${req.body.mergeId}`
+                    message: `Không tìm thấy mã gộp:${req.body.mergeId}`
                 })
             }
 
@@ -316,7 +316,7 @@ async function getSuggestion(req, res) {
             logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
-                message: 'Loi he thong',
+                message: 'Lỗi hệ thống',
                 error: err
             })
         }
@@ -332,8 +332,8 @@ async function getSuggestion(req, res) {
                 logger.error('Cannot retrieve from database', { body: req.body, value: allBin })
                 return res.status(500).json({
                     status: 'fail',
-                    message: 'Loi he thong',
-                    error: 'Khong truy xuat duoc database'
+                    message: 'Lỗi hệ thống',
+                    error: 'Cannot retrieve from database'
                 })
             }
             else if (allBin.length == 0) _createVolume(req, res)
@@ -353,7 +353,7 @@ async function getSuggestion(req, res) {
             logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
-                message: 'Loi he thong',
+                message: 'Lỗi hệ thống',
                 error: err
             })
         }
@@ -369,7 +369,8 @@ async function getSuggestion(req, res) {
                 logger.error('Not enough space to create new bin', { body: req.body })
                 return res.status(400).json({
                     status: 'fail',
-                    message: 'Khong con cho trong tren tuong, vui long chon che do \'arrangeMode:merge\''
+                    message: 'Không còn ô trống trên tường, Vui lòng chuyển sang chế độ gộp',
+                    error: 'Out of space, use merge mode instead'
                 })
             }
             else {
@@ -411,14 +412,14 @@ async function putToLight(req, res) {
         logger.error('Invalid productId', { body: req.body })
         return res.status(400).json({
             status: 'fail',
-            message: 'Gia tri productId khong hop le'
+            message: 'Mã sản phẩm không hợp lệ'
         });
     }
     if (req.body.orderId == '' || req.body.orderId == undefined) {
         logger.error('Invalid orderId', { body: req.body })
         return res.status(400).json({
             status: 'fail',
-            message: 'Gia tri orderId khong hop le'
+            message: 'Mã phiếu không hợp lệ'
         });
     }
     // get bin with the same binId, productId, orderId
@@ -445,13 +446,20 @@ async function putToLight(req, res) {
                 logger.error('Unexpected search from db, conflict data', { body: req.body, value: binList_2 })
                 return res.status(500).json({
                     status: 'fail',
-                    message: 'Loi he thong',
+                    message: 'Lỗi hệ thống',
+                    error: 'Unexpected search from db, conflict data',
                     value: binList_2
                 })
             }
         }
         else {
             logger.error('Unexpected search from db, conflict data', { body: req.body, value: binList_1 })
+            return res.status(500).json({
+                status: 'fail',
+                message: 'Lỗi hệ thống',
+                error: 'Unexpected search from db, conflict data',
+                value: binList_1
+            })
         }
     }
     catch (err) {
@@ -474,11 +482,14 @@ async function putToLight(req, res) {
         // if row is full, add new row
         if (tempLightCursor + deltaPoint >= numOfLedPerStrip) {
             // if no row to expand
-            if (tempBinIndex_Y + 1 >= numOfStrip)
+            if (tempBinIndex_Y + 1 >= numOfStrip) {
+                logger.error('Out of space, use another binId instead')
                 return res.status(400).json({
                     status: 'fail',
-                    message: `Khong con o trong, vui long dung api \'addStock\' o che do \'arrangeMode\'=\'merge\' de tim o khac`
+                    message: 'Không còn ô trống trên tường, Vui lòng chuyển sang chế độ gộp',
+                    error: 'Out of space, use another binId instead'
                 })
+            }
             else {
                 tempBinIndex_Y += 1
                 tempBinIndex_X = 0
@@ -530,7 +541,7 @@ async function putToLight(req, res) {
             logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
-                message: 'Loi he thong',
+                message: 'Lỗi hệ thống',
                 error: err
             })
         }
@@ -560,7 +571,7 @@ async function putToLight(req, res) {
             logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
-                message: 'Loi he thong',
+                message: 'Lỗi hệ thống',
                 error: err
             })
         }
@@ -587,7 +598,7 @@ async function putToLight(req, res) {
             logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
-                message: 'Loi he thong',
+                message: 'Lỗi hệ thống',
                 error: err
             })
         }
@@ -602,7 +613,7 @@ async function pickToLight(req, res) {
             logger.error('ProductId not found', { body: req.body, value: allMatchedBin })
             return res.status(400).json({
                 status: 'fail',
-                message: `Khong tim thay san pham co productId:${req.body.productId}`
+                message: `Không tìm thấy mã sản phẩm: ${req.body.productId}`
             })
         }
         else {
@@ -627,7 +638,7 @@ async function pickToLight(req, res) {
         logger.error('Catch unknown error', { body: req.body, err: err })
         return res.status(500).json({
             status: 'fail',
-            message: 'Loi he thong',
+            message: 'Lỗi hệ thống',
             error: err
         })
     }
@@ -661,7 +672,7 @@ async function clearStock(req, res) {
         logger.error('Catch unknown error', { err: err })
         res.status(500).json({
             status: 'fail',
-            message: 'Loi he thong',
+            message: 'Lỗi hệ thống',
             error: err
         })
     }
