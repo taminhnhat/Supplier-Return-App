@@ -423,13 +423,15 @@ async function putToLight(req, res) {
         });
     }
     // get bin with the same binId, productId, orderId
+    // if exist, update product quantity
     const binList_1 = await StockCollection.find({ binId: req.body.binId, stocks: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } })
     try {
+        // If bin exists, update product quantity on this bin
         if (binList_1.length == 1) {
-            // update product quantity on this bin
             const thisBin = binList_1[0]
             updateProductQuantity(req, res, thisBin)
         }
+        // If no bin matched, find bin with the same binId only
         else if (binList_1.length == 0) {
             // get bin with the same binId only
             const binList_2 = await StockCollection.find({ binId: req.body.binId })
