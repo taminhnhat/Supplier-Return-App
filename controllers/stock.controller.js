@@ -100,6 +100,10 @@ async function deleteBin(req, res) {
     return res.status()
 }
 
+async function getProductList() {
+    //
+}
+
 async function searchProduct(req, res) {
     const productIdFromRequest = req.query.productId
     const orderIdFromRequest = req.query.orderId
@@ -258,6 +262,9 @@ async function getSuggestion(req, res) {
             status: 'fail',
             message: 'Mã phiếu không hợp lệ'
         });
+    }
+    if (req.body.notIncludedInOrder == true) {
+        logger.warn('Product is not included in order', { body: req.body })
     }
     switch (arrangeMode) {
         case 'default':
@@ -422,6 +429,13 @@ async function putToLight(req, res) {
             message: 'Mã phiếu không hợp lệ'
         });
     }
+    if (req.body.binId == undefined) {
+        logger.error('Invalid binId', { body: req.body })
+        return res.status(400).json({
+            status: 'fail',
+            message: 'Mã ô không hợp lệ'
+        });
+    }
     // get bin with the same binId, productId, orderId
     // if exist, update product quantity
     const binList_1 = await StockCollection.find({ binId: req.body.binId, stocks: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } })
@@ -517,7 +531,9 @@ async function putToLight(req, res) {
                 stocks: [{
                     productId: req.body.productId,
                     orderId: req.body.orderId,
-                    productQuantity: req.body.productQuantity
+                    productQuantity: req.body.productQuantity,
+                    price: req.body.price,
+                    notIncludedInOrder: req.body.notIncludedInOrder
                 }]
             });
             let backup = await BackupCollection.findOne({})
@@ -584,7 +600,9 @@ async function putToLight(req, res) {
             thisBin.stocks.push({
                 productId: req.body.productId,
                 orderId: req.body.orderId,
-                productQuantity: req.body.productQuantity
+                productQuantity: req.body.productQuantity,
+                price: req.body.price,
+                notIncludedInOrder: req.body.notIncludedInOrder
             })
             const updatedBin = await thisBin.save()
             _clearLightTimeout()
@@ -744,4 +762,18 @@ function _clearLightTimeout() {
 }
 
 
-module.exports = { getStock, getSuggestion, clearStock, putToLight, pickToLight, getConfiguration, config, searchProduct, testLight, deleteProduct, getBin, deleteBin };
+module.exports = {
+    getStock,
+    getSuggestion,
+    clearStock,
+    getProductList,
+    putToLight,
+    pickToLight,
+    getConfiguration,
+    config,
+    searchProduct,
+    testLight,
+    deleteProduct,
+    getBin,
+    deleteBin
+};

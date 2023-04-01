@@ -6,9 +6,11 @@ const stockCtrl = require('../controllers/stock.controller')
 
 router
     .route('/products')
-    .get(stockCtrl.getStock)
+    .get(stockCtrl.getProductList)
     .post(stockCtrl.getSuggestion)
     .delete(stockCtrl.clearStock)
+
+router.get('/stock', stockCtrl.getStock)
 
 router.post('/putToLight', stockCtrl.putToLight)
 
