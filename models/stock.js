@@ -27,7 +27,7 @@ const stockSchema = new mongoose.Schema({
             required: true
         }
     },
-    stocks: {
+    stock: {
         type: Array,
         required: true,
         default: []

@@ -42,7 +42,9 @@ function putToLight(binId, productId, orderId, productQuantity) {
         orderId: orderId,
         binId: binId,
         productQuantity: productQuantity,
-        binWidth: "5cm",
+        price: "25.000 đ",
+        notIncludedInOrder: false,
+        binWidth: "20cm",
         lightColor: "00ff00"
     }, {
         headers: {
@@ -64,22 +66,22 @@ putToLight(3, productList[3], orderList[0], 21)
 putToLight(4, productList[4], orderList[0], 98)
 putToLight(5, productList[5], orderList[0], 53)
 putToLight(6, productList[6], orderList[0], 23)
-putToLight(0, productList[7], orderList[0], 24)
-putToLight(1, productList[8], orderList[0], 2)
+putToLight(7, productList[7], orderList[0], 22)
+putToLight(8, productList[8], orderList[0], 72)
+putToLight(9, productList[9], orderList[0], 3)
 
-putToLight(7, productList[7], orderList[1], 4)
-putToLight(8, productList[8], orderList[1], 34)
-putToLight(0, productList[0], orderList[1], 43)
-putToLight(1, productList[1], orderList[1], 11)
-putToLight(3, productList[11], orderList[1], 17)
-putToLight(9, productList[10], orderList[1], 54)
-putToLight(10, productList[9], orderList[1], 30)
+putToLight(0, productList[0], orderList[1], 32)
+putToLight(1, productList[1], orderList[1], 5)
+putToLight(3, productList[3], orderList[1], 1)
+putToLight(5, productList[5], orderList[1], 3)
+putToLight(6, productList[6], orderList[1], 9)
+putToLight(8, productList[8], orderList[1], 5)
+putToLight(9, productList[9], orderList[1], 6)
 
-putToLight(0, productList[9], orderList[2], 3)
-putToLight(1, productList[1], orderList[2], 3)
-putToLight(2, productList[2], orderList[2], 3)
-putToLight(4, productList[4], orderList[2], 3)
-putToLight(5, productList[11], orderList[2], 3)
-putToLight(9, productList[10], orderList[2], 3)
-putToLight(10, productList[9], orderList[2], 3)
-putToLight(11, productList[11], orderList[2], 3)
+putToLight(1, productList[1], orderList[2], 12)
+putToLight(2, productList[2], orderList[2], 5)
+putToLight(3, productList[3], orderList[2], 2)
+putToLight(8, productList[8], orderList[2], 11)
+putToLight(9, productList[9], orderList[2], 17)
+
+

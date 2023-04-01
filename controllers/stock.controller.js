@@ -101,7 +101,44 @@ async function deleteBin(req, res) {
 }
 
 async function getProductList() {
-    //
+    try {
+        const allBins = await StockCollection.find()
+        if (allBins == undefined || allBins == null) {
+            logger.error('Cannot retrieve from database', { query: req.query, value: allBins })
+            return res.status(500).json({
+                status: 'fail',
+                message: 'Loi he thong',
+                error: 'Khong truy xuat duoc database'
+            })
+        }
+        else {
+            let productList = []
+            function includedInProductList(matchedId) {
+                productList.forEach(product => {
+                    if (product.productId == matchedId) return true
+                })
+                return false
+            }
+            allBins.forEach((eachBin, binIdx) => {
+                eachBin.stock.forEach(eachProduct => {
+                    if (includedInProductList(eachProduct.productId)) {
+                        productList.push(eachProduct.productId)
+                    }
+                })
+            })
+            return res.status(200).json({
+                status: 'success',
+                data: productList
+            })
+        }
+    } catch (err) {
+        logger.error('Catch unknown error', { query: req.query, err: err })
+        return res.status(500).json({
+            status: 'fail',
+            message: 'Loi he thong',
+            error: err
+        })
+    }
 }
 
 async function searchProduct(req, res) {
@@ -112,12 +149,12 @@ async function searchProduct(req, res) {
     const locationReturnFlag = req.query.locationReturn || 'false'
 
     // query
-    let queryObj = { stocks: { $elemMatch: {} } }
-    if (productIdFromRequest != undefined) queryObj.stocks.$elemMatch.productId = productIdFromRequest
-    if (orderIdFromRequest != undefined) queryObj.stocks.$elemMatch.orderId = orderIdFromRequest
+    let queryObj = { stock: { $elemMatch: {} } }
+    if (productIdFromRequest != undefined) queryObj.stock.$elemMatch.productId = productIdFromRequest
+    if (orderIdFromRequest != undefined) queryObj.stock.$elemMatch.orderId = orderIdFromRequest
     if (binIdFromRequest != undefined) queryObj.binId = binIdFromRequest
     // projection
-    let projectionObj = { _id: 0, coordinate: 1, binId: 1, stocks: 1 }
+    let projectionObj = { _id: 0, coordinate: 1, binId: 1, stock: 1 }
 
     try {
         // get all matched bins
@@ -134,7 +171,7 @@ async function searchProduct(req, res) {
 
         // filering result
         allMatchedBin.forEach(eachBin => {
-            eachBin.stocks = eachBin.stocks.filter(eachProduct => {
+            eachBin.stock = eachBin.stock.filter(eachProduct => {
                 return eachProduct.productId == productIdFromRequest
             })
         });
@@ -168,7 +205,7 @@ async function deleteProduct(req, res) {
     try {
         // get matched bin
         const inputProductId = String(req.params.productId)
-        const allMatchedBin = await StockCollection.find({ stocks: { $elemMatch: { productId: inputProductId } } }, { _id: 0, binId: 1, stocks: 1 })
+        const allMatchedBin = await StockCollection.find({ stock: { $elemMatch: { productId: inputProductId } } }, { _id: 0, binId: 1, stock: 1 })
         // if stock is empty
         if (allMatchedBin == null || allMatchedBin == undefined) {
             logger.error('Cannot retrieve from database', { query: req.query, value: allMatchedBin })
@@ -186,10 +223,10 @@ async function deleteProduct(req, res) {
             })
         // remove matched Product
         allMatchedBin.forEach((eachBin, index) => {
-            const filteredBin = eachBin.stocks.filter(eachStock => {
+            const filteredBin = eachBin.stock.filter(eachStock => {
                 return eachStock.productId != inputProductId
             })
-            eachBin.stocks = filteredBin
+            eachBin.stock = filteredBin
         })
         // return res.status(202).json(allMatchedBin)
         // update stock
@@ -286,7 +323,7 @@ async function getSuggestion(req, res) {
 
     async function handleMergeMode(req, res) {
         try {
-            const queryObj = { stocks: { $elemMatch: { productId: req.body.mergeId } } }
+            const queryObj = { stock: { $elemMatch: { productId: req.body.mergeId } } }
             const allBin = await StockCollection.find(queryObj)
             if (allBin == null || allBin == undefined) {
                 logger.error('Cannot retrieve from database', { body: req.body, value: allBin })
@@ -305,7 +342,7 @@ async function getSuggestion(req, res) {
             }
 
             const matchedBin = allBin[allBin.length - 1]
-            matchedBin.stocks.push({
+            matchedBin.stock.push({
                 productId: req.body.productId,
                 orderId: req.body.orderId
             })
@@ -333,7 +370,7 @@ async function getSuggestion(req, res) {
     }
     async function handleDefaultMode(req, res) {
         try {
-            const queryObj = { stocks: { $elemMatch: { productId: req.body.productId } } }
+            const queryObj = { stock: { $elemMatch: { productId: req.body.productId } } }
             const allBin = await StockCollection.find(queryObj)
             if (allBin == null || allBin == undefined) {
                 logger.error('Cannot retrieve from database', { body: req.body, value: allBin })
@@ -400,7 +437,7 @@ async function getSuggestion(req, res) {
                 X_index: tempBinIndex_X,
                 Y_index: tempBinIndex_Y
             },
-            stocks: [{
+            stock: [{
                 productId: req.body.productId,
                 orderId: req.body.orderId
             }]
@@ -438,7 +475,7 @@ async function putToLight(req, res) {
     }
     // get bin with the same binId, productId, orderId
     // if exist, update product quantity
-    const binList_1 = await StockCollection.find({ binId: req.body.binId, stocks: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } })
+    const binList_1 = await StockCollection.find({ binId: req.body.binId, stock: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } })
     try {
         // If bin exists, update product quantity on this bin
         if (binList_1.length == 1) {
@@ -528,7 +565,7 @@ async function putToLight(req, res) {
                     X_index: tempBinIndex_X,
                     Y_index: tempBinIndex_Y
                 },
-                stocks: [{
+                stock: [{
                     productId: req.body.productId,
                     orderId: req.body.orderId,
                     productQuantity: req.body.productQuantity,
@@ -567,12 +604,12 @@ async function putToLight(req, res) {
 
     async function updateProductQuantity(req, res, thisBin) {
         try {
-            thisBin.stocks.forEach(async (eachProduct, productIndex) => {
+            thisBin.stock.forEach(async (eachProduct, productIndex) => {
                 if (eachProduct.productId == req.body.productId && eachProduct.orderId == req.body.orderId) {
                     let updateProduct = eachProduct
                     updateProduct.productQuantity += req.body.productQuantity
-                    thisBin.stocks.push(updateProduct)
-                    thisBin.stocks.splice(productIndex, 1)
+                    thisBin.stock.push(updateProduct)
+                    thisBin.stock.splice(productIndex, 1)
                     const updatedBin = await thisBin.save()
                     _clearLightTimeout()
                     _clearLight()
@@ -597,7 +634,7 @@ async function putToLight(req, res) {
 
     async function pushNewProduct(req, res, thisBin) {
         try {
-            thisBin.stocks.push({
+            thisBin.stock.push({
                 productId: req.body.productId,
                 orderId: req.body.orderId,
                 productQuantity: req.body.productQuantity,
@@ -628,7 +665,7 @@ async function putToLight(req, res) {
 async function pickToLight(req, res) {
     try {
         // find all bin with input productId
-        let allMatchedBin = await StockCollection.find({ stocks: { $elemMatch: { productId: req.body.productId } } }, { _id: 0, coordinate: 1, binId: 1, stocks: 1 })
+        let allMatchedBin = await StockCollection.find({ stock: { $elemMatch: { productId: req.body.productId } } }, { _id: 0, coordinate: 1, binId: 1, stock: 1 })
         if (allMatchedBin.length == 0) {
             logger.error('ProductId not found', { body: req.body, value: allMatchedBin })
             return res.status(400).json({
@@ -641,7 +678,7 @@ async function pickToLight(req, res) {
             _clearLight()
             allMatchedBin.forEach(eachBin => {
                 // filering result
-                eachBin.stocks = eachBin.stocks.filter(eachProduct => {
+                eachBin.stock = eachBin.stock.filter(eachProduct => {
                     return eachProduct.productId == req.body.productId
                 })
                 // turn the light on
@@ -666,8 +703,8 @@ async function pickToLight(req, res) {
 
 async function clearStock(req, res) {
     try {
-        const stocks = await StockCollection.find()
-        stocks.forEach(async stock => {
+        const stock = await StockCollection.find()
+        stock.forEach(async stock => {
             await stock.remove()
         })
         tempLightCursor = 0
@@ -686,7 +723,7 @@ async function clearStock(req, res) {
         }).save()
         res.status(200).json({
             status: 'success',
-            message: 'Deleted stocks'
+            message: 'Clear stock'
         })
     } catch (err) {
         logger.error('Catch unknown error', { err: err })
