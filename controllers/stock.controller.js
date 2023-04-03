@@ -100,7 +100,7 @@ async function deleteBin(req, res) {
     return res.status()
 }
 
-async function getProductList() {
+async function getProductList(req, res) {
     try {
         const allBins = await StockCollection.find()
         if (allBins == undefined || allBins == null) {
@@ -112,26 +112,41 @@ async function getProductList() {
             })
         }
         else {
-            let productList = []
-            function includedInProductList(matchedId) {
-                productList.forEach(product => {
-                    if (product.productId == matchedId) return true
-                })
-                return false
-            }
+            let result = []
             allBins.forEach((eachBin, binIdx) => {
                 eachBin.stock.forEach(eachProduct => {
-                    if (includedInProductList(eachProduct.productId)) {
-                        productList.push(eachProduct.productId)
+                    let isIncluded = false
+                    result.forEach((product, idx) => {
+                        // console.log(product, id)
+                        if (product.productId == eachProduct.productId && product.orderId == eachProduct.orderId) {
+                            isIncluded = true
+                            product.productQuantity = product.productQuantity + eachProduct.productQuantity
+                            product.location.push({ binId: `TH-${eachBin.binId}`, quantity: eachProduct.productQuantity })
+                        }
+                    })
+                    if (!isIncluded) {
+                        let temp = eachProduct
+                        temp.location = []
+                        temp.location.push(eachBin.binId)
+                        result.push({
+                            productId: eachProduct.productId,
+                            price: eachProduct.price,
+                            orderId: eachProduct.orderId,
+                            productQuantity: eachProduct.productQuantity,
+                            notIncludedInOrder: eachProduct.notIncludedInOrder,
+                            location: [{ binId: `TH-${eachBin.binId}`, quantity: eachProduct.productQuantity }]
+                        })
                     }
                 })
             })
+            // result.sort(function (a, b) { return a.productId - b.productId })
             return res.status(200).json({
                 status: 'success',
-                data: productList
+                data: result
             })
         }
     } catch (err) {
+        console.log(err)
         logger.error('Catch unknown error', { query: req.query, err: err })
         return res.status(500).json({
             status: 'fail',
