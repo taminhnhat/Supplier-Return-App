@@ -36,7 +36,7 @@ const productList = [
 const orderList = ['590028/20/XT/QV/ABQ', '467537/20/XT/QV/ABQ', '989722/20/XT/QV/ABQ']
 
 function putToLight(binId, productId, orderId, productQuantity) {
-    axios.post('http://192.168.1.42:3000/api/v1/putToLight/', {
+    axios.post('http://192.168.1.43:3000/api/v1/putToLight/', {
         userId: "Minh_Nhat",
         productId: productId,
         orderId: orderId,
@@ -68,6 +68,13 @@ setTimeout(() => putToLight(6, productList[6], orderList[0], 23), 700)
 setTimeout(() => putToLight(7, productList[7], orderList[0], 22), 800)
 setTimeout(() => putToLight(8, productList[8], orderList[0], 72), 900)
 setTimeout(() => putToLight(9, productList[9], orderList[0], 3), 1000)
+
+setTimeout(() => putToLight(0, productList[0], orderList[1], 1), 1100)
+setTimeout(() => putToLight(2, productList[0], orderList[0], 2), 1200)
+setTimeout(() => putToLight(7, productList[0], orderList[1], 3), 1300)
+
+setTimeout(() => putToLight(7, productList[9], orderList[0], 1), 1400)
+setTimeout(() => putToLight(4, productList[9], orderList[0], 2), 1500)
 
 // putToLight(0, productList[0], orderList[1], 32)
 // putToLight(1, productList[1], orderList[1], 5)
