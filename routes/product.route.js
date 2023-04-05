@@ -18,7 +18,7 @@ router.post('/pickToLight', stockCtrl.pickToLight)
 
 router.get('/products/search', stockCtrl.searchProduct)
 
-router.delete('/products/:productId', stockCtrl.deleteProduct)
+router.delete('/products/delete/:productId', stockCtrl.deleteProduct)
 
 router
     .route('/configurations')

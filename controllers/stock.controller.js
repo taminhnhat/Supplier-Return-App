@@ -117,7 +117,6 @@ async function getProductList(req, res) {
                 eachBin.stock.forEach(eachProduct => {
                     let isIncluded = false
                     result.forEach((product, idx) => {
-                        // console.log(product, id)
                         if (product.productId == eachProduct.productId && product.orderId == eachProduct.orderId) {
                             isIncluded = true
                             product.productQuantity = product.productQuantity + eachProduct.productQuantity
@@ -146,7 +145,6 @@ async function getProductList(req, res) {
             })
         }
     } catch (err) {
-        console.log(err)
         logger.error('Catch unknown error', { query: req.query, err: err })
         return res.status(500).json({
             status: 'fail',
@@ -219,8 +217,10 @@ async function searchProduct(req, res) {
 async function deleteProduct(req, res) {
     try {
         // get matched bin
-        const inputProductId = String(req.params.productId)
-        const allMatchedBin = await StockCollection.find({ stock: { $elemMatch: { productId: inputProductId } } }, { _id: 0, binId: 1, stock: 1 })
+        const inputProductId = req.params.productId
+
+        const allMatchedBin = await StockCollection.find({ stock: { $elemMatch: { productId: inputProductId } } }, { _id: 1, coordinate: 1, binId: 1, stock: 1 })
+
         // if stock is empty
         if (allMatchedBin == null || allMatchedBin == undefined) {
             logger.error('Cannot retrieve from database', { query: req.query, value: allMatchedBin })
@@ -243,16 +243,18 @@ async function deleteProduct(req, res) {
             })
             eachBin.stock = filteredBin
         })
+
         // return res.status(202).json(allMatchedBin)
         // update stock
         let result = []
         allMatchedBin.forEach(async (eachBin, index) => {
             const out = await eachBin.save()
             result.push(out)
-            if (index == allMatchedBin.length - 1) return res.status(200).json({
-                status: 'success',
-                data: result
-            })
+            if (index == allMatchedBin.length - 1)
+                return res.status(200).json({
+                    status: 'success',
+                    data: result
+                })
         })
     } catch (err) {
         logger.error('Catch unknown error', { query: req.query, err: err })
