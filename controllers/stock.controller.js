@@ -317,6 +317,13 @@ async function getSuggestion(req, res) {
             message: 'Mã phiếu không hợp lệ'
         });
     }
+    if (req.body.price == '' || req.body.price == undefined) {
+        logger.error('Invalid price', { body: req.body })
+        return res.status(400).json({
+            status: 'fail',
+            message: 'Giá sản phẩm không hợp lệ'
+        });
+    }
     if (req.body.notIncludedInOrder == true) {
         logger.warn('Product is not included in order', { body: req.body })
     }
@@ -584,6 +591,8 @@ async function putToLight(req, res) {
                 },
                 stock: [{
                     productId: req.body.productId,
+                    productName: req.body.productName || '',
+                    M_Product_ID: req.body.M_Product_ID || '',
                     orderId: req.body.orderId,
                     productQuantity: req.body.productQuantity,
                     price: req.body.price,
@@ -653,6 +662,8 @@ async function putToLight(req, res) {
         try {
             thisBin.stock.push({
                 productId: req.body.productId,
+                productName: req.body.productName || '',
+                M_Product_ID: req.body.M_Product_ID || '',
                 orderId: req.body.orderId,
                 productQuantity: req.body.productQuantity,
                 price: req.body.price,
