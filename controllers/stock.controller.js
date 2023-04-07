@@ -691,47 +691,77 @@ async function updateQuantity(req, res) {
     try {
         let result = []
         const locations = req.body.locations
+        let updateToBeDone = []
+
         // find all matched bins
         locations.forEach(async (location, idx) => {
             let bin = await StockCollection.findOne({ binId: location.binId, stock: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } },
                 { _id: 1, binId: 1, coordinate: 1, stock: 1 })
             // update quantity
-            new Promise((resolve, reject) => {
-                try {
-                    bin.stock.forEach(async (eachProduct, productIndex) => {
-                        if (eachProduct.productId == req.body.productId && eachProduct.orderId == req.body.orderId) {
-                            let updateProduct = eachProduct
-                            updateProduct.productQuantity = location.productQuantity
-                            bin.stock.push(updateProduct)
-                            bin.stock.splice(productIndex, 1)
-                        }
-                        if (productIndex == bin.stock.length - 1) resolve()
-                    })
+            if (bin != null) {
+                console.log(`found bin: ${bin.binId}`)
+                updateToBeDone.push({ bin: bin, productQuantity: location.productQuantity })
+            }
+            // end of forEach
+            if (idx == locations.length - 1) {
+                // if no bin found
+                if (updateToBeDone.length == 0) {
+                    logger.error('Invalid product information', { body: req.body })
+                    return res.status(400).json({
+                        status: 'fail',
+                        message: 'Không tìm thấy thông tin sản phẩm',
+                        error: 'Invalid product information'
+                    });
                 }
-                catch (err) {
-                    reject(err)
+                else {
+                    console.log('bins:', updateToBeDone)
+                    // Update all matched bins
+                    updateBins(updateToBeDone)
                 }
-            })
-                .then(async () => {
-                    // resolve
-                    const updatedBin = await bin.save()
-                    result.push(updatedBin)
-                    if (idx == locations.length - 1)
-                        return res.status(201).json({
-                            status: 'success',
-                            data: result
-                        })
-                },
-                    (err) => {
-                        // reject
-                        logger.error('Catch unknown error', { body: req.body, err: err })
-                        return res.status(500).json({
-                            status: 'fail',
-                            message: 'Lỗi hệ thống',
-                            error: err
-                        })
-                    })
+            }
         })
+
+        // Update all matched bins
+        function updateBins(changes) {
+            changes.forEach((change, idx) => {
+                new Promise((resolve, reject) => {
+                    try {
+                        let bin = change.bin
+                        bin.stock.forEach(async (eachProduct, productIndex) => {
+                            if (eachProduct.productId == req.body.productId && eachProduct.orderId == req.body.orderId) {
+                                let updateProduct = eachProduct
+                                updateProduct.productQuantity = change.productQuantity
+                                bin.stock.push(updateProduct)
+                                bin.stock.splice(productIndex, 1)
+                            }
+                            if (productIndex == bin.stock.length - 1) resolve(bin)
+                        })
+                    }
+                    catch (err) {
+                        reject(err)
+                    }
+                })
+                    .then(async (bin) => {
+                        // resolve
+                        const updatedBin = await bin.save()
+                        result.push(updatedBin)
+                        if (idx == changes.length - 1)
+                            return res.status(201).json({
+                                status: 'success',
+                                data: result
+                            })
+                    },
+                        (err) => {
+                            // reject
+                            logger.error('Catch unknown error', { body: req.body, err: err })
+                            return res.status(500).json({
+                                status: 'fail',
+                                message: 'Lỗi hệ thống',
+                                error: err
+                            })
+                        })
+            })
+        }
     }
     catch (err) {
         logger.error('Catch unknown error', { body: req.body, err: err })
