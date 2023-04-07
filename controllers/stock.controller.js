@@ -3,7 +3,6 @@ const logger = require('../logger/logger')
 const StockCollection = require('../models/stock')
 const BackupCollection = require('../models/backup')
 const rgbHub = require('../rgbHub')
-const { set } = require('mongoose')
 
 let tempLightCursor = 0;
 let tempBinIndex = 0;
@@ -243,8 +242,6 @@ async function deleteProduct(req, res) {
             })
             eachBin.stock = filteredBin
         })
-
-        // return res.status(202).json(allMatchedBin)
         // update stock
         let result = []
         allMatchedBin.forEach(async (eachBin, index) => {
@@ -690,6 +687,62 @@ async function putToLight(req, res) {
     }
 }
 
+async function updateQuantity(req, res) {
+    try {
+        let result = []
+        const locations = req.body.locations
+        // find all matched bins
+        locations.forEach(async (location, idx) => {
+            let bin = await StockCollection.findOne({ binId: location.binId, stock: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } },
+                { _id: 1, binId: 1, coordinate: 1, stock: 1 })
+            // update quantity
+            new Promise((resolve, reject) => {
+                try {
+                    bin.stock.forEach(async (eachProduct, productIndex) => {
+                        if (eachProduct.productId == req.body.productId && eachProduct.orderId == req.body.orderId) {
+                            let updateProduct = eachProduct
+                            updateProduct.productQuantity = location.productQuantity
+                            bin.stock.push(updateProduct)
+                            bin.stock.splice(productIndex, 1)
+                        }
+                        if (productIndex == bin.stock.length - 1) resolve()
+                    })
+                }
+                catch (err) {
+                    reject(err)
+                }
+            })
+                .then(async () => {
+                    // resolve
+                    const updatedBin = await bin.save()
+                    result.push(updatedBin)
+                    if (idx == locations.length - 1)
+                        return res.status(201).json({
+                            status: 'success',
+                            data: result
+                        })
+                },
+                    (err) => {
+                        // reject
+                        logger.error('Catch unknown error', { body: req.body, err: err })
+                        return res.status(500).json({
+                            status: 'fail',
+                            message: 'Lỗi hệ thống',
+                            error: err
+                        })
+                    })
+        })
+    }
+    catch (err) {
+        logger.error('Catch unknown error', { body: req.body, err: err })
+        return res.status(500).json({
+            status: 'fail',
+            message: 'Lỗi hệ thống',
+            error: err
+        })
+    }
+}
+
 async function pickToLight(req, res) {
     try {
         // find all bin with input productId
@@ -833,6 +886,7 @@ module.exports = {
     clearStock,
     getProductList,
     putToLight,
+    updateQuantity,
     pickToLight,
     getConfiguration,
     config,
