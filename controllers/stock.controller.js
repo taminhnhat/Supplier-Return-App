@@ -119,6 +119,7 @@ async function getProductList(req, res) {
                         if (product.productId == eachProduct.productId && product.orderId == eachProduct.orderId) {
                             isIncluded = true
                             product.productQuantity = product.productQuantity + eachProduct.productQuantity
+                            if (eachProduct.vendorName != undefined) product.vendorName = eachProduct.vendorName
                             product.location.push({ binId: `TH-${eachBin.binId}`, quantity: eachProduct.productQuantity })
                         }
                     })
@@ -131,6 +132,7 @@ async function getProductList(req, res) {
                             productName: eachProduct.productName,
                             M_Product_ID: eachProduct.M_Product_ID,
                             price: eachProduct.price,
+                            vendorName: eachProduct.vendorName || '',
                             orderId: eachProduct.orderId,
                             productQuantity: eachProduct.productQuantity,
                             notIncludedInOrder: eachProduct.notIncludedInOrder,
@@ -539,6 +541,7 @@ async function putToLight(req, res) {
         }
     }
     catch (err) {
+        console.log(err)
         logger.error('Catch unknown error', { body: req.body, err: err })
         return res.status(500).json({
             status: 'fail',
@@ -592,9 +595,10 @@ async function putToLight(req, res) {
                     productId: req.body.productId,
                     productName: req.body.productName || '',
                     M_Product_ID: req.body.M_Product_ID || '',
+                    price: req.body.price,
+                    vendorName: req.body.vendorName,
                     orderId: req.body.orderId,
                     productQuantity: req.body.productQuantity,
-                    price: req.body.price,
                     notIncludedInOrder: req.body.notIncludedInOrder
                 }]
             });
@@ -618,6 +622,7 @@ async function putToLight(req, res) {
                 data: newStock
             })
         } catch (err) {
+            console.log(err)
             logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
@@ -648,6 +653,7 @@ async function putToLight(req, res) {
                 }
             })
         } catch (err) {
+            console.log(err)
             logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
@@ -663,9 +669,10 @@ async function putToLight(req, res) {
                 productId: req.body.productId,
                 productName: req.body.productName || '',
                 M_Product_ID: req.body.M_Product_ID || '',
+                price: req.body.price,
+                vendorName: req.body.vendorName,
                 orderId: req.body.orderId,
                 productQuantity: req.body.productQuantity,
-                price: req.body.price,
                 notIncludedInOrder: req.body.notIncludedInOrder
             })
             const updatedBin = await thisBin.save()
@@ -679,6 +686,7 @@ async function putToLight(req, res) {
                 data: updatedBin
             })
         } catch (err) {
+            console.log(err)
             logger.error('Catch unknown error', { body: req.body, err: err })
             return res.status(500).json({
                 status: 'fail',
