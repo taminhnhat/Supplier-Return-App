@@ -128,6 +128,8 @@ async function getProductList(req, res) {
                         temp.location.push(eachBin.binId)
                         result.push({
                             productId: eachProduct.productId,
+                            productName: eachProduct.productName,
+                            M_Product_ID: eachProduct.M_Product_ID,
                             price: eachProduct.price,
                             orderId: eachProduct.orderId,
                             productQuantity: eachProduct.productQuantity,
@@ -695,11 +697,10 @@ async function updateQuantity(req, res) {
 
         // find all matched bins
         locations.forEach(async (location, idx) => {
-            let bin = await StockCollection.findOne({ binId: location.binId, stock: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } },
+            const bin = await StockCollection.findOne({ binId: location.binId, stock: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } },
                 { _id: 1, binId: 1, coordinate: 1, stock: 1 })
             // update quantity
             if (bin != null) {
-                console.log(`found bin: ${bin.binId}`)
                 updateToBeDone.push({ bin: bin, productQuantity: location.productQuantity })
             }
             // end of forEach
@@ -714,7 +715,6 @@ async function updateQuantity(req, res) {
                     });
                 }
                 else {
-                    console.log('bins:', updateToBeDone)
                     // Update all matched bins
                     updateBins(updateToBeDone)
                 }
