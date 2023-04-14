@@ -136,7 +136,7 @@ async function getProductList(req, res) {
                             orderId: eachProduct.orderId,
                             productQuantity: eachProduct.productQuantity,
                             notIncludedInOrder: eachProduct.notIncludedInOrder,
-                            location: [{ binId: `TH-${eachBin.binId}`, quantity: eachProduct.productQuantity }]
+                            location: [{ binId: eachBin.binId, binCode: `TH-${eachBin.binId}`, quantity: eachProduct.productQuantity }]
                         })
                     }
                 })
