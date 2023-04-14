@@ -717,7 +717,7 @@ async function updateQuantity(req, res) {
                 { _id: 1, binId: 1, coordinate: 1, stock: 1 })
             // update quantity
             if (bin != null) {
-                updateToBeDone.push({ bin: bin, productQuantity: location.quantity })
+                updateToBeDone.push({ bin: bin, productQuantity: Number(location.quantity) })
             }
             // end of forEach
             if (idx == locations.length - 1) {
