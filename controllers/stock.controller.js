@@ -705,11 +705,19 @@ async function updateQuantity(req, res) {
 
         // find all matched bins
         locations.forEach(async (location, idx) => {
+            if (location.quantity == undefined) {
+                logger.error('Invalid product information', { body: req.body })
+                return res.status(400).json({
+                    status: 'fail',
+                    message: 'Số lượng sản phẩm không hợp lệ',
+                    error: 'Invalid product information'
+                });
+            }
             const bin = await StockCollection.findOne({ binId: location.binId, stock: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } },
                 { _id: 1, binId: 1, coordinate: 1, stock: 1 })
             // update quantity
             if (bin != null) {
-                updateToBeDone.push({ bin: bin, productQuantity: location.productQuantity })
+                updateToBeDone.push({ bin: bin, productQuantity: location.quantity })
             }
             // end of forEach
             if (idx == locations.length - 1) {
