@@ -120,7 +120,7 @@ async function getProductList(req, res) {
                             isIncluded = true
                             product.productQuantity = product.productQuantity + eachProduct.productQuantity
                             if (eachProduct.vendorName != undefined) product.vendorName = eachProduct.vendorName
-                            product.location.push({ binId: `TH-${eachBin.binId}`, quantity: eachProduct.productQuantity })
+                            product.location.push({ binId: eachBin.binId, binCode: `TH-${eachBin.binId}`, quantity: eachProduct.productQuantity })
                         }
                     })
                     if (!isIncluded) {
