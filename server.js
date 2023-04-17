@@ -18,3 +18,7 @@ app.listen(port, (err) => {
     if (err) console.log(err)
     logger.info(`HTTP Server started at port ${port}`)
 })
+
+app.on('error', err => {
+    logger.error({ message: 'server error', error: err })
+})

@@ -119,6 +119,8 @@ async function getProductList(req, res) {
                         if (product.productId == eachProduct.productId && product.orderId == eachProduct.orderId) {
                             isIncluded = true
                             product.productQuantity = product.productQuantity + eachProduct.productQuantity
+                            product.passedProductQuantity = product.passedProductQuantity + eachProduct.passedProductQuantity
+                            product.scrappedProductQuantity = product.scrappedProductQuantity + eachProduct.scrappedProductQuantity
                             if (eachProduct.vendorName != undefined) product.vendorName = eachProduct.vendorName
                             product.location.push({ binId: eachBin.binId, binCode: `TH-${eachBin.binId}`, quantity: eachProduct.productQuantity })
                         }
@@ -135,8 +137,15 @@ async function getProductList(req, res) {
                             vendorName: eachProduct.vendorName || '',
                             orderId: eachProduct.orderId,
                             productQuantity: eachProduct.productQuantity,
+                            passedProductQuantity: eachProduct.passedProductQuantity,
+                            scrappedProductQuantity: eachProduct.scrappedProductQuantity,
                             notIncludedInOrder: eachProduct.notIncludedInOrder,
-                            location: [{ binId: eachBin.binId, binCode: `TH-${eachBin.binId}`, quantity: eachProduct.productQuantity }]
+                            location: [{
+                                binId: eachBin.binId,
+                                binCode: `TH-${eachBin.binId}`,
+                                passedQuantity: eachProduct.passedProductQuantity,
+                                scrappedQuantity: eachProduct.scrappedProductQuantity
+                            }]
                         })
                     }
                 })
@@ -500,7 +509,7 @@ async function putToLight(req, res) {
     }
     // get bin with the same binId, productId, orderId
     // if exist, update product quantity
-    const binList_1 = await StockCollection.find({ binId: req.body.binId, stock: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } })
+    const binList_1 = await StockCollection.find({ binId: Number(req.body.binId), stock: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } })
     try {
         // If bin exists, update product quantity on this bin
         if (binList_1.length == 1) {
@@ -510,7 +519,7 @@ async function putToLight(req, res) {
         // If no bin matched, find bin with the same binId only
         else if (binList_1.length == 0) {
             // get bin with the same binId only
-            const binList_2 = await StockCollection.find({ binId: req.body.binId })
+            const binList_2 = await StockCollection.find({ binId: Number(req.body.binId) })
             if (binList_2.length == 1) {
                 // push new product to this bin
                 const thisBin = binList_2[0]
@@ -582,6 +591,8 @@ async function putToLight(req, res) {
         }
 
         try {
+            const passedProQty = Number(req.body.passedProductQuantity || 0)
+            const scrappedProQty = Number(req.body.scrappedProductQuantity || 0)
             const stock = new StockCollection({
                 binId: tempBinIndex,
                 binWidth: req.body.binWidth,
@@ -598,7 +609,9 @@ async function putToLight(req, res) {
                     price: req.body.price,
                     vendorName: req.body.vendorName,
                     orderId: req.body.orderId,
-                    productQuantity: req.body.productQuantity,
+                    passedProductQuantity: passedProQty,
+                    scrappedProductQuantity: scrappedProQty,
+                    productQuantity: passedProQty + scrappedProQty,
                     notIncludedInOrder: req.body.notIncludedInOrder
                 }]
             });
@@ -637,7 +650,11 @@ async function putToLight(req, res) {
             thisBin.stock.forEach(async (eachProduct, productIndex) => {
                 if (eachProduct.productId == req.body.productId && eachProduct.orderId == req.body.orderId) {
                     let updateProduct = eachProduct
-                    updateProduct.productQuantity += req.body.productQuantity
+                    const passedProQty = Number(req.body.passedProductQuantity)
+                    const scrappedProQty = Number(req.body.scrappedProductQuantity)
+                    updateProduct.passedProductQuantity = updateProduct.passedProductQuantity || 0 + passedProQty
+                    updateProduct.scrappedProductQuantity = updateProduct.scrappedProductQuantity || 0 + scrappedProQty
+                    updateProduct.productQuantity += (passedProQty + scrappedProQty)
                     thisBin.stock.push(updateProduct)
                     thisBin.stock.splice(productIndex, 1)
                     const updatedBin = await thisBin.save()
@@ -665,6 +682,8 @@ async function putToLight(req, res) {
 
     async function pushNewProduct(req, res, thisBin) {
         try {
+            const passedProQty = Number(req.body.passedProductQuantity || 0)
+            const scrappedProQty = Number(req.body.scrappedProductQuantity || 0)
             thisBin.stock.push({
                 productId: req.body.productId,
                 productName: req.body.productName || '',
@@ -672,7 +691,9 @@ async function putToLight(req, res) {
                 price: req.body.price,
                 vendorName: req.body.vendorName,
                 orderId: req.body.orderId,
-                productQuantity: req.body.productQuantity,
+                passedProductQuantity: passedProQty,
+                scrappedProductQuantity: scrappedProQty,
+                productQuantity: passedProQty + scrappedProQty,
                 notIncludedInOrder: req.body.notIncludedInOrder
             })
             const updatedBin = await thisBin.save()
@@ -717,7 +738,11 @@ async function updateQuantity(req, res) {
                 { _id: 1, binId: 1, coordinate: 1, stock: 1 })
             // update quantity
             if (bin != null) {
-                updateToBeDone.push({ bin: bin, productQuantity: Number(location.quantity) })
+                updateToBeDone.push({
+                    bin: bin,
+                    passedProductQuantity: Number(location.passedQuantity),
+                    scrappedProductQuantity: Number(location.scrappedQuantity)
+                })
             }
             // end of forEach
             if (idx == locations.length - 1) {
@@ -746,7 +771,9 @@ async function updateQuantity(req, res) {
                         bin.stock.forEach(async (eachProduct, productIndex) => {
                             if (eachProduct.productId == req.body.productId && eachProduct.orderId == req.body.orderId) {
                                 let updateProduct = eachProduct
-                                updateProduct.productQuantity = change.productQuantity
+                                updateProduct.passedProductQuantity = change.passedProductQuantity
+                                updateProduct.scrappedProductQuantity = change.scrappedProductQuantity
+                                updateProduct.productQuantity = change.passedProductQuantity + change.scrappedProductQuantity
                                 bin.stock.push(updateProduct)
                                 bin.stock.splice(productIndex, 1)
                             }

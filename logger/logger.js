@@ -5,8 +5,14 @@ const winston = require('winston');
 const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
+        winston.format.timestamp({ format: 'DD/MM/YYYY hh:mm:ss A' }),
+        winston.format.json(),
+        winston.format.printf(({ level, message, timestamp, error, value }) => {
+            let res = `${timestamp} ${level.toUpperCase()} ${message}`
+            if (error != undefined) res += ` ${JSON.stringify(error)}`
+            if (value != undefined) res += ` ${JSON.stringify(value)}`
+            return res
+        })
     ),
     transports: [
         //
@@ -27,8 +33,12 @@ if (process.env.NODE_ENV !== 'production') {
         format: winston.format.combine(
             winston.format.colorize(),
             winston.format.timestamp(),
-            winston.format.splat(),
-            winston.format.simple()
+            winston.format.printf(({ level, message, timestamp, error, value }) => {
+                let res = `${timestamp} ${level.toUpperCase()} ${message}`
+                if (error != undefined) res += ` ${JSON.stringify(error)}`
+                if (value != undefined) res += ` ${JSON.stringify(value)}`
+                return res
+            })
         ),
     }));
 }
