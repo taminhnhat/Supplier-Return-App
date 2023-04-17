@@ -122,7 +122,12 @@ async function getProductList(req, res) {
                             product.passedProductQuantity = product.passedProductQuantity + eachProduct.passedProductQuantity
                             product.scrappedProductQuantity = product.scrappedProductQuantity + eachProduct.scrappedProductQuantity
                             if (eachProduct.vendorName != undefined) product.vendorName = eachProduct.vendorName
-                            product.location.push({ binId: eachBin.binId, binCode: `TH-${eachBin.binId}`, quantity: eachProduct.productQuantity })
+                            product.location.push({
+                                binId: eachBin.binId,
+                                binCode: `TH-${eachBin.binId}`,
+                                passedQuantity: eachProduct.passedProductQuantity,
+                                scrappedQuantity: eachProduct.scrappedProductQuantity
+                            })
                         }
                     })
                     if (!isIncluded) {
@@ -560,6 +565,7 @@ async function putToLight(req, res) {
     }
 
     async function createNewBin(req, res) {
+        logger.debug('putToLight:create new bin')
         //
         const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER)
         const binWidthInCm = Number(req.body.binWidth.replace('cm', '').replace('Cm', '').replace('CM', ''))
@@ -595,6 +601,7 @@ async function putToLight(req, res) {
             const scrappedProQty = Number(req.body.scrappedProductQuantity || 0)
             const stock = new StockCollection({
                 binId: tempBinIndex,
+                binName: `TH-${tempBinIndex}`,
                 binWidth: req.body.binWidth,
                 coordinate: {
                     startPoint: startPoint,
@@ -646,14 +653,15 @@ async function putToLight(req, res) {
     }
 
     async function updateProductQuantity(req, res, thisBin) {
+        logger.debug('putToLight:update quantity')
         try {
             thisBin.stock.forEach(async (eachProduct, productIndex) => {
                 if (eachProduct.productId == req.body.productId && eachProduct.orderId == req.body.orderId) {
                     let updateProduct = eachProduct
                     const passedProQty = Number(req.body.passedProductQuantity)
                     const scrappedProQty = Number(req.body.scrappedProductQuantity)
-                    updateProduct.passedProductQuantity = updateProduct.passedProductQuantity || 0 + passedProQty
-                    updateProduct.scrappedProductQuantity = updateProduct.scrappedProductQuantity || 0 + scrappedProQty
+                    updateProduct.passedProductQuantity = updateProduct.passedProductQuantity + passedProQty
+                    updateProduct.scrappedProductQuantity = updateProduct.scrappedProductQuantity + scrappedProQty
                     updateProduct.productQuantity += (passedProQty + scrappedProQty)
                     thisBin.stock.push(updateProduct)
                     thisBin.stock.splice(productIndex, 1)
@@ -681,6 +689,7 @@ async function putToLight(req, res) {
     }
 
     async function pushNewProduct(req, res, thisBin) {
+        logger.debug('putToLight:push new product')
         try {
             const passedProQty = Number(req.body.passedProductQuantity || 0)
             const scrappedProQty = Number(req.body.scrappedProductQuantity || 0)
@@ -726,7 +735,7 @@ async function updateQuantity(req, res) {
 
         // find all matched bins
         locations.forEach(async (location, idx) => {
-            if (location.quantity == undefined) {
+            if (location.passedQuantity == undefined || location.scrappedQuantity == undefined) {
                 logger.error('Invalid product information', { body: req.body })
                 return res.status(400).json({
                     status: 'fail',
