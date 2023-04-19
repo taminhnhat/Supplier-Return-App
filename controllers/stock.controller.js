@@ -3,6 +3,7 @@ const logger = require('../logger/logger')
 const StockCollection = require('../models/stock')
 const BackupCollection = require('../models/backup')
 const rgbHub = require('../rgbHub')
+const { all } = require('axios')
 
 let tempLightCursor = 0;
 let tempBinIndex = 0;
@@ -118,15 +119,17 @@ async function getProductList(req, res) {
                     result.forEach((product, idx) => {
                         if (product.productId == eachProduct.productId && product.orderId == eachProduct.orderId) {
                             isIncluded = true
-                            product.productQuantity = product.productQuantity + eachProduct.productQuantity
-                            product.passedProductQuantity = product.passedProductQuantity + eachProduct.passedProductQuantity
-                            product.scrappedProductQuantity = product.scrappedProductQuantity + eachProduct.scrappedProductQuantity
+                            product.productQuantity += eachProduct.productQuantity
+                            product.passedProductQuantity += eachProduct.passedProductQuantity
+                            product.scrappedProductQuantity += eachProduct.scrappedProductQuantity
+                            product.pickedProductQuantity += eachProduct.pickedProductQuantity
                             if (eachProduct.vendorName != undefined) product.vendorName = eachProduct.vendorName
                             product.location.push({
                                 binId: eachBin.binId,
                                 binCode: `TH-${eachBin.binId}`,
                                 passedQuantity: eachProduct.passedProductQuantity,
-                                scrappedQuantity: eachProduct.scrappedProductQuantity
+                                scrappedQuantity: eachProduct.scrappedProductQuantity,
+                                pickedQuantity: eachProduct.pickedProductQuantity
                             })
                         }
                     })
@@ -144,12 +147,14 @@ async function getProductList(req, res) {
                             productQuantity: eachProduct.productQuantity,
                             passedProductQuantity: eachProduct.passedProductQuantity,
                             scrappedProductQuantity: eachProduct.scrappedProductQuantity,
+                            pickedProductQuantity: eachProduct.pickedProductQuantity,
                             notIncludedInOrder: eachProduct.notIncludedInOrder,
                             location: [{
                                 binId: eachBin.binId,
                                 binCode: `TH-${eachBin.binId}`,
                                 passedQuantity: eachProduct.passedProductQuantity,
-                                scrappedQuantity: eachProduct.scrappedProductQuantity
+                                scrappedQuantity: eachProduct.scrappedProductQuantity,
+                                pickedQuantity: eachProduct.pickedProductQuantity
                             }]
                         })
                     }
@@ -205,21 +210,43 @@ async function searchProduct(req, res) {
                 return eachProduct.productId == productIdFromRequest
             })
         });
+        let passedProQty = 0
+        let scrappedProQty = 0
+        let pickedProQty = 0
 
         // if lightOn mode is true
         if (lightOnFlag == 'true') {
             _clearLightTimeout()
             _clearLight()
             allMatchedBin.forEach(eachBin => {
+                bin.stock.forEach(product => {
+                    passedProQty += product.passedProductQuantity
+                    scrappedProQty += product.scrappedProductQuantity
+                    pickedProQty += product.pickedProductQuantity
+                })
                 // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
             })
             _setLightTimeout(holdingLightInSeconds)
         }
+        else {
+            allMatchedBin.forEach(bin => {
+                bin.stock.forEach(product => {
+                    passedProQty += product.passedProductQuantity
+                    scrappedProQty += product.scrappedProductQuantity
+                    pickedProQty += product.pickedProductQuantity
+                })
+            })
+        }
 
         return res.status(200).json({
             status: 'success',
-            data: allMatchedBin
+            data: {
+                passedProductQuantity: passedProQty,
+                scrappedProductQuantity: scrappedProQty,
+                pickedProductQuantity: pickedProQty,
+                bins: allMatchedBin
+            }
         })
     } catch (err) {
         logger.error('Catch unknown error', { query: req.query, err: err })
@@ -619,6 +646,7 @@ async function putToLight(req, res) {
                     passedProductQuantity: passedProQty,
                     scrappedProductQuantity: scrappedProQty,
                     productQuantity: passedProQty + scrappedProQty,
+                    pickedProductQuantity: 0,
                     notIncludedInOrder: req.body.notIncludedInOrder
                 }]
             });
@@ -703,6 +731,7 @@ async function putToLight(req, res) {
                 passedProductQuantity: passedProQty,
                 scrappedProductQuantity: scrappedProQty,
                 productQuantity: passedProQty + scrappedProQty,
+                pickedProductQuantity: 0,
                 notIncludedInOrder: req.body.notIncludedInOrder
             })
             const updatedBin = await thisBin.save()
@@ -727,7 +756,7 @@ async function putToLight(req, res) {
     }
 }
 
-async function updateQuantity(req, res) {
+async function putToLight_updateQuantity(req, res) {
     try {
         let result = []
         const locations = req.body.locations
@@ -825,10 +854,93 @@ async function updateQuantity(req, res) {
     }
 }
 
+async function pickToLight_search(req, res) {
+    try {
+        const allBins = await StockCollection.find({ stock: { $elemMatch: { productId: req.body.productId } } })
+        if (allBins == undefined || allBins.length == null) {
+            logger.error('Cannot retrieve from database', { query: req.query, value: allBins })
+            return res.status(500).json({
+                status: 'fail',
+                message: 'Loi he thong',
+                error: 'Khong truy xuat duoc database'
+            })
+        }
+        else if (allBins.length == 0) {
+            logger.error('ProductId not found', { body: req.body })
+            return res.status(400).json({
+                status: 'fail',
+                message: `Không tìm thấy mã sản phẩm: ${req.body.productId}`
+            })
+        }
+        else {
+            let result = []
+            allBins.forEach(bin => {
+                bin.stock.forEach(product => {
+                    let isIncluded = false
+                    result.forEach((tmp, idx) => {
+                        if (product.productId == tmp.productId && product.orderId == tmp.orderId) {
+                            isIncluded = true
+                            product.productQuantity += tmp.productQuantity
+                            product.passedProductQuantity += tmp.passedProductQuantity
+                            product.scrappedProductQuantity += tmp.scrappedProductQuantity
+                            product.pickedProductQuantity += tmp.pickedProductQuantity
+                            if (product.vendorName != undefined) product.vendorName = product.vendorName
+                            product.location.push({
+                                binId: bin.binId,
+                                binCode: `TH-${bin.binId}`,
+                                passedQuantity: product.passedProductQuantity,
+                                scrappedQuantity: product.scrappedProductQuantity,
+                                pickedQuantity: product.pickedProductQuantity
+                            })
+                        }
+                    })
+                    if (!isIncluded) {
+                        let temp = product
+                        temp.location = []
+                        temp.location.push(bin.binId)
+                        result.push({
+                            productId: product.productId,
+                            productName: product.productName,
+                            M_Product_ID: product.M_Product_ID,
+                            price: product.price,
+                            vendorName: product.vendorName || '',
+                            orderId: product.orderId,
+                            productQuantity: product.productQuantity,
+                            passedProductQuantity: product.passedProductQuantity,
+                            scrappedProductQuantity: product.scrappedProductQuantity,
+                            pickedProductQuantity: product.pickedProductQuantity,
+                            notIncludedInOrder: product.notIncludedInOrder,
+                            location: [{
+                                binId: bin.binId,
+                                binCode: `TH-${bin.binId}`,
+                                passedQuantity: product.passedProductQuantity,
+                                scrappedQuantity: product.scrappedProductQuantity,
+                                pickedQuantity: product.pickedProductQuantity
+                            }]
+                        })
+                    }
+                })
+            })
+            // result.sort(function (a, b) { return a.productId - b.productId })
+            return res.status(200).json({
+                status: 'success',
+                data: result
+            })
+        }
+    } catch (err) {
+        console.log(err)
+        logger.error('Catch unknown error', { value: { body: req.body }, error: err })
+        return res.status(500).json({
+            status: 'fail',
+            message: 'Loi he thong',
+            error: err
+        })
+    }
+}
 async function pickToLight(req, res) {
     try {
         // find all bin with input productId
-        let allMatchedBin = await StockCollection.find({ stock: { $elemMatch: { productId: req.body.productId } } }, { _id: 0, coordinate: 1, binId: 1, stock: 1 })
+        let allMatchedBin = await StockCollection.find({ stock: { $elemMatch: { productId: req.body.productId } } }, { _id: 1, coordinate: 1, binId: 1, stock: 1 })
         if (allMatchedBin.length == 0) {
             logger.error('ProductId not found', { body: req.body, value: allMatchedBin })
             return res.status(400).json({
@@ -839,20 +951,34 @@ async function pickToLight(req, res) {
         else {
             _clearLightTimeout()
             _clearLight()
-            allMatchedBin.forEach(eachBin => {
+            let result = []
+            allMatchedBin.forEach(async (bin, binIdx) => {
                 // filering result
-                eachBin.stock = eachBin.stock.filter(eachProduct => {
+                bin.stock.forEach((product, proIdx) => {
+                    if (product.productId == req.body.productId) {
+                        let updateProduct = product
+                        updateProduct.pickedProductQuantity = updateProduct.productQuantity
+                        bin.stock.push(updateProduct)
+                        bin.stock.splice(proIdx, 1)
+                    }
+                })
+                const tmp = await bin.save()
+                console.log(tmp.stock)
+                result.push(tmp)
+                bin.stock = bin.stock.filter(eachProduct => {
                     return eachProduct.productId == req.body.productId
                 })
                 // turn the light on
-                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${pickingLightColor}\n`)
-            });
-            _setLightTimeout(holdingLightInSeconds)
+                rgbHub.write(`W${bin.coordinate.Y_index + 1}:${bin.coordinate.startPoint}:${bin.coordinate.endPoint}:${pickingLightColor}\n`)
+                if (binIdx == allMatchedBin.length - 1) {
+                    _setLightTimeout(holdingLightInSeconds)
 
-            return res.status(200).json({
-                status: 'success',
-                data: allMatchedBin
-            })
+                    return res.status(200).json({
+                        status: 'success',
+                        data: result
+                    })
+                }
+            });
         }
     } catch (err) {
         logger.error('Catch unknown error', { body: req.body, err: err })
@@ -968,7 +1094,8 @@ module.exports = {
     clearStock,
     getProductList,
     putToLight,
-    updateQuantity,
+    putToLight_updateQuantity,
+    pickToLight_search,
     pickToLight,
     getConfiguration,
     config,
