@@ -112,49 +112,51 @@ async function getProductList(req, res) {
             })
         }
         else {
-            let result = []
-            allBins.forEach((eachBin, binIdx) => {
-                eachBin.stock.forEach(eachProduct => {
+            let results = []
+            allBins.forEach((bin, binIdx) => {
+                bin.stock.forEach(product => {
                     let isIncluded = false
-                    result.forEach((product, idx) => {
-                        if (product.productId == eachProduct.productId && product.orderId == eachProduct.orderId) {
+                    results.forEach((result, idx) => {
+                        if (result.productId == product.productId && result.orderId == product.orderId) {
                             isIncluded = true
-                            product.productQuantity += eachProduct.productQuantity
-                            product.passedProductQuantity += eachProduct.passedProductQuantity
-                            product.scrappedProductQuantity += eachProduct.scrappedProductQuantity
-                            product.pickedProductQuantity += eachProduct.pickedProductQuantity
-                            if (eachProduct.vendorName != undefined) product.vendorName = eachProduct.vendorName
-                            product.location.push({
-                                binId: eachBin.binId,
-                                binCode: `TH-${eachBin.binId}`,
-                                passedQuantity: eachProduct.passedProductQuantity,
-                                scrappedQuantity: eachProduct.scrappedProductQuantity,
-                                pickedQuantity: eachProduct.pickedProductQuantity
+                            result.productQuantity += product.productQuantity
+                            result.passedProductQuantity += product.passedProductQuantity
+                            result.scrappedProductQuantity += product.scrappedProductQuantity
+                            result.pickedProductQuantity += product.pickedProductQuantity
+                            if (product.vendorName != undefined) result.vendorName = product.vendorName
+                            result.location.push({
+                                binId: bin.binId,
+                                binName: bin.binName,
+                                quantity: product.productQuantity,
+                                passedQuantity: product.passedProductQuantity,
+                                scrappedQuantity: product.scrappedProductQuantity,
+                                pickedQuantity: product.pickedProductQuantity
                             })
                         }
                     })
                     if (!isIncluded) {
-                        let temp = eachProduct
+                        let temp = product
                         temp.location = []
-                        temp.location.push(eachBin.binId)
-                        result.push({
-                            productId: eachProduct.productId,
-                            productName: eachProduct.productName,
-                            M_Product_ID: eachProduct.M_Product_ID,
-                            price: eachProduct.price,
-                            vendorName: eachProduct.vendorName || '',
-                            orderId: eachProduct.orderId,
-                            productQuantity: eachProduct.productQuantity,
-                            passedProductQuantity: eachProduct.passedProductQuantity,
-                            scrappedProductQuantity: eachProduct.scrappedProductQuantity,
-                            pickedProductQuantity: eachProduct.pickedProductQuantity,
-                            notIncludedInOrder: eachProduct.notIncludedInOrder,
+                        temp.location.push(bin.binId)
+                        results.push({
+                            productId: product.productId,
+                            productName: product.productName,
+                            M_Product_ID: product.M_Product_ID,
+                            price: product.price,
+                            vendorName: product.vendorName || '',
+                            orderId: product.orderId,
+                            productQuantity: product.productQuantity,
+                            passedProductQuantity: product.passedProductQuantity,
+                            scrappedProductQuantity: product.scrappedProductQuantity,
+                            pickedProductQuantity: product.pickedProductQuantity,
+                            notIncludedInOrder: product.notIncludedInOrder,
                             location: [{
-                                binId: eachBin.binId,
-                                binCode: `TH-${eachBin.binId}`,
-                                passedQuantity: eachProduct.passedProductQuantity,
-                                scrappedQuantity: eachProduct.scrappedProductQuantity,
-                                pickedQuantity: eachProduct.pickedProductQuantity
+                                binId: bin.binId,
+                                binName: bin.binName,
+                                quantity: product.productQuantity,
+                                passedQuantity: product.passedProductQuantity,
+                                scrappedQuantity: product.scrappedProductQuantity,
+                                pickedQuantity: product.pickedProductQuantity
                             }]
                         })
                     }
@@ -163,7 +165,7 @@ async function getProductList(req, res) {
             // result.sort(function (a, b) { return a.productId - b.productId })
             return res.status(200).json({
                 status: 'success',
-                data: result
+                data: results
             })
         }
     } catch (err) {
@@ -873,21 +875,22 @@ async function pickToLight_search(req, res) {
             })
         }
         else {
-            let result = []
+            let results = []
             allBins.forEach(bin => {
                 bin.stock.forEach(product => {
                     let isIncluded = false
-                    result.forEach((tmp, idx) => {
-                        if (product.productId == tmp.productId && product.orderId == tmp.orderId) {
+                    results.forEach((result, idx) => {
+                        if (result.productId == product.productId) {
                             isIncluded = true
-                            product.productQuantity += tmp.productQuantity
-                            product.passedProductQuantity += tmp.passedProductQuantity
-                            product.scrappedProductQuantity += tmp.scrappedProductQuantity
-                            product.pickedProductQuantity += tmp.pickedProductQuantity
-                            if (product.vendorName != undefined) product.vendorName = product.vendorName
-                            product.location.push({
+                            result.productQuantity += product.productQuantity
+                            result.passedProductQuantity += product.passedProductQuantity
+                            result.scrappedProductQuantity += product.scrappedProductQuantity
+                            result.pickedProductQuantity += product.pickedProductQuantity
+                            if (product.vendorName != undefined) result.vendorName = product.vendorName
+                            result.location.push({
                                 binId: bin.binId,
-                                binCode: `TH-${bin.binId}`,
+                                binName: bin.binName,
+                                quantity: product.productQuantity,
                                 passedQuantity: product.passedProductQuantity,
                                 scrappedQuantity: product.scrappedProductQuantity,
                                 pickedQuantity: product.pickedProductQuantity
@@ -898,7 +901,7 @@ async function pickToLight_search(req, res) {
                         let temp = product
                         temp.location = []
                         temp.location.push(bin.binId)
-                        result.push({
+                        results.push({
                             productId: product.productId,
                             productName: product.productName,
                             M_Product_ID: product.M_Product_ID,
@@ -913,6 +916,7 @@ async function pickToLight_search(req, res) {
                             location: [{
                                 binId: bin.binId,
                                 binCode: `TH-${bin.binId}`,
+                                quantity: product.productQuantity,
                                 passedQuantity: product.passedProductQuantity,
                                 scrappedQuantity: product.scrappedProductQuantity,
                                 pickedQuantity: product.pickedProductQuantity
@@ -924,7 +928,7 @@ async function pickToLight_search(req, res) {
             // result.sort(function (a, b) { return a.productId - b.productId })
             return res.status(200).json({
                 status: 'success',
-                data: result
+                data: results
             })
         }
     } catch (err) {
