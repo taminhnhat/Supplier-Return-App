@@ -879,6 +879,10 @@ async function pickToLight_search(req, res) {
             allBins.forEach(bin => {
                 bin.stock.forEach(product => {
                     let isIncluded = false
+                    let tmpProQty = 0
+                    let tmpPasProQty = 0
+                    let tmpScrProQty = 0
+                    let tmpPicProQty = 0
                     results.forEach((result, idx) => {
                         if (result.productId == product.productId) {
                             isIncluded = true
@@ -886,7 +890,7 @@ async function pickToLight_search(req, res) {
                             result.passedProductQuantity += product.passedProductQuantity
                             result.scrappedProductQuantity += product.scrappedProductQuantity
                             result.pickedProductQuantity += product.pickedProductQuantity
-                            if (product.vendorName != undefined) result.vendorName = product.vendorName
+                            result.vendorName = product.vendorName
                             result.location.push({
                                 binId: bin.binId,
                                 binName: bin.binName,

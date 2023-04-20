@@ -5,6 +5,10 @@ const stockSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    binName: {
+        type: String,
+        required: true
+    },
     binWidth: {
         type: String,
         required: false
