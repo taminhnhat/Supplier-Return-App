@@ -919,7 +919,7 @@ async function pickToLight_search(req, res) {
                             notIncludedInOrder: product.notIncludedInOrder,
                             location: [{
                                 binId: bin.binId,
-                                binCode: `TH-${bin.binId}`,
+                                binName: `TH-${bin.binId}`,
                                 quantity: product.productQuantity,
                                 passedQuantity: product.passedProductQuantity,
                                 scrappedQuantity: product.scrappedProductQuantity,
