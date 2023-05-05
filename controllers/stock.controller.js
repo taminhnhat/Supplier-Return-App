@@ -147,7 +147,6 @@ async function getProductList(req, res) {
                                 M_Product_ID: product.M_Product_ID,
                                 price: product.price,
                                 vendorName: product.vendorName || '',
-                                orderId: product.orderId,
                                 productQuantity: product.productQuantity,
                                 passedProductQuantity: product.passedProductQuantity,
                                 scrappedProductQuantity: product.scrappedProductQuantity,
@@ -156,6 +155,7 @@ async function getProductList(req, res) {
                                 location: [{
                                     binId: bin.binId,
                                     binName: bin.binName,
+                                    orderId: product.orderId,
                                     quantity: product.productQuantity,
                                     passedQuantity: product.passedProductQuantity,
                                     scrappedQuantity: product.scrappedProductQuantity,
