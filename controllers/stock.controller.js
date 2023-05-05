@@ -102,71 +102,144 @@ async function deleteBin(req, res) {
 
 async function getProductList(req, res) {
     try {
-        const allBins = await StockCollection.find()
-        if (allBins == undefined || allBins == null) {
-            logger.error('Cannot retrieve from database', { query: req.query, value: allBins })
-            return res.status(500).json({
-                status: 'fail',
-                message: 'Loi he thong',
-                error: 'Khong truy xuat duoc database'
-            })
-        }
-        else {
-            let results = []
-            allBins.forEach((bin, binIdx) => {
-                bin.stock.forEach(product => {
-                    let isIncluded = false
-                    results.forEach((result, idx) => {
-                        if (result.productId == product.productId && result.orderId == product.orderId) {
-                            isIncluded = true
-                            result.productQuantity += product.productQuantity
-                            result.passedProductQuantity += product.passedProductQuantity
-                            result.scrappedProductQuantity += product.scrappedProductQuantity
-                            result.pickedProductQuantity += product.pickedProductQuantity
-                            if (product.vendorName != undefined) result.vendorName = product.vendorName
-                            result.location.push({
-                                binId: bin.binId,
-                                binName: bin.binName,
-                                quantity: product.productQuantity,
-                                passedQuantity: product.passedProductQuantity,
-                                scrappedQuantity: product.scrappedProductQuantity,
-                                pickedQuantity: product.pickedProductQuantity
+        const inputOrderId = req.query.orderId || false
+        if (inputOrderId == false) {
+            const allBins = await StockCollection.find()
+            if (allBins == undefined || allBins == null) {
+                logger.error('Cannot retrieve from database', { query: req.query, value: allBins })
+                return res.status(500).json({
+                    status: 'fail',
+                    message: 'Loi he thong',
+                    error: 'Khong truy xuat duoc database'
+                })
+            }
+            else {
+                let results = []
+                allBins.forEach((bin, binIdx) => {
+                    bin.stock.forEach(product => {
+                        let isIncluded = false
+                        results.forEach((result, idx) => {
+                            if (result.productId == product.productId) {
+                                isIncluded = true
+                                result.productQuantity += product.productQuantity
+                                result.passedProductQuantity += product.passedProductQuantity
+                                result.scrappedProductQuantity += product.scrappedProductQuantity
+                                result.pickedProductQuantity += product.pickedProductQuantity
+                                if (product.vendorName != undefined) result.vendorName = product.vendorName
+                                result.location.push({
+                                    binId: bin.binId,
+                                    binName: bin.binName,
+                                    orderId: product.orderId,
+                                    quantity: product.productQuantity,
+                                    passedQuantity: product.passedProductQuantity,
+                                    scrappedQuantity: product.scrappedProductQuantity,
+                                    pickedQuantity: product.pickedProductQuantity
+                                })
+                            }
+                        })
+                        if (!isIncluded) {
+                            let temp = product
+                            temp.location = []
+                            temp.location.push(bin.binId)
+                            results.push({
+                                productId: product.productId,
+                                productName: product.productName,
+                                M_Product_ID: product.M_Product_ID,
+                                price: product.price,
+                                vendorName: product.vendorName || '',
+                                orderId: product.orderId,
+                                productQuantity: product.productQuantity,
+                                passedProductQuantity: product.passedProductQuantity,
+                                scrappedProductQuantity: product.scrappedProductQuantity,
+                                pickedProductQuantity: product.pickedProductQuantity,
+                                notIncludedInOrder: product.notIncludedInOrder,
+                                location: [{
+                                    binId: bin.binId,
+                                    binName: bin.binName,
+                                    quantity: product.productQuantity,
+                                    passedQuantity: product.passedProductQuantity,
+                                    scrappedQuantity: product.scrappedProductQuantity,
+                                    pickedQuantity: product.pickedProductQuantity
+                                }]
                             })
                         }
                     })
-                    if (!isIncluded) {
-                        let temp = product
-                        temp.location = []
-                        temp.location.push(bin.binId)
-                        results.push({
-                            productId: product.productId,
-                            productName: product.productName,
-                            M_Product_ID: product.M_Product_ID,
-                            price: product.price,
-                            vendorName: product.vendorName || '',
-                            orderId: product.orderId,
-                            productQuantity: product.productQuantity,
-                            passedProductQuantity: product.passedProductQuantity,
-                            scrappedProductQuantity: product.scrappedProductQuantity,
-                            pickedProductQuantity: product.pickedProductQuantity,
-                            notIncludedInOrder: product.notIncludedInOrder,
-                            location: [{
-                                binId: bin.binId,
-                                binName: bin.binName,
-                                quantity: product.productQuantity,
-                                passedQuantity: product.passedProductQuantity,
-                                scrappedQuantity: product.scrappedProductQuantity,
-                                pickedQuantity: product.pickedProductQuantity
-                            }]
-                        })
-                    }
                 })
-            })
-            // result.sort(function (a, b) { return a.productId - b.productId })
-            return res.status(200).json({
-                status: 'success',
-                data: results
-            })
+                // result.sort(function (a, b) { return a.productId - b.productId })
+                return res.status(200).json({
+                    status: 'success',
+                    data: results
+                })
+            }
+        }
+        else {
+            const bins = await StockCollection.find()
+            if (bins == undefined || bins == null) {
+                logger.error('Cannot retrieve from database', { query: req.query, value: bins })
+                return res.status(500).json({
+                    status: 'fail',
+                    message: 'Loi he thong',
+                    error: 'Khong truy xuat duoc database'
+                })
+            }
+            else {
+                let results = []
+                bins.forEach((bin, binIdx) => {
+                    //
+                    bin.stock.forEach(product => {
+                        let isIncluded = false
+                        results.forEach((result, idx) => {
+                            if (result.productId == product.productId && result.orderId == product.orderId) {
+                                isIncluded = true
+                                result.productQuantity += product.productQuantity
+                                result.passedProductQuantity += product.passedProductQuantity
+                                result.scrappedProductQuantity += product.scrappedProductQuantity
+                                result.pickedProductQuantity += product.pickedProductQuantity
+                                if (product.vendorName != undefined) result.vendorName = product.vendorName
+                                result.location.push({
+                                    binId: bin.binId,
+                                    binName: bin.binName,
+                                    quantity: product.productQuantity,
+                                    passedQuantity: product.passedProductQuantity,
+                                    scrappedQuantity: product.scrappedProductQuantity,
+                                    pickedQuantity: product.pickedProductQuantity
+                                })
+                            }
+                        })
+                        if (!isIncluded && product.orderId == inputOrderId) {
+                            let temp = product
+                            temp.location = []
+                            temp.location.push(bin.binId)
+                            results.push({
+                                productId: product.productId,
+                                productName: product.productName,
+                                M_Product_ID: product.M_Product_ID,
+                                price: product.price,
+                                vendorName: product.vendorName || '',
+                                orderId: product.orderId,
+                                productQuantity: product.productQuantity,
+                                passedProductQuantity: product.passedProductQuantity,
+                                scrappedProductQuantity: product.scrappedProductQuantity,
+                                pickedProductQuantity: product.pickedProductQuantity,
+                                notIncludedInOrder: product.notIncludedInOrder,
+                                location: [{
+                                    binId: bin.binId,
+                                    binName: bin.binName,
+                                    quantity: product.productQuantity,
+                                    passedQuantity: product.passedProductQuantity,
+                                    scrappedQuantity: product.scrappedProductQuantity,
+                                    pickedQuantity: product.pickedProductQuantity
+                                }]
+                            })
+                        }
+                    })
+                })
+                // result.sort(function (a, b) { return a.productId - b.productId })
+                return res.status(200).json({
+                    status: 'success',
+                    data: results
+                })
+            }
         }
     } catch (err) {
         logger.error('Catch unknown error', { query: req.query, err: err })
