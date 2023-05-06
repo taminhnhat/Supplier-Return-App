@@ -967,6 +967,7 @@ async function pickToLight_search(req, res) {
                             result.location.push({
                                 binId: bin.binId,
                                 binName: bin.binName,
+                                orderId: product.orderId,
                                 quantity: product.productQuantity,
                                 passedQuantity: product.passedProductQuantity,
                                 scrappedQuantity: product.scrappedProductQuantity,
@@ -984,7 +985,6 @@ async function pickToLight_search(req, res) {
                             M_Product_ID: product.M_Product_ID,
                             price: product.price,
                             vendorName: product.vendorName || '',
-                            orderId: product.orderId,
                             productQuantity: product.productQuantity,
                             passedProductQuantity: product.passedProductQuantity,
                             scrappedProductQuantity: product.scrappedProductQuantity,
@@ -993,6 +993,7 @@ async function pickToLight_search(req, res) {
                             location: [{
                                 binId: bin.binId,
                                 binName: `TH-${bin.binId}`,
+                                orderId: product.orderId,
                                 quantity: product.productQuantity,
                                 passedQuantity: product.passedProductQuantity,
                                 scrappedQuantity: product.scrappedProductQuantity,
@@ -1039,8 +1040,9 @@ async function pickToLight(req, res) {
                     if (product.productId == req.body.productId) {
                         let updateProduct = product
                         updateProduct.pickedProductQuantity = updateProduct.productQuantity
-                        bin.stock.push(updateProduct)
-                        bin.stock.splice(proIdx, 1)
+                        // bin.stock.push(updateProduct)
+                        // bin.stock.splice(proIdx, 1)
+                        bin.stock[proIdx] = updateProduct
                     }
                 })
                 const tmp = await bin.save()
