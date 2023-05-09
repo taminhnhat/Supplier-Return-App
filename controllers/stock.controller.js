@@ -731,7 +731,7 @@ async function putToLight(req, res) {
             message: 'Mã phiếu không hợp lệ'
         });
     }
-    else if (req.body.binId == undefined || req.body.binId == "") {
+    else if (req.body.binId == undefined || req.body.binId === "") {
         logger.error('Invalid binId', { body: req.body })
         return res.status(400).json({
             status: 'fail',
