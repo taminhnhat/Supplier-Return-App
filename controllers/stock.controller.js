@@ -315,6 +315,12 @@ async function searchProduct(req, res) {
         }
         async function groupByProductId() {
             let result
+            if (allMatchedBin.length == 0)
+                return res.status(200).json({
+                    status: 'success',
+                    data_grouped: 'by ProductId',
+                    data: []
+                })
             allMatchedBin.forEach(bin => {
                 bin.stock.forEach(product => {
                     let isIncluded = false
