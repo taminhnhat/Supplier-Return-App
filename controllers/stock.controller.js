@@ -259,26 +259,7 @@ async function searchProduct(req, res) {
     const lightOnFlag = req.query.lightOn || 'false'
     const locationReturnFlag = req.query.locationReturn || 'false'
 
-    // query
-    let queryObj = { stock: { $elemMatch: {} } }
-    if (productIdFromRequest != undefined) queryObj.stock.$elemMatch.productId = productIdFromRequest
-    if (orderIdFromRequest != undefined) queryObj.stock.$elemMatch.orderId = orderIdFromRequest
-    if (binIdFromRequest != undefined) queryObj.binId = binIdFromRequest
-    // projection
-    let projectionObj = { _id: 0, coordinate: 1, binId: 1, binName: 1, binWidth: 1, stock: 1 }
-
     try {
-        // get all matched bins
-        let allMatchedBin = await StockCollection.find(queryObj, projectionObj)
-        // if stock is empty
-        if (allMatchedBin == null || allMatchedBin == undefined) {
-            logger.error('Cannot retrieve from database', { query: req.query, value: allMatchedBin })
-            return res.status(500).json({
-                status: 'fail',
-                message: 'Loi he thong',
-                error: 'Khong truy xuat duoc database'
-            })
-        }
         switch (req.query.groupBy) {
             case 'binId':
                 groupByBinId()
@@ -286,12 +267,33 @@ async function searchProduct(req, res) {
             case 'productId':
                 groupByProductId()
                 break
+            case 'orderId':
+                groupByOrderId()
+                break
             default:
                 groupByProductId()
                 break
         }
 
         async function groupByBinId() {
+            // query
+            let queryObj = { stock: { $elemMatch: {} } }
+            if (productIdFromRequest != undefined) queryObj.stock.$elemMatch.productId = productIdFromRequest
+            if (orderIdFromRequest != undefined) queryObj.stock.$elemMatch.orderId = orderIdFromRequest
+            if (binIdFromRequest != undefined) queryObj.binId = binIdFromRequest
+            // projection
+            let projectionObj = { _id: 0, coordinate: 1, binId: 1, binName: 1, binWidth: 1, stock: 1 }
+            // get all matched bins
+            let allMatchedBin = await StockCollection.find(queryObj, projectionObj)
+            // if stock is empty
+            if (allMatchedBin == null || allMatchedBin == undefined) {
+                logger.error('Cannot retrieve from database', { query: req.query, value: allMatchedBin })
+                return res.status(500).json({
+                    status: 'fail',
+                    message: 'Loi he thong',
+                    error: 'Khong truy xuat duoc database'
+                })
+            }
             // filering result
             let results = []
             allMatchedBin.forEach(eachBin => {
@@ -314,6 +316,24 @@ async function searchProduct(req, res) {
             })
         }
         async function groupByProductId() {
+            // query
+            let queryObj = { stock: { $elemMatch: {} } }
+            if (productIdFromRequest != undefined) queryObj.stock.$elemMatch.productId = productIdFromRequest
+            if (orderIdFromRequest != undefined) queryObj.stock.$elemMatch.orderId = orderIdFromRequest
+            if (binIdFromRequest != undefined) queryObj.binId = binIdFromRequest
+            // projection
+            let projectionObj = { _id: 0, coordinate: 1, binId: 1, binName: 1, binWidth: 1, stock: 1 }
+            // get all matched bins
+            let allMatchedBin = await StockCollection.find(queryObj, projectionObj)
+            // if stock is empty
+            if (allMatchedBin == null || allMatchedBin == undefined) {
+                logger.error('Cannot retrieve from database', { query: req.query, value: allMatchedBin })
+                return res.status(500).json({
+                    status: 'fail',
+                    message: 'Loi he thong',
+                    error: 'Khong truy xuat duoc database'
+                })
+            }
             let result
             allMatchedBin.forEach(bin => {
                 bin.stock.forEach(product => {
@@ -387,6 +407,41 @@ async function searchProduct(req, res) {
                 data: results
             })
         }
+        async function groupByOrderId() {
+            const allBins = await StockCollection.find()
+            if (allBins == undefined || allBins == null) {
+                logger.error('Cannot retrieve from database', { query: req.query, value: allBins })
+                return res.status(500).json({
+                    status: 'fail',
+                    message: 'Loi he thong',
+                    error: 'Khong truy xuat duoc database'
+                })
+            }
+            else {
+                let results = []
+                allBins.forEach((bin, binIdx) => {
+                    bin.stock.forEach(product => {
+                        let isIncluded = false
+                        results.forEach((result, idx) => {
+                            if (result.orderId == product.orderId) {
+                                isIncluded = true
+                            }
+                        })
+                        if (!isIncluded) {
+                            results.push({
+                                orderId: product.orderId
+                            })
+                        }
+                    })
+                })
+                // result.sort(function (a, b) { return a.productId - b.productId })
+                return res.status(200).json({
+                    status: 'success',
+                    data: results
+                })
+            }
+        }
+
 
         // turn light on
         if (lightOnFlag == 'true') {
