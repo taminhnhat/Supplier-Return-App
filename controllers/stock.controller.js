@@ -279,74 +279,74 @@ async function searchProduct(req, res) {
             })
         }
 
-        // filering result
-        let results = []
-        allMatchedBin.forEach(eachBin => {
-            let result = {}
-            result.binId = eachBin.binId
-            result.binName = eachBin.binName
-            result.binWidth = eachBin.binWidth
-            result.stock = eachBin.stock
-            if (productIdFromRequest != undefined)
-                result.stock = result.stock.filter(eachProduct => {
-                    return eachProduct.productId == productIdFromRequest
-                })
-            results.push(result)
-        });
+        // // filering result
+        // let results = []
+        // allMatchedBin.forEach(eachBin => {
+        //     let result = {}
+        //     result.binId = eachBin.binId
+        //     result.binName = eachBin.binName
+        //     result.binWidth = eachBin.binWidth
+        //     result.stock = eachBin.stock
+        //     if (productIdFromRequest != undefined)
+        //         result.stock = result.stock.filter(eachProduct => {
+        //             return eachProduct.productId == productIdFromRequest
+        //         })
+        //     results.push(result)
+        // });
 
-        if (lightOnFlag == 'true') {
-            _clearLightTimeout()
-            _clearLight()
-            allMatchedBin.forEach(eachBin => {
-                // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
-                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
-            })
-            _setLightTimeout(holdingLightInSeconds)
-        }
-
-        return res.status(200).json({
-            status: 'success',
-            data: results
-        })
-
-        // let passedProQty = 0
-        // let scrappedProQty = 0
-        // let pickedProQty = 0
-
-        // // if lightOn mode is true
         // if (lightOnFlag == 'true') {
         //     _clearLightTimeout()
         //     _clearLight()
         //     allMatchedBin.forEach(eachBin => {
-        //         bin.stock.forEach(product => {
-        //             passedProQty += product.passedProductQuantity
-        //             scrappedProQty += product.scrappedProductQuantity
-        //             pickedProQty += product.pickedProductQuantity
-        //         })
         //         // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
         //         rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
         //     })
         //     _setLightTimeout(holdingLightInSeconds)
         // }
-        // else {
-        //     allMatchedBin.forEach(bin => {
-        //         bin.stock.forEach(product => {
-        //             passedProQty += product.passedProductQuantity
-        //             scrappedProQty += product.scrappedProductQuantity
-        //             pickedProQty += product.pickedProductQuantity
-        //         })
-        //     })
-        // }
 
         // return res.status(200).json({
         //     status: 'success',
-        //     data: {
-        //         passedProductQuantity: passedProQty,
-        //         scrappedProductQuantity: scrappedProQty,
-        //         pickedProductQuantity: pickedProQty,
-        //         bins: allMatchedBin
-        //     }
+        //     data: results
         // })
+
+        let passedProQty = 0
+        let scrappedProQty = 0
+        let pickedProQty = 0
+
+        // if lightOn mode is true
+        if (lightOnFlag == 'true') {
+            _clearLightTimeout()
+            _clearLight()
+            allMatchedBin.forEach(eachBin => {
+                bin.stock.forEach(product => {
+                    passedProQty += product.passedProductQuantity
+                    scrappedProQty += product.scrappedProductQuantity
+                    pickedProQty += product.pickedProductQuantity
+                })
+                // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
+                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
+            })
+            _setLightTimeout(holdingLightInSeconds)
+        }
+        else {
+            allMatchedBin.forEach(bin => {
+                bin.stock.forEach(product => {
+                    passedProQty += product.passedProductQuantity
+                    scrappedProQty += product.scrappedProductQuantity
+                    pickedProQty += product.pickedProductQuantity
+                })
+            })
+        }
+
+        return res.status(200).json({
+            status: 'success',
+            data: {
+                passedProductQuantity: passedProQty,
+                scrappedProductQuantity: scrappedProQty,
+                pickedProductQuantity: pickedProQty,
+                bins: allMatchedBin
+            }
+        })
     } catch (err) {
         console.log(err)
         logger.error('Catch unknown error', { query: req.query, err: err })
@@ -973,6 +973,8 @@ async function pickToLight_search(req, res) {
             })
         }
         else {
+            _clearLightTimeout()
+            _clearLight()
             let result
             allBins.forEach(bin => {
                 bin.stock.forEach(product => {
@@ -1036,7 +1038,10 @@ async function pickToLight_search(req, res) {
                         }
                     }
                 })
+                // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
+                rgbHub.write(`W${bin.coordinate.Y_index + 1}:${bin.coordinate.startPoint}:${bin.coordinate.endPoint}:${pickToLight_search}\n`)
             })
+            _setLightTimeout(holdingLightInSeconds)
             // result.sort(function (a, b) { return a.productId - b.productId })
             return res.status(200).json({
                 status: 'success',
