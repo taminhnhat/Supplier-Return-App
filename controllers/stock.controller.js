@@ -15,10 +15,10 @@ const numOfStrip = process.env.NUM_OF_STRIP
 
 const holdingLightInSeconds = process.env.HOLDING_LIGHT_IN_SECONDS || 180
 const searchingLightColor = process.env.SEARCHING_MODE_LIGHT_COLOR || 'ffff00'
-const addingLightColor = process.env.ADDING_MODE_LIGHT_COLOR || '00ffff'
+const gettingSuggestLightColor = process.env.PUTTING_SUGGEST_MODE_LIGHT_COLOR || '40ff40'
 const puttingLightColor = process.env.PUTTING_MODE_LIGHT_COLOR || '00ff00'
-const pickToLightSearchColor = process.env.PICKING_MODE_LIGHT_COLOR || 'ffff00'
-const pickingLightColor = process.env.PICKING_MODE_LIGHT_COLOR || 'ffff00'
+const pickToLightSearchColor = process.env.PICKING_SEARCH_MODE_LIGHT_COLOR || '80ffff'
+const pickingLightColor = process.env.PICKING_MODE_LIGHT_COLOR || 'ffffff'
 
 let lightOffTimeout
 
@@ -557,7 +557,7 @@ async function getSuggestion(req, res) {
             _clearLightTimeout()
             _clearLight()
             // rgbHub.write(`F${matchedBin.coordinate.Y_index + 1}:000000\n`);
-            rgbHub.write(`W${matchedBin.coordinate.Y_index + 1}:${matchedBin.coordinate.startPoint}:${matchedBin.coordinate.endPoint}:${addingLightColor}\n`)
+            rgbHub.write(`W${matchedBin.coordinate.Y_index + 1}:${matchedBin.coordinate.startPoint}:${matchedBin.coordinate.endPoint}:${gettingSuggestLightColor}\n`)
             _setLightTimeout(holdingLightInSeconds)
             return res.status(200).json({
                 status: 'success',
@@ -594,7 +594,7 @@ async function getSuggestion(req, res) {
                 _clearLightTimeout()
                 _clearLight()
                 // rgbHub.write(`F${tempRes.coordinate.Y_index + 1}:000000\n`)
-                rgbHub.write(`W${tempRes.coordinate.Y_index + 1}:${tempRes.coordinate.startPoint}:${tempRes.coordinate.endPoint}:${addingLightColor}\n`)
+                rgbHub.write(`W${tempRes.coordinate.Y_index + 1}:${tempRes.coordinate.startPoint}:${tempRes.coordinate.endPoint}:${gettingSuggestLightColor}\n`)
                 _setLightTimeout(holdingLightInSeconds)
                 return res.status(200).json({
                     status: 'success',
@@ -634,7 +634,7 @@ async function getSuggestion(req, res) {
         _clearLightTimeout()
         _clearLight()
         // rgbHub.write(`F${lightRow}:000000\n`)
-        rgbHub.write(`W${lightRow}:${startPoint}:${endPoint}:${addingLightColor}\n`)
+        rgbHub.write(`W${lightRow}:${startPoint}:${endPoint}:${gettingSuggestLightColor}\n`)
         _setLightTimeout(holdingLightInSeconds)
         const newStock = {
             binId: tempBinIndex,
