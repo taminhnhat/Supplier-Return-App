@@ -17,6 +17,7 @@ const holdingLightInSeconds = process.env.HOLDING_LIGHT_IN_SECONDS || 180
 const searchingLightColor = process.env.SEARCHING_MODE_LIGHT_COLOR || 'ffff00'
 const addingLightColor = process.env.ADDING_MODE_LIGHT_COLOR || '00ffff'
 const puttingLightColor = process.env.PUTTING_MODE_LIGHT_COLOR || '00ff00'
+const pickToLightSearchColor = process.env.PICKING_MODE_LIGHT_COLOR || 'ffff00'
 const pickingLightColor = process.env.PICKING_MODE_LIGHT_COLOR || 'ffff00'
 
 let lightOffTimeout
@@ -278,75 +279,123 @@ async function searchProduct(req, res) {
                 error: 'Khong truy xuat duoc database'
             })
         }
+        switch (req.query.groupBy) {
+            case 'binId':
+                groupByBinId()
+                break
+            case 'productId':
+                groupByProductId()
+                break
+            default:
+                groupByProductId()
+                break
+        }
 
-        // // filering result
-        // let results = []
-        // allMatchedBin.forEach(eachBin => {
-        //     let result = {}
-        //     result.binId = eachBin.binId
-        //     result.binName = eachBin.binName
-        //     result.binWidth = eachBin.binWidth
-        //     result.stock = eachBin.stock
-        //     if (productIdFromRequest != undefined)
-        //         result.stock = result.stock.filter(eachProduct => {
-        //             return eachProduct.productId == productIdFromRequest
-        //         })
-        //     results.push(result)
-        // });
+        async function groupByBinId() {
+            // filering result
+            let results = []
+            allMatchedBin.forEach(eachBin => {
+                let result = {}
+                result.binId = eachBin.binId
+                result.binName = eachBin.binName
+                result.binWidth = eachBin.binWidth
+                result.stock = eachBin.stock
+                if (productIdFromRequest != undefined)
+                    result.stock = result.stock.filter(eachProduct => {
+                        return eachProduct.productId == productIdFromRequest
+                    })
+                results.push(result)
+            });
 
-        // if (lightOnFlag == 'true') {
-        //     _clearLightTimeout()
-        //     _clearLight()
-        //     allMatchedBin.forEach(eachBin => {
-        //         // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
-        //         rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
-        //     })
-        //     _setLightTimeout(holdingLightInSeconds)
-        // }
+            return res.status(200).json({
+                status: 'success',
+                data_grouped: 'by BinId',
+                data: results
+            })
+        }
+        async function groupByProductId() {
+            let result
+            allMatchedBin.forEach(bin => {
+                bin.stock.forEach(product => {
+                    let isIncluded = false
+                    let tmpProQty = 0
+                    let tmpPasProQty = 0
+                    let tmpScrProQty = 0
+                    let tmpPicProQty = 0
 
-        // return res.status(200).json({
-        //     status: 'success',
-        //     data: results
-        // })
+                    if (product.productId == req.query.productId) {
+                        if (result == undefined) {
+                            result = {}
+                            result.productId = product.productId
+                            result.productName = product.productName
+                            result.M_Product_ID = product.M_Product_ID
+                            result.price = product.price
+                            result.vendorName = product.vendorName || ''
+                            result.productQuantity = product.productQuantity
+                            result.passedProductQuantity = product.passedProductQuantity
+                            result.scrappedProductQuantity = product.scrappedProductQuantity
+                            result.pickedProductQuantity = product.pickedProductQuantity
+                            result.notIncludedInOrder = product.notIncludedInOrder
+                            result.location = [{
+                                binId: bin.binId,
+                                binName: bin.binName,
+                                quantity: product.productQuantity,
+                                passedQuantity: product.passedProductQuantity,
+                                scrappedQuantity: product.scrappedProductQuantity,
+                                pickedQuantity: product.pickedProductQuantity
+                            }]
+                        }
+                        else {
+                            result.productQuantity += product.productQuantity
+                            result.passedProductQuantity += product.passedProductQuantity
+                            result.scrappedProductQuantity += product.scrappedProductQuantity
+                            result.pickedProductQuantity += product.pickedProductQuantity
+                            let includeFlag = false
+                            let includeIndex = false
+                            result.location.forEach((loca, idx) => {
+                                if (loca.binId == bin.binId) {
+                                    includeFlag = true
+                                    includeIndex = idx
+                                }
+                            })
+                            if (includeFlag == true) {
+                                result.location[includeIndex].quantity += product.productQuantity
+                                result.location[includeIndex].passedQuantity += product.passedProductQuantity
+                                result.location[includeIndex].scrappedQuantity += product.scrappedProductQuantity
+                                result.location[includeIndex].pickedQuantity += product.pickedProductQuantity
+                            }
+                            else {
+                                result.location.push({
+                                    binId: bin.binId,
+                                    binName: bin.binName,
+                                    quantity: product.productQuantity,
+                                    passedQuantity: product.passedProductQuantity,
+                                    scrappedQuantity: product.scrappedProductQuantity,
+                                    pickedQuantity: product.pickedProductQuantity
+                                })
+                            }
+                        }
+                    }
+                })
+            })
 
-        let passedProQty = 0
-        let scrappedProQty = 0
-        let pickedProQty = 0
+            return res.status(200).json({
+                status: 'success',
+                data_grouped: 'by ProductId',
+                data: [result]
+            })
+        }
 
-        // if lightOn mode is true
+        // turn light on
         if (lightOnFlag == 'true') {
             _clearLightTimeout()
             _clearLight()
             allMatchedBin.forEach(eachBin => {
-                bin.stock.forEach(product => {
-                    passedProQty += product.passedProductQuantity
-                    scrappedProQty += product.scrappedProductQuantity
-                    pickedProQty += product.pickedProductQuantity
-                })
                 // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
             })
             _setLightTimeout(holdingLightInSeconds)
         }
-        else {
-            allMatchedBin.forEach(bin => {
-                bin.stock.forEach(product => {
-                    passedProQty += product.passedProductQuantity
-                    scrappedProQty += product.scrappedProductQuantity
-                    pickedProQty += product.pickedProductQuantity
-                })
-            })
-        }
-
-        return res.status(200).json({
-            status: 'success',
-            data: {
-                passedProductQuantity: passedProQty,
-                scrappedProductQuantity: scrappedProQty,
-                pickedProductQuantity: pickedProQty,
-                bins: allMatchedBin
-            }
-        })
     } catch (err) {
         console.log(err)
         logger.error('Catch unknown error', { query: req.query, err: err })
@@ -546,7 +595,7 @@ async function getSuggestion(req, res) {
                 _clearLight()
                 // rgbHub.write(`F${tempRes.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.write(`W${tempRes.coordinate.Y_index + 1}:${tempRes.coordinate.startPoint}:${tempRes.coordinate.endPoint}:${addingLightColor}\n`)
-                _setLightTimeout()
+                _setLightTimeout(holdingLightInSeconds)
                 return res.status(200).json({
                     status: 'success',
                     data: tempRes
@@ -1039,7 +1088,7 @@ async function pickToLight_search(req, res) {
                     }
                 })
                 // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
-                rgbHub.write(`W${bin.coordinate.Y_index + 1}:${bin.coordinate.startPoint}:${bin.coordinate.endPoint}:${pickToLight_search}\n`)
+                rgbHub.write(`W${bin.coordinate.Y_index + 1}:${bin.coordinate.startPoint}:${bin.coordinate.endPoint}:${pickToLightSearchColor}\n`)
             })
             _setLightTimeout(holdingLightInSeconds)
             // result.sort(function (a, b) { return a.productId - b.productId })
