@@ -667,21 +667,21 @@ async function putToLight(req, res) {
             message: 'Mã sản phẩm không hợp lệ'
         });
     }
-    if (req.body.orderId == '' || req.body.orderId == undefined) {
+    else if (req.body.orderId == '' || req.body.orderId == undefined) {
         logger.error('Invalid orderId', { body: req.body })
         return res.status(400).json({
             status: 'fail',
             message: 'Mã phiếu không hợp lệ'
         });
     }
-    if (req.body.binId == undefined) {
+    else if (req.body.binId == undefined || req.body.binId == "") {
         logger.error('Invalid binId', { body: req.body })
         return res.status(400).json({
             status: 'fail',
             message: 'Mã ô không hợp lệ'
         });
     }
-    if (req.body.price == '' || req.body.price == undefined) {
+    else if (req.body.price == '' || req.body.price == undefined) {
         logger.error('Invalid price', { body: req.body })
         return res.status(400).json({
             status: 'fail',
