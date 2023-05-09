@@ -973,7 +973,7 @@ async function pickToLight_search(req, res) {
             })
         }
         else {
-            let results = []
+            let result
             allBins.forEach(bin => {
                 bin.stock.forEach(product => {
                     let isIncluded = false
@@ -981,57 +981,66 @@ async function pickToLight_search(req, res) {
                     let tmpPasProQty = 0
                     let tmpScrProQty = 0
                     let tmpPicProQty = 0
-                    results.forEach((result, idx) => {
-                        if (result.productId == product.productId) {
-                            isIncluded = true
-                            result.productQuantity += product.productQuantity
-                            result.passedProductQuantity += product.passedProductQuantity
-                            result.scrappedProductQuantity += product.scrappedProductQuantity
-                            result.pickedProductQuantity += product.pickedProductQuantity
-                            result.vendorName = product.vendorName
-                            result.location.push({
+
+                    if (product.productId == req.body.productId) {
+                        if (result == undefined) {
+                            result = {}
+                            result.productId = product.productId
+                            result.productName = product.productName
+                            result.M_Product_ID = product.M_Product_ID
+                            result.price = product.price
+                            result.vendorName = product.vendorName || ''
+                            result.productQuantity = product.productQuantity
+                            result.passedProductQuantity = product.passedProductQuantity
+                            result.scrappedProductQuantity = product.scrappedProductQuantity
+                            result.pickedProductQuantity = product.pickedProductQuantity
+                            result.notIncludedInOrder = product.notIncludedInOrder
+                            result.location = [{
                                 binId: bin.binId,
                                 binName: bin.binName,
-                                orderId: product.orderId,
-                                quantity: product.productQuantity,
-                                passedQuantity: product.passedProductQuantity,
-                                scrappedQuantity: product.scrappedProductQuantity,
-                                pickedQuantity: product.pickedProductQuantity
-                            })
-                        }
-                    })
-                    if (!isIncluded) {
-                        let temp = product
-                        temp.location = []
-                        temp.location.push(bin.binId)
-                        results.push({
-                            productId: product.productId,
-                            productName: product.productName,
-                            M_Product_ID: product.M_Product_ID,
-                            price: product.price,
-                            vendorName: product.vendorName || '',
-                            productQuantity: product.productQuantity,
-                            passedProductQuantity: product.passedProductQuantity,
-                            scrappedProductQuantity: product.scrappedProductQuantity,
-                            pickedProductQuantity: product.pickedProductQuantity,
-                            notIncludedInOrder: product.notIncludedInOrder,
-                            location: [{
-                                binId: bin.binId,
-                                binName: `TH-${bin.binId}`,
-                                orderId: product.orderId,
                                 quantity: product.productQuantity,
                                 passedQuantity: product.passedProductQuantity,
                                 scrappedQuantity: product.scrappedProductQuantity,
                                 pickedQuantity: product.pickedProductQuantity
                             }]
-                        })
+                        }
+                        else {
+                            result.productQuantity += product.productQuantity
+                            result.passedProductQuantity += product.passedProductQuantity
+                            result.scrappedProductQuantity += product.scrappedProductQuantity
+                            result.pickedProductQuantity += product.pickedProductQuantity
+                            let includeFlag = false
+                            let includeIndex = false
+                            result.location.forEach((loca, idx) => {
+                                if (loca.binId == bin.binId) {
+                                    includeFlag = true
+                                    includeIndex = idx
+                                }
+                            })
+                            if (includeFlag == true) {
+                                result.location[includeIndex].quantity += product.productQuantity
+                                result.location[includeIndex].passedQuantity += product.passedProductQuantity
+                                result.location[includeIndex].scrappedQuantity += product.scrappedProductQuantity
+                                result.location[includeIndex].pickedQuantity += product.pickedProductQuantity
+                            }
+                            else {
+                                result.location.push({
+                                    binId: bin.binId,
+                                    binName: bin.binName,
+                                    quantity: product.productQuantity,
+                                    passedQuantity: product.passedProductQuantity,
+                                    scrappedQuantity: product.scrappedProductQuantity,
+                                    pickedQuantity: product.pickedProductQuantity
+                                })
+                            }
+                        }
                     }
                 })
             })
             // result.sort(function (a, b) { return a.productId - b.productId })
             return res.status(200).json({
                 status: 'success',
-                data: results
+                data: [result]
             })
         }
     } catch (err) {
