@@ -264,7 +264,7 @@ async function searchProduct(req, res) {
     if (orderIdFromRequest != undefined) queryObj.stock.$elemMatch.orderId = orderIdFromRequest
     if (binIdFromRequest != undefined) queryObj.binId = binIdFromRequest
     // projection
-    let projectionObj = { _id: 0, coordinate: 1, binId: 1, binName:1, binWidth:1, stock: 1 }
+    let projectionObj = { _id: 0, coordinate: 1, binId: 1, binName: 1, binWidth: 1, stock: 1 }
 
     try {
         // get all matched bins
@@ -280,19 +280,29 @@ async function searchProduct(req, res) {
         }
 
         // filering result
-        let results=[]
+        let results = []
         allMatchedBin.forEach(eachBin => {
-            let result ={}
+            let result = {}
             result.binId = eachBin.binId
             result.binName = eachBin.binName
             result.binWidth = eachBin.binWidth
             result.stock = eachBin.stock
-            if(productIdFromRequest!=undefined)
-            result.stock = result.stock.filter(eachProduct => {
-                return eachProduct.productId == productIdFromRequest
-            })
+            if (productIdFromRequest != undefined)
+                result.stock = result.stock.filter(eachProduct => {
+                    return eachProduct.productId == productIdFromRequest
+                })
             results.push(result)
         });
+
+        if (lightOnFlag == 'true') {
+            _clearLightTimeout()
+            _clearLight()
+            allMatchedBin.forEach(eachBin => {
+                // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
+                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
+            })
+            _setLightTimeout(holdingLightInSeconds)
+        }
 
         return res.status(200).json({
             status: 'success',
