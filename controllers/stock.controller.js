@@ -308,6 +308,16 @@ async function searchProduct(req, res) {
                     })
                 results.push(result)
             });
+            // turn light on
+            if (lightOnFlag == 'true') {
+                _clearLightTimeout()
+                _clearLight()
+                allMatchedBin.forEach(eachBin => {
+                    // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
+                    rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
+                })
+                _setLightTimeout(holdingLightInSeconds)
+            }
 
             return res.status(200).json({
                 status: 'success',
@@ -398,6 +408,16 @@ async function searchProduct(req, res) {
                     }
                 })
             })
+            // turn light on
+            if (lightOnFlag == 'true') {
+                _clearLightTimeout()
+                _clearLight()
+                allMatchedBin.forEach(eachBin => {
+                    // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
+                    rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
+                })
+                _setLightTimeout(holdingLightInSeconds)
+            }
 
             let results = []
             if (result != null) results.push(result)
@@ -434,6 +454,16 @@ async function searchProduct(req, res) {
                         }
                     })
                 })
+                // turn light on
+                if (lightOnFlag == 'true') {
+                    _clearLightTimeout()
+                    _clearLight()
+                    allBins.forEach(eachBin => {
+                        // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
+                        rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
+                    })
+                    _setLightTimeout(holdingLightInSeconds)
+                }
                 // result.sort(function (a, b) { return a.productId - b.productId })
                 return res.status(200).json({
                     status: 'success',
@@ -443,16 +473,7 @@ async function searchProduct(req, res) {
         }
 
 
-        // turn light on
-        if (lightOnFlag == 'true') {
-            _clearLightTimeout()
-            _clearLight()
-            allMatchedBin.forEach(eachBin => {
-                // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
-                rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
-            })
-            _setLightTimeout(holdingLightInSeconds)
-        }
+
     } catch (err) {
         console.log(err)
         logger.error('Catch unknown error', { query: req.query, err: err })
