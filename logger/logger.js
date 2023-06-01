@@ -1,6 +1,14 @@
 require('dotenv').config({ path: './.env' });
 
 const winston = require('winston');
+require('winston-daily-rotate-file');
+
+const myTransport = new winston.transports.DailyRotateFile({
+    filename: './logs/%DATE%-mergewall.log',
+    datePattern: 'DD-MM-YYYY',
+    frequency: '24h',
+    maxFiles: '90d'
+});
 
 const logger = winston.createLogger({
     level: 'debug',
@@ -20,7 +28,7 @@ const logger = winston.createLogger({
         // - Write all logs with importance level of `info` or less to `combined.log`
         //
         new winston.transports.File({ filename: './logs/error.log', level: 'error' }),
-        new winston.transports.File({ filename: './logs/combined.log' }),
+        myTransport
     ],
 });
 

@@ -17,6 +17,7 @@ router.delete('/products/delete/:productId', stockCtrl.deleteProduct)
 router.get('/configurations', stockCtrl.getConfiguration)
 router.get('/testLight', stockCtrl.testLight)
 router.get('/bin', stockCtrl.getBin)
-router.delete('/bin/delete', stockCtrl.getBin)
+router.post('/history/create', stockCtrl.createHistory)
+router.get('/history', stockCtrl.getHistory)
 
 module.exports = router

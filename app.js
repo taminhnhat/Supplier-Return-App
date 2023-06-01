@@ -23,6 +23,8 @@ else if (process.env.NODE_ENV == 'development')
 else
     app.use(morgan('common'))
 
+const endPointLog = require('.//middlewares/log')
+app.use(endPointLog)
 // authorization
 const auth = require('./middlewares/auth')
 app.use(auth)
