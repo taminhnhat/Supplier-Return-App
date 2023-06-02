@@ -2,7 +2,7 @@ require('dotenv').config({ path: './.env' })
 const logger = require('../logger/logger')
 const StockCollection = require('../models/stock')
 const BackupCollection = require('../models/backup')
-const HistoryCollection = require('../models/hist')
+const HistoryCollection = require('../models/history')
 const rgbHub = require('../rgbHub')
 const { all } = require('axios')
 const { error } = require('winston')
@@ -23,8 +23,15 @@ const pickToLightSearchColor = process.env.PICKING_SEARCH_MODE_LIGHT_COLOR || '8
 const pickingLightColor = process.env.PICKING_MODE_LIGHT_COLOR || 'ffffff'
 
 let lightOffTimeout
-
+let ifStartMerge = false
+let startTime = ''
 reload()
+
+function createFormatTime() {
+    const t = new Date()
+    const formatedTime = `${t.getDate()}/${t.getMonth() + 1}/${t.getFullYear()} ${t.getHours()}:${t.getMinutes()}`
+    return formatedTime
+}
 
 async function getStock(req, res) {
     const binIdFromRequest = req.query.binId || false
@@ -740,6 +747,14 @@ async function getSuggestion(req, res) {
 }
 
 async function putToLight(req, res) {
+    if (ifStartMerge == false) {
+        startTime = createFormatTime()
+        ifStartMerge = true
+        let backup = await BackupCollection.findOne({})
+        backup.startTime = startTime
+        backup.started = ifStartMerge
+        await backup.save()
+    }
     if (req.body.productId == '' || req.body.productId == undefined) {
         logger.error('Invalid productId', { value: req.body })
         return res.status(400).json({
@@ -1246,10 +1261,9 @@ async function createHistory(req, res) {
         // Retrieve stock
         const stock = await StockCollection.find()
         // save to history
-        const today = Date.now()
         const hist = new HistoryCollection({
-            dateStarted: Date.now(),
-            dateCompleted: Date.now(),
+            dateStarted: startTime,
+            dateCompleted: createFormatTime(),
             data: stock
         })
         const newHistory = await hist.save()
@@ -1274,11 +1288,12 @@ async function clearStock(req, res) {
         const stock = await StockCollection.find()
         // save to history
         const hist = new HistoryCollection({
-            dateStartd: '',
-            dateCompleted: Date.now(),
+            dateStarted: startTime,
+            dateCompleted: createFormatTime(),
             data: stock
         })
         const newHistory = await hist.save()
+        logger.debug('Creating history completed')
 
         // clear stock
         stock.forEach(async stock => {
@@ -1288,21 +1303,29 @@ async function clearStock(req, res) {
         tempBinIndex = 0
         tempBinIndex_X = 0
         tempBinIndex_Y = 0
+
         const backup = await BackupCollection.find()
         backup.forEach(async ele => {
             await ele.remove()
         })
+        logger.debug('Clearing stock completed')
+
         await BackupCollection({
             lightCursor: tempLightCursor,
             binIndex: tempBinIndex,
             binIndex_X: tempBinIndex_X,
             binIndex_Y: tempBinIndex_Y
         }).save()
+        logger.debug('Updating backup completed')
+
+        ifStartMerge = false
+
         res.status(200).json({
             status: 'success',
             message: 'Clear stock'
         })
     } catch (err) {
+        console.log(err)
         logger.error('Catch unknown error', { error: err })
         res.status(500).json({
             status: 'fail',
@@ -1329,6 +1352,8 @@ async function reload(req, res) {
             tempBinIndex = backup[0].binIndex
             tempBinIndex_X = backup[0].binIndex_X
             tempBinIndex_Y = backup[0].binIndex_Y
+            startTime = backup[0].startTime || createFormatTime()
+            ifStartMerge = backup[0].started
         }
         _clearLight()
     } catch (err) {
@@ -1338,7 +1363,11 @@ async function reload(req, res) {
 
 async function getHistory(req, res) {
     try {
-        //
+        const history = await HistoryCollection.find()
+        res.status(200).json({
+            status: 'success',
+            data: history
+        })
     }
     catch (err) {
         logger.error('Catch unknown error', { error: err })

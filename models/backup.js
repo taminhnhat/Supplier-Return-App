@@ -20,6 +20,14 @@ const backupSchema = new mongoose.Schema({
         type: Number,
         required: true,
         default: 0
+    },
+    startTime: {
+        type: String,
+        required: false
+    },
+    started: {
+        type: Boolean,
+        required: false
     }
 })
 

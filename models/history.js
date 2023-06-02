@@ -2,13 +2,12 @@ const mongoose = require('mongoose')
 
 const stockSchema = new mongoose.Schema({
     dateStarted: {
-        type: Date,
+        type: String,
         required: true
     },
     dateCompleted: {
-        type: Date,
-        required: true,
-        default: Date.now
+        type: String,
+        required: true
     },
     data: {
         type: Array,
