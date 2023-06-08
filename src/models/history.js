@@ -9,6 +9,14 @@ const stockSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    orders: {
+        type: Array,
+        required: true
+    },
+    products: {
+        type: Array,
+        required: true
+    },
     data: {
         type: Array,
         required: true

@@ -1,11 +1,10 @@
 require('dotenv').config({ path: './.env' })
-const logger = require('../logger/logger')
+const logger = require('../middlewares/logger.middleware')
+const date = require('../middlewares/timeDate.middleware')
 const StockCollection = require('../models/stock')
 const BackupCollection = require('../models/backup')
 const HistoryCollection = require('../models/history')
-const rgbHub = require('../rgbHub')
-const { all } = require('axios')
-const { error } = require('winston')
+const rgbHub = require('../middlewares/rgbHub')
 
 let tempLightCursor = 0;
 let tempBinIndex = 0;
@@ -26,12 +25,6 @@ let lightOffTimeout
 let ifStartMerge = false
 let startTime = ''
 reload()
-
-function createFormatTime() {
-    const t = new Date()
-    const formatedTime = `${t.getDate()}/${t.getMonth() + 1}/${t.getFullYear()} ${t.getHours()}:${t.getMinutes()}`
-    return formatedTime
-}
 
 async function getStock(req, res) {
     const binIdFromRequest = req.query.binId || false
@@ -124,10 +117,13 @@ async function getProductList(req, res) {
                 })
             }
             else {
+                // create product list
                 let results = []
+                // scan product in stock
                 allBins.forEach((bin, binIdx) => {
                     bin.stock.forEach(product => {
                         let isIncluded = false
+                        // check if product added to list
                         results.forEach((result, idx) => {
                             if (result.productId == product.productId) {
                                 isIncluded = true
@@ -147,6 +143,7 @@ async function getProductList(req, res) {
                                 })
                             }
                         })
+                        // if not, add new product to list
                         if (!isIncluded) {
                             let temp = product
                             temp.location = []
@@ -747,44 +744,45 @@ async function getSuggestion(req, res) {
 }
 
 async function putToLight(req, res) {
-    if (ifStartMerge == false) {
-        startTime = createFormatTime()
-        ifStartMerge = true
-        let backup = await BackupCollection.findOne({})
-        backup.startTime = startTime
-        backup.started = ifStartMerge
-        await backup.save()
+    // Check if putToLight for the 1st time
+    async function ifFirstTimePutToLight() {
+        if (ifStartMerge == false) {
+            startTime = date('minutes')
+            ifStartMerge = true
+            let backup = await BackupCollection.findOne({})
+            backup.startTime = startTime
+            backup.started = ifStartMerge
+            backup.vendor = req.body.vendorName
+            await backup.save()
+        }
     }
-    if (req.body.productId == '' || req.body.productId == undefined) {
-        logger.error('Invalid productId', { value: req.body })
-        return res.status(400).json({
-            status: 'fail',
-            message: 'Mã sản phẩm không hợp lệ'
-        });
+    ifFirstTimePutToLight()
+
+    /**
+     * Update order list
+     */
+    async function checkOrder(_orderId, _vendorName) {
+        let backup = await BackupCollection.findOne()
+        let ifIncluded = false
+        backup.orders.forEach(async (order, idx) => {
+            if (_orderId == order.orderId && _vendorName == order.vendorName) ifIncluded = true
+        })
+        if (ifIncluded == false) {
+            backup.orders.push({
+                orderId: req.body.orderId,
+                vendorName: req.body.vendorName,
+                dateStarted: date('seconds'),
+                dateCompleted: false
+            })
+            await backup.save()
+        }
     }
-    else if (req.body.orderId == '' || req.body.orderId == undefined) {
-        logger.error('Invalid orderId', { value: req.body })
-        return res.status(400).json({
-            status: 'fail',
-            message: 'Mã phiếu không hợp lệ'
-        });
-    }
-    else if (req.body.binId == undefined || req.body.binId === "") {
-        logger.error('Invalid binId', { value: req.body })
-        return res.status(400).json({
-            status: 'fail',
-            message: 'Mã ô không hợp lệ'
-        });
-    }
-    else if (req.body.price == '' || req.body.price == undefined) {
-        logger.error('Invalid price', { value: req.body })
-        return res.status(400).json({
-            status: 'fail',
-            message: 'Giá sản phẩm không hợp lệ'
-        });
-    }
-    // get bin with the same binId, productId, orderId
-    // if exist, update product quantity
+    checkOrder(req.body.orderId, req.body.vendorName)
+
+    /**
+     * get bin with the same binId, productId, orderId
+     * if exist, update product quantity
+     */
     const binList_1 = await StockCollection.find({ binId: Number(req.body.binId), stock: { $elemMatch: { productId: req.body.productId, orderId: req.body.orderId } } })
     try {
         // If bin exists, update product quantity on this bin
@@ -1204,47 +1202,65 @@ async function pickToLight_search(req, res) {
 }
 async function pickToLight(req, res) {
     try {
-        // find all bin with input productId
-        let allMatchedBin = await StockCollection.find({ stock: { $elemMatch: { productId: req.body.productId } } }, { _id: 1, coordinate: 1, binId: 1, stock: 1 })
-        if (allMatchedBin.length == 0) {
-            logger.error('ProductId not found', { value: allMatchedBin })
-            return res.status(400).json({
-                status: 'fail',
-                message: `Không tìm thấy mã sản phẩm: ${req.body.productId}`
-            })
+        if (req.body.productId != undefined) {
+            // find all bin with input productId
+            let allMatchedBin = await StockCollection.find({ stock: { $elemMatch: { productId: req.body.productId } } }, { _id: 1, coordinate: 1, binId: 1, stock: 1 })
+            if (allMatchedBin.length == 0) {
+                logger.error('ProductId not found', { value: allMatchedBin })
+                return res.status(400).json({
+                    status: 'fail',
+                    message: `Không tìm thấy mã sản phẩm: ${req.body.productId}`
+                })
+            }
+            else {
+                _clearLightTimeout()
+                _clearLight()
+                let result = []
+                allMatchedBin.forEach(async (bin, binIdx) => {
+                    // filering result
+                    bin.stock.forEach((product, proIdx) => {
+                        if (product.productId == req.body.productId) {
+                            let updateProduct = product
+                            updateProduct.pickedProductQuantity = updateProduct.productQuantity
+                            // bin.stock.push(updateProduct)
+                            // bin.stock.splice(proIdx, 1)
+                            bin.stock[proIdx] = updateProduct
+                        }
+                    })
+                    const tmp = await bin.save()
+                    console.log(tmp.stock)
+                    result.push(tmp)
+                    bin.stock = bin.stock.filter(eachProduct => {
+                        return eachProduct.productId == req.body.productId
+                    })
+                    // turn the light on
+                    rgbHub.write(`W${bin.coordinate.Y_index + 1}:${bin.coordinate.startPoint}:${bin.coordinate.endPoint}:${pickingLightColor}\n`)
+                    if (binIdx == allMatchedBin.length - 1) {
+                        _setLightTimeout(holdingLightInSeconds)
+
+                        return res.status(200).json({
+                            status: 'success',
+                            data: result
+                        })
+                    }
+                });
+            }
         }
         else {
-            _clearLightTimeout()
-            _clearLight()
-            let result = []
-            allMatchedBin.forEach(async (bin, binIdx) => {
-                // filering result
-                bin.stock.forEach((product, proIdx) => {
-                    if (product.productId == req.body.productId) {
-                        let updateProduct = product
-                        updateProduct.pickedProductQuantity = updateProduct.productQuantity
-                        // bin.stock.push(updateProduct)
-                        // bin.stock.splice(proIdx, 1)
-                        bin.stock[proIdx] = updateProduct
-                    }
-                })
-                const tmp = await bin.save()
-                console.log(tmp.stock)
-                result.push(tmp)
-                bin.stock = bin.stock.filter(eachProduct => {
-                    return eachProduct.productId == req.body.productId
-                })
-                // turn the light on
-                rgbHub.write(`W${bin.coordinate.Y_index + 1}:${bin.coordinate.startPoint}:${bin.coordinate.endPoint}:${pickingLightColor}\n`)
-                if (binIdx == allMatchedBin.length - 1) {
-                    _setLightTimeout(holdingLightInSeconds)
-
-                    return res.status(200).json({
-                        status: 'success',
-                        data: result
-                    })
+            let backup = await BackupCollection.findOne()
+            const t = date('seconds')
+            backup.orders.forEach((order, idx) => {
+                if (order.dateCompleted == false) {
+                    let changedOrder = order
+                    changedOrder.dateCompleted = t
+                    backup.orders[idx] = changedOrder
                 }
-            });
+            })
+            const result = backup.save()
+            return res.status(200).json({
+                status: 'success',
+                data: result
+            })
         }
     } catch (err) {
         logger.error('Catch unknown error', { error: err })
@@ -1262,8 +1278,8 @@ async function createHistory(req, res) {
         const stock = await StockCollection.find()
         // save to history
         const hist = new HistoryCollection({
-            dateStarted: startTime,
-            dateCompleted: createFormatTime(),
+            dateStartd: startTime,
+            dateCompleted: date('minutes'),
             data: stock
         })
         const newHistory = await hist.save()
@@ -1282,21 +1298,99 @@ async function createHistory(req, res) {
     }
 }
 
+async function clearHistory(req, res) {
+    try {
+        let history = await HistoryCollection.find()
+        //
+        history.forEach(async ele => {
+            await ele.remove()
+        })
+        res.status(200).json({
+            status: 'success',
+            message: 'History cleared'
+        })
+    }
+    catch (err) {
+        logger.error('Catch unknown error', { error: err })
+        res.status(500).json({
+            status: 'fail',
+            message: 'Lỗi hệ thống',
+            error: err
+        })
+    }
+}
+
 async function clearStock(req, res) {
     try {
         // Retrieve stock
-        const stock = await StockCollection.find()
+        const bins = await StockCollection.find()
+
+        let productsList = []
+        bins.forEach((bin, binIdx) => {
+            bin.stock.forEach(product => {
+                let isIncluded = false
+                productsList.forEach((result, idx) => {
+                    if (result.productId == product.productId) {
+                        isIncluded = true
+                        result.productQuantity += product.productQuantity
+                        result.passedProductQuantity += product.passedProductQuantity
+                        result.scrappedProductQuantity += product.scrappedProductQuantity
+                        result.pickedProductQuantity += product.pickedProductQuantity
+                        if (product.vendorName != undefined) result.vendorName = product.vendorName
+                        result.location.push({
+                            binId: bin.binId,
+                            binName: bin.binName,
+                            orderId: product.orderId,
+                            quantity: product.productQuantity,
+                            passedQuantity: product.passedProductQuantity,
+                            scrappedQuantity: product.scrappedProductQuantity,
+                            pickedQuantity: product.pickedProductQuantity
+                        })
+                    }
+                })
+                if (!isIncluded) {
+                    let temp = product
+                    temp.location = []
+                    temp.location.push(bin.binId)
+                    productsList.push({
+                        productId: product.productId,
+                        productName: product.productName,
+                        M_Product_ID: product.M_Product_ID,
+                        price: product.price,
+                        vendorName: product.vendorName || '',
+                        productQuantity: product.productQuantity,
+                        passedProductQuantity: product.passedProductQuantity,
+                        scrappedProductQuantity: product.scrappedProductQuantity,
+                        pickedProductQuantity: product.pickedProductQuantity,
+                        notIncludedInOrder: product.notIncludedInOrder,
+                        location: [{
+                            binId: bin.binId,
+                            binName: bin.binName,
+                            orderId: product.orderId,
+                            quantity: product.productQuantity,
+                            passedQuantity: product.passedProductQuantity,
+                            scrappedQuantity: product.scrappedProductQuantity,
+                            pickedQuantity: product.pickedProductQuantity
+                        }]
+                    })
+                }
+            })
+        })
+        // 
+        let backup = await BackupCollection.find()
         // save to history
         const hist = new HistoryCollection({
             dateStarted: startTime,
-            dateCompleted: createFormatTime(),
-            data: stock
+            dateCompleted: date('minutes'),
+            orders: backup[0].orders,
+            products: productsList,
+            data: bins
         })
         const newHistory = await hist.save()
         logger.debug('Creating history completed')
 
         // clear stock
-        stock.forEach(async stock => {
+        bins.forEach(async stock => {
             await stock.remove()
         })
         tempLightCursor = 0
@@ -1304,7 +1398,6 @@ async function clearStock(req, res) {
         tempBinIndex_X = 0
         tempBinIndex_Y = 0
 
-        const backup = await BackupCollection.find()
         backup.forEach(async ele => {
             await ele.remove()
         })
@@ -1352,7 +1445,7 @@ async function reload(req, res) {
             tempBinIndex = backup[0].binIndex
             tempBinIndex_X = backup[0].binIndex_X
             tempBinIndex_Y = backup[0].binIndex_Y
-            startTime = backup[0].startTime || createFormatTime()
+            startTime = backup[0].startTime || date('minutes')
             ifStartMerge = backup[0].started
         }
         _clearLight()
@@ -1361,13 +1454,51 @@ async function reload(req, res) {
     }
 }
 
-async function getHistory(req, res) {
+async function getOrderList(req, res) {
     try {
-        const history = await HistoryCollection.find()
+        let results
+        const backup = await BackupCollection.findOne()
+        results = backup.orders
+        if (req.query.orderId != undefined)
+            results = results.filter(result => {
+                return result.orderId == req.query.orderId
+            })
+        if (req.query.vendorName != undefined)
+            results = results.filter(result => {
+                return result.vendorName == req.query.vendorName
+            })
         res.status(200).json({
             status: 'success',
-            data: history
+            data: results
         })
+    }
+    catch (err) {
+        logger.error('Catch unknown error', { error: err })
+        res.status(500).json({
+            status: 'fail',
+            message: 'Lỗi hệ thống',
+            error: err
+        })
+    }
+}
+
+async function getHistory(req, res) {
+    try {
+        let queryObj = {}
+        if (req.query.id != undefined) {
+            const history = await HistoryCollection.findById(req.query.id)
+            res.status(200).json({
+                status: 'success',
+                data: [history]
+            })
+        }
+        else {
+            const history = await HistoryCollection.find().sort({ dateCompleted: -1 })
+            res.status(200).json({
+                status: 'success',
+                data: history
+            })
+        }
     }
     catch (err) {
         logger.error('Catch unknown error', { error: err })
@@ -1434,5 +1565,7 @@ module.exports = {
     getBin,
     deleteBin,
     createHistory,
+    clearHistory,
+    getOrderList,
     getHistory
 };

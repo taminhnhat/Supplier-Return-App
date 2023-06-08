@@ -1,7 +1,7 @@
-const app = require('./app')
+const app = require('./src/app')
 require('dotenv').config()
 const mongoose = require('mongoose')
-const logger = require('./logger/logger')
+const logger = require('./src/middlewares/logger.middleware')
 
 mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true })
     .catch(err => {

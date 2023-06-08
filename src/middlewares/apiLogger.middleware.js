@@ -1,4 +1,4 @@
-const logger = require('../logger/logger')
+const logger = require('./logger.middleware')
 
 const log = async function (req, res, next) {
     try {

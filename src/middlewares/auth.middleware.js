@@ -1,4 +1,4 @@
-const logger = require('../logger/logger')
+const logger = require('./logger.middleware')
 const auth = async (req, res, next) => {
     try {
         if (req.headers.api_key === process.env.TOKEN_SECRET)

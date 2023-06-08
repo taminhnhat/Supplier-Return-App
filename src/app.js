@@ -22,12 +22,14 @@ else if (process.env.NODE_ENV == 'development')
     app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :response-time ms'))
 else
     app.use(morgan('common'))
-
-const endPointLog = require('.//middlewares/log')
+const endPointLog = require('./middlewares/apiLogger.middleware')
 app.use(endPointLog)
+
+
 // authorization
-const auth = require('./middlewares/auth')
+const auth = require('./middlewares/auth.middleware')
 app.use(auth)
+
 
 // routing
 const productRouter = require('./routes/product.route')
@@ -35,14 +37,17 @@ const stockRouter = require('./routes/stock.route')
 app.use('/api/v1', productRouter)
 app.use('/api/v2', stockRouter)
 
+
 // enable ssl
-const privateKey = fs.readFileSync('sslcert/key.pem', 'utf8');
-const certificate = fs.readFileSync('sslcert/cert.pem', 'utf8');
+const privateKey = fs.readFileSync('./src/sslcert/key.pem', 'utf8');
+const certificate = fs.readFileSync('./src/sslcert/cert.pem', 'utf8');
 const credentials = { key: privateKey, cert: certificate };
+
 
 // create server
 const httpServer = http.createServer(app)
 const httpsServer = https.createServer(credentials, app)
+
 
 // export
 module.exports = httpServer

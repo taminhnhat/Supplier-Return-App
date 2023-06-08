@@ -21,12 +21,21 @@ const backupSchema = new mongoose.Schema({
         required: true,
         default: 0
     },
+    orders: {
+        type: Array,
+        required: true,
+        default: []
+    },
     startTime: {
         type: String,
         required: false
     },
     started: {
         type: Boolean,
+        required: false
+    },
+    vendor: {
+        type: String,
         required: false
     }
 })

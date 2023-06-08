@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+const validator = require('../middlewares/validator.middleware')
 
 require('dotenv').config({ path: './.env' })
 const stockCtrl = require('../controllers/stock.controller')
@@ -12,7 +13,7 @@ router
 
 router.get('/stock', stockCtrl.getStock)
 
-router.post('/putToLight', stockCtrl.putToLight)
+router.post('/putToLight', validator.putToLight, stockCtrl.putToLight)
 
 router.post('/pickToLight', stockCtrl.pickToLight)
 

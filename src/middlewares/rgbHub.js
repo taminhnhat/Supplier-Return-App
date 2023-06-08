@@ -3,11 +3,8 @@
  * Scanners are configured
  */
 require('dotenv').config({ path: './.env' });
+const logger = require('./logger.middleware');
 const SerialPort = require('serialport');
-
-const logger = require('./logger/logger');
-
-const FILE_NAME = 'serial.js  ';
 
 const rgbHubPath = process.env.RGB_HUB_PATH;
 const rgbHubBaudrate = Number(process.env.RGB_HUB_BAUDRATE) || 115200;
@@ -31,7 +28,7 @@ const rgbHub = new SerialPort(rgbHubPath, {
 rgbHub.on('open', function () {
   isRgbHubOpen = true
   clearInterval(reconnectHubInterval)
-  logger.info({ message: 'rgb hub opened', location: FILE_NAME })
+  logger.info('rgb hub opened')
 });
 
 rgbHub.on('data', function (data) {
@@ -54,7 +51,7 @@ rgbHub.on('close', () => {
 });
 
 rgbHub.on('error', (err) => {
-  logger.error('Rgb hub error', { err: err })
+  logger.error('Rgb hub error', { error: err })
 });
 
 /**
@@ -82,7 +79,7 @@ function next() {
   if (delayTimeInMilis > 0) {
     setTimeout(() => {
       rgbHub.write(messageToRgbHub, (err, res) => {
-        if (err) logger.error({ message: 'Cannot write to rgb hub', err: err, location: FILE_NAME });
+        if (err) logger.error({ message: 'Cannot write to rgb hub', error: err });
         if (rgbHubDebugMode == 'true');
       });
     }, delayTimeInMilis)
@@ -91,7 +88,7 @@ function next() {
   else {
     setImmediate(() => {
       rgbHub.write(messageToRgbHub, (err, res) => {
-        if (err) logger.error({ message: 'Cannot write to rgb hub', err: err, location: FILE_NAME });
+        if (err) logger.error({ message: 'Cannot write to rgb hub', error: err });
         if (rgbHubDebugMode == 'true');
       });
     })
@@ -101,7 +98,7 @@ function next() {
 }
 
 rgbHub.open((err) => {
-  if (err) logger.error({ message: 'Can not open rgbHub', err: err, location: FILE_NAME });
+  if (err) logger.error('Can not open rgbHub', { error: err });
   reconnectHubInterval = setInterval(() => {
     rgbHub.open((err) => {
       //
