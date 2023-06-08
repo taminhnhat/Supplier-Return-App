@@ -39,8 +39,8 @@ app.use('/api/v2', stockRouter)
 
 
 // enable ssl
-const privateKey = fs.readFileSync('./src/sslcert/key.pem', 'utf8');
-const certificate = fs.readFileSync('./src/sslcert/cert.pem', 'utf8');
+const privateKey = fs.readFileSync('./src/configs/key.pem', 'utf8');
+const certificate = fs.readFileSync('./src/configs/cert.pem', 'utf8');
 const credentials = { key: privateKey, cert: certificate };
 
 
