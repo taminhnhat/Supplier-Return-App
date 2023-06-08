@@ -1,0 +1,10 @@
+{
+    "bin_width": [
+        "20cm",
+        "25cm",
+        "30cm",
+        "35cm",
+        "40cm"
+    ],
+    "num_of_led_per_stip": 180
+}

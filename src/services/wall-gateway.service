@@ -1,0 +1,10 @@
+[Unit]
+Description=GATEWAY process service
+
+[Service]
+User=root
+WorkingDirectory=.../Supplier-Return-App/
+ExecStart=.../Supplier-Return-App/service/gateway.sh
+
+[Install]
+WantedBy=default.target

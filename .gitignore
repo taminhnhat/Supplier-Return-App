@@ -1,7 +1,5 @@
-.env
 node_modules
-route.rest
+src/configs/*.pem
 package-lock.json
-sslcert
 .env
 logs

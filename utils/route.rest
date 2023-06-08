@@ -1,0 +1,32 @@
+#### Add Stock
+POST http://localhost:3000/api/v2/products HTTP/1.1
+content-type: application/json
+
+{
+    "userId": "Minh_Nhat",
+    "productId": "34t2345623467",
+    "orderId": "590028/20/XT/QV/ABQ",
+    "arrangeMode": "default",
+    "binWidth": "10cm",
+    "lightColor": "00ff00",
+    "mergeId": "34t2345623467"
+}
+
+#### Put To Light
+POST http://localhost:3000/api/v2/putToLight HTTP/1.1
+content-type: application/json
+
+{
+    "userId": "Minh_Nhat",
+    "productId": "0100876534276",
+    "productName": "Đồ chơi",
+    "vendorName": "Nhat Tinh Anh",
+    "M_Product_ID": "wyug-wrfqv-evreh",
+    "orderId": "590028/20/XT/QV/ABQ",
+    "binId": 0,
+    "price": "15.000đ",
+    "passedProductQuantity": 1,
+    "scrappedProductQuantity": 1,
+    "notIncludedInOrder": false,
+    "binWidth": "15cm"
+}
