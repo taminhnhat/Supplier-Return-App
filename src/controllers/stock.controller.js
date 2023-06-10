@@ -263,7 +263,6 @@ async function searchProduct(req, res) {
     const orderIdFromRequest = req.query.orderId
     const binIdFromRequest = req.query.binId
     const lightOnFlag = req.query.lightOn || 'false'
-    const locationReturnFlag = req.query.locationReturn || 'false'
 
     try {
         switch (req.query.groupBy) {
@@ -353,11 +352,6 @@ async function searchProduct(req, res) {
             let result
             allMatchedBin.forEach(bin => {
                 bin.stock.forEach(product => {
-                    let isIncluded = false
-                    let tmpProQty = 0
-                    let tmpPasProQty = 0
-                    let tmpScrProQty = 0
-                    let tmpPicProQty = 0
 
                     if (product.productId == req.query.productId) {
                         if (result == undefined) {

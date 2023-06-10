@@ -34,47 +34,59 @@ const productList = [
     '3000364765378']
 
 const orderList = ['590028/20/XT/QV/ABQ', '467537/20/XT/QV/ABQ', '989722/20/XT/QV/ABQ']
-
-function putToLight(binId, productId, orderId, productQuantity) {
-    axios.post('http://192.168.1.43:3000/api/v1/putToLight/', {
+const vendorList = ['Kim Dong', 'Nhat Tinh Anh', 'NXB Tre']
+const url = 'http://192.168.1.42:3000/api/v1/putToLight/'
+const head = { headers: { api_key: 'mgw_cEfRlzOgO2EwRe9ha7Ho' } }
+function pro(binId, vendorName) {
+    return {
         userId: "Minh_Nhat",
-        productId: productId,
-        orderId: orderId,
+        productId: productList[Math.floor(Math.random() * productList.length)],
+        productName: 'Đồ chơi',
+        vendorName: vendorName,
+        M_Product_ID: "wyug-wrfqv-evreh",
+        orderId: orderList[Math.floor(Math.random() * orderList.length)],
         binId: binId,
-        productQuantity: productQuantity,
-        price: "25.000 đ",
+        price: '20.000đ',
+        passedProductQuantity: 6,
+        scrappedProductQuantity: 2,
         notIncludedInOrder: false,
-        binWidth: "20cm",
-        lightColor: "00ff00"
-    }, {
-        headers: {
-            api_key: 'mgw_cEfRlzOgO2EwRe9ha7Ho'
-        }
-    })
-        .then(response => {
-            console.log(response.data)
-        })
-        .catch(error => {
-            console.log(error.message);
-        });
+        binWidth: "20cm"
+    }
 }
-setTimeout(() => putToLight(0, productList[0], orderList[0], 2), 100)
-setTimeout(() => putToLight(1, productList[1], orderList[0], 4), 200)
-setTimeout(() => putToLight(2, productList[2], orderList[0], 56), 300)
-setTimeout(() => putToLight(3, productList[3], orderList[0], 21), 400)
-setTimeout(() => putToLight(4, productList[4], orderList[0], 98), 500)
-setTimeout(() => putToLight(5, productList[5], orderList[0], 53), 600)
-setTimeout(() => putToLight(6, productList[6], orderList[0], 23), 700)
-setTimeout(() => putToLight(7, productList[7], orderList[0], 22), 800)
-setTimeout(() => putToLight(8, productList[8], orderList[0], 72), 900)
-setTimeout(() => putToLight(9, productList[9], orderList[0], 3), 1000)
+async function createStock() {
+    try {
+        // await axios.delete(url, head)
+        for (let vendorIdx = 0; vendorIdx < 3; vendorIdx++) {
+            for (let binIdx = 0; binIdx < 15; binIdx++) {
+                const Amount = Math.floor(Math.random() * 2 + 1)
+                for (i = 0; i < Amount; i++) {
+                    await axios.post(url, pro(binIdx, vendorList[vendorIdx]), head)
+                }
+            }
+        }
+    }
+    catch (error) {
+        console.log(error.message);
+    }
+}
+createStock()
+// setTimeout(() => putToLight(0, productList[0], orderList[0], 2), 100)
+// setTimeout(() => putToLight(1, productList[1], orderList[0], 4), 200)
+// setTimeout(() => putToLight(2, productList[2], orderList[0], 56), 300)
+// setTimeout(() => putToLight(3, productList[3], orderList[0], 21), 400)
+// setTimeout(() => putToLight(4, productList[4], orderList[0], 98), 500)
+// setTimeout(() => putToLight(5, productList[5], orderList[0], 53), 600)
+// setTimeout(() => putToLight(6, productList[6], orderList[0], 23), 700)
+// setTimeout(() => putToLight(7, productList[7], orderList[0], 22), 800)
+// setTimeout(() => putToLight(8, productList[8], orderList[0], 72), 900)
+// setTimeout(() => putToLight(9, productList[9], orderList[0], 3), 1000)
 
-setTimeout(() => putToLight(0, productList[0], orderList[1], 1), 1100)
-setTimeout(() => putToLight(2, productList[0], orderList[0], 2), 1200)
-setTimeout(() => putToLight(7, productList[0], orderList[1], 3), 1300)
+// setTimeout(() => putToLight(0, productList[0], orderList[1], 1), 1100)
+// setTimeout(() => putToLight(2, productList[0], orderList[0], 2), 1200)
+// setTimeout(() => putToLight(7, productList[0], orderList[1], 3), 1300)
 
-setTimeout(() => putToLight(7, productList[9], orderList[0], 1), 1400)
-setTimeout(() => putToLight(4, productList[9], orderList[0], 2), 1500)
+// setTimeout(() => putToLight(7, productList[9], orderList[0], 1), 1400)
+// setTimeout(() => putToLight(4, productList[9], orderList[0], 2), 1500)
 
 // putToLight(0, productList[0], orderList[1], 32)
 // putToLight(1, productList[1], orderList[1], 5)
