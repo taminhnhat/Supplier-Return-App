@@ -33,7 +33,7 @@ const productList = [
     '2900839799823',
     '3000364765378']
 
-const orderList = ['590028/20/XT/QV/ABQ', '467537/20/XT/QV/ABQ', '989722/20/XT/QV/ABQ']
+const orderList = ['590028/20/XT/QV/ABQ', '467537/20/XT/QV/ABQ', '989722/20/XT/QV/ABQ', '345628/20/XT/QV/ABQ', '228001/20/XT/QV/ABQ', '377220/20/XT/QV/ABQ']
 const vendorList = ['Kim Dong', 'Nhat Tinh Anh', 'NXB Tre']
 const url = 'http://192.168.1.42:3000/api/v1/putToLight/'
 const head = { headers: { api_key: 'mgw_cEfRlzOgO2EwRe9ha7Ho' } }
@@ -47,8 +47,8 @@ function pro(binId, vendorName) {
         orderId: orderList[Math.floor(Math.random() * orderList.length)],
         binId: binId,
         price: '20.000đ',
-        passedProductQuantity: 6,
-        scrappedProductQuantity: 2,
+        passedProductQuantity: Math.floor(Math.random() * 30),
+        scrappedProductQuantity: Math.floor(Math.random() * 1),
         notIncludedInOrder: false,
         binWidth: "20cm"
     }
@@ -56,12 +56,11 @@ function pro(binId, vendorName) {
 async function createStock() {
     try {
         // await axios.delete(url, head)
-        for (let vendorIdx = 0; vendorIdx < 3; vendorIdx++) {
-            for (let binIdx = 0; binIdx < 15; binIdx++) {
-                const Amount = Math.floor(Math.random() * 2 + 1)
-                for (i = 0; i < Amount; i++) {
-                    await axios.post(url, pro(binIdx, vendorList[vendorIdx]), head)
-                }
+
+        for (let binIdx = 0; binIdx < 45; binIdx++) {
+            const Amount = Math.floor(Math.random() * 2 + 1)
+            for (i = 0; i < Amount; i++) {
+                await axios.post(url, pro(binIdx, vendorList[1]), head)
             }
         }
     }

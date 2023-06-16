@@ -31,20 +31,37 @@ async function getStock(req, res) {
 
     if (binIdFromRequest === false) {
         try {
-            const result = await StockCollection.find()
-            if (result == undefined || result == null) {
-                logger.error('Cannot retrieve from database', { value: result })
+            let results = await StockCollection.find()
+            if (results == undefined || results == null) {
+                logger.error('Cannot retrieve from database', { value: results })
                 return res.status(500).json({
                     status: 'fail',
                     message: 'Loi he thong',
                     error: 'Khong truy xuat duoc database'
                 })
             }
-            else
-                return res.status(200).json({
-                    status: 'success',
-                    data: result
+            else {
+                let output = []
+                results.forEach((result, idx) => {
+                    let tmpSumQty = 0
+                    result.stock.forEach(product => {
+                        tmpSumQty += product.productQuantity
+                    })
+                    output.push({
+                        binId: result.binId,
+                        binName: result.binName,
+                        coordinate: result.coordinate,
+                        binWidth: result.binWidth,
+                        sumQty: tmpSumQty,
+                        stock: result.stock
+                    })
+                    if (idx == results.length - 1)
+                        return res.status(200).json({
+                            status: 'success',
+                            data: output
+                        })
                 })
+            }
         } catch (err) {
             logger.error('Catch unknown error', { error: err })
             return res.status(500).json({
