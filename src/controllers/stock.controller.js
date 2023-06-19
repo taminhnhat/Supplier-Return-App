@@ -61,6 +61,11 @@ async function getStock(req, res) {
                             data: output
                         })
                 })
+                if (results.length == 0)
+                    return res.status(200).json({
+                        status: 'success',
+                        data: output
+                    })
             }
         } catch (err) {
             logger.error('Catch unknown error', { error: err })
