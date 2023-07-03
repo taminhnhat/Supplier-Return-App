@@ -860,7 +860,7 @@ async function putToLight(req, res) {
     }
 
     async function createNewBin(req, res) {
-        logger.debug('putToLight:create new bin')
+        logger.debug({ message: 'putToLight:create new bin' })
         //
         const ledsPerMetterOfLedStrip = Number(process.env.LEDS_PER_METTER)
         const binWidthInCm = Number(req.body.binWidth.replace('cm', '').replace('Cm', '').replace('CM', ''))
@@ -933,6 +933,7 @@ async function putToLight(req, res) {
             // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
             rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${puttingLightColor}\n`)
             _setLightTimeout(defaultHoldingLightInSeconds)
+            logger.debug({ message: 'Response:', value: newStock })
             return res.status(201).json({
                 status: 'success',
                 data: newStock
@@ -949,7 +950,7 @@ async function putToLight(req, res) {
     }
 
     async function updateProductQuantity(req, res, thisBin) {
-        logger.debug('putToLight:update quantity')
+        logger.debug({ message: 'putToLight:update quantity', value: thisBin })
         try {
             thisBin.stock.forEach(async (eachProduct, productIndex) => {
                 if (eachProduct.productId == req.body.productId && eachProduct.orderId == req.body.orderId) {
@@ -959,14 +960,14 @@ async function putToLight(req, res) {
                     updateProduct.passedProductQuantity = updateProduct.passedProductQuantity + passedProQty
                     updateProduct.scrappedProductQuantity = updateProduct.scrappedProductQuantity + scrappedProQty
                     updateProduct.productQuantity += (passedProQty + scrappedProQty)
-                    thisBin.stock.push(updateProduct)
-                    thisBin.stock.splice(productIndex, 1)
+                    thisBin.stock[productIndex] = updateProduct
                     const updatedBin = await thisBin.save()
                     _clearLightTimeout()
                     _clearLight()
                     // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
                     rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${puttingLightColor}\n`)
                     _setLightTimeout(defaultHoldingLightInSeconds)
+                    logger.debug({ message: 'Response:', value: updatedBin })
                     return res.status(201).json({
                         status: 'success',
                         data: updatedBin
@@ -985,7 +986,7 @@ async function putToLight(req, res) {
     }
 
     async function pushNewProduct(req, res, thisBin) {
-        logger.debug('putToLight:push new product')
+        logger.debug({ message: 'putToLight:push new product', value: thisBin })
         try {
             const passedProQty = Number(req.body.passedProductQuantity || 0)
             const scrappedProQty = Number(req.body.scrappedProductQuantity || 0)
@@ -1008,6 +1009,7 @@ async function putToLight(req, res) {
             // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
             rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${puttingLightColor}\n`)
             _setLightTimeout(defaultHoldingLightInSeconds)
+            logger.debug({ message: 'Response:', value: updatedBin })
             return res.status(201).json({
                 status: 'success',
                 data: updatedBin
@@ -1080,8 +1082,7 @@ async function putToLight_updateQuantity(req, res) {
                                 updateProduct.passedProductQuantity = change.passedProductQuantity
                                 updateProduct.scrappedProductQuantity = change.scrappedProductQuantity
                                 updateProduct.productQuantity = change.passedProductQuantity + change.scrappedProductQuantity
-                                bin.stock.push(updateProduct)
-                                bin.stock.splice(productIndex, 1)
+                                bin.stock[productIndex] = updateProduct
                             }
                             if (productIndex == bin.stock.length - 1) resolve(bin)
                         })
@@ -1248,8 +1249,6 @@ async function pickToLight(req, res) {
                         if (product.productId == req.body.productId) {
                             let updateProduct = product
                             updateProduct.pickedProductQuantity = updateProduct.productQuantity
-                            // bin.stock.push(updateProduct)
-                            // bin.stock.splice(proIdx, 1)
                             bin.stock[proIdx] = updateProduct
                         }
                     })

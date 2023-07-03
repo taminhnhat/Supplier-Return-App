@@ -34,7 +34,7 @@ app.use(auth)
 // routing
 const productRouter = require('./routes/product.route')
 const stockRouter = require('./routes/stock.route')
-app.use('/api/v1', productRouter)
+// app.use('/api/v1', productRouter)
 app.use('/api/v2', stockRouter)
 
 
