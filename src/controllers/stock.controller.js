@@ -452,9 +452,17 @@ async function searchProduct(req, res) {
             })
         }
         async function groupByOrderId() {
-            const allBins = await StockCollection.find()
-            if (allBins == undefined || allBins == null) {
-                logger.error('Cannot retrieve from database', { value: allBins })
+            // query
+            let queryObj = { stock: { $elemMatch: {} } }
+            if (productIdFromRequest != undefined) queryObj.stock.$elemMatch.productId = productIdFromRequest
+            if (orderIdFromRequest != undefined) queryObj.stock.$elemMatch.orderId = orderIdFromRequest
+            if (binIdFromRequest != undefined) queryObj.binId = binIdFromRequest
+            // projection
+            let projectionObj = { _id: 0, coordinate: 1, binId: 1, binName: 1, binWidth: 1, stock: 1 }
+            // get all matched bins
+            const allMatchedBins = await StockCollection.find(queryObj, projectionObj)
+            if (allMatchedBins == undefined || allMatchedBins == null) {
+                logger.error('Cannot retrieve from database', { value: allMatchedBins })
                 return res.status(500).json({
                     status: 'fail',
                     message: 'Loi he thong',
@@ -463,8 +471,7 @@ async function searchProduct(req, res) {
             }
             else {
                 let results = []
-                let lightOnBins = []
-                allBins.forEach((bin, binIdx) => {
+                allMatchedBins.forEach((bin, binIdx) => {
                     bin.stock.forEach(product => {
                         let isIncluded = false
                         results.forEach((result, idx) => {
@@ -476,7 +483,6 @@ async function searchProduct(req, res) {
                             results.push({
                                 orderId: product.orderId
                             })
-                            lightOnBins.push(bin)
                         }
                     })
                 })
@@ -484,7 +490,7 @@ async function searchProduct(req, res) {
                 if (lightOnFlag == 'true') {
                     _clearLightTimeout()
                     _clearLight()
-                    lightOnBins.forEach(eachBin => {
+                    allMatchedBins.forEach(eachBin => {
                         // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
                         rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
                     })
