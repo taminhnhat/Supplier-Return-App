@@ -14,7 +14,9 @@ let tempBinIndex_Y = 0;
 const numOfLedPerStrip = process.env.NUM_OF_LED_PER_STRIP
 const numOfStrip = process.env.NUM_OF_STRIP
 
-const holdingLightInSeconds = process.env.HOLDING_LIGHT_IN_SECONDS || 180
+const defaultHoldingLightInSeconds = Number(process.env.DEFAULT_HOLDING_LIGHT_IN_SECONDS) || 180
+const searchingHoldingLightInSeconds = Number(process.env.SEARCHING_HOLDING_LIGHT_IN_SECONDS) || 180
+const testingHoldingLightInSeconds = Number(process.env.TESTING_HOLDING_LIGHT_IN_SECONDS) || 5
 const searchingLightColor = process.env.SEARCHING_MODE_LIGHT_COLOR || 'ffff00'
 const gettingSuggestLightColor = process.env.PUTTING_SUGGEST_MODE_LIGHT_COLOR || '40ff40'
 const puttingLightColor = process.env.PUTTING_MODE_LIGHT_COLOR || '00ff00'
@@ -343,7 +345,7 @@ async function searchProduct(req, res) {
                     // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
                     rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
                 })
-                _setLightTimeout(holdingLightInSeconds)
+                _setLightTimeout(searchingHoldingLightInSeconds)
             }
 
             return res.status(200).json({
@@ -438,7 +440,7 @@ async function searchProduct(req, res) {
                     // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
                     rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
                 })
-                _setLightTimeout(holdingLightInSeconds)
+                _setLightTimeout(searchingHoldingLightInSeconds)
             }
 
             let results = []
@@ -461,6 +463,7 @@ async function searchProduct(req, res) {
             }
             else {
                 let results = []
+                let lightOnBins = []
                 allBins.forEach((bin, binIdx) => {
                     bin.stock.forEach(product => {
                         let isIncluded = false
@@ -473,6 +476,7 @@ async function searchProduct(req, res) {
                             results.push({
                                 orderId: product.orderId
                             })
+                            lightOnBins.push(bin)
                         }
                     })
                 })
@@ -480,11 +484,11 @@ async function searchProduct(req, res) {
                 if (lightOnFlag == 'true') {
                     _clearLightTimeout()
                     _clearLight()
-                    allBins.forEach(eachBin => {
+                    lightOnBins.forEach(eachBin => {
                         // rgbHub.write(`F${eachBin.coordinate.Y_index + 1}:000000\n`)
                         rgbHub.write(`W${eachBin.coordinate.Y_index + 1}:${eachBin.coordinate.startPoint}:${eachBin.coordinate.endPoint}:${searchingLightColor}\n`)
                     })
-                    _setLightTimeout(holdingLightInSeconds)
+                    _setLightTimeout(searchingHoldingLightInSeconds)
                 }
                 // result.sort(function (a, b) { return a.productId - b.productId })
                 return res.status(200).json({
@@ -658,7 +662,7 @@ async function getSuggestion(req, res) {
             _clearLight()
             // rgbHub.write(`F${matchedBin.coordinate.Y_index + 1}:000000\n`);
             rgbHub.write(`W${matchedBin.coordinate.Y_index + 1}:${matchedBin.coordinate.startPoint}:${matchedBin.coordinate.endPoint}:${gettingSuggestLightColor}\n`)
-            _setLightTimeout(holdingLightInSeconds)
+            _setLightTimeout(defaultHoldingLightInSeconds)
             return res.status(200).json({
                 status: 'success',
                 data: matchedBin
@@ -695,7 +699,7 @@ async function getSuggestion(req, res) {
                 _clearLight()
                 // rgbHub.write(`F${tempRes.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.write(`W${tempRes.coordinate.Y_index + 1}:${tempRes.coordinate.startPoint}:${tempRes.coordinate.endPoint}:${gettingSuggestLightColor}\n`)
-                _setLightTimeout(holdingLightInSeconds)
+                _setLightTimeout(defaultHoldingLightInSeconds)
                 return res.status(200).json({
                     status: 'success',
                     data: tempRes
@@ -735,7 +739,7 @@ async function getSuggestion(req, res) {
         _clearLight()
         // rgbHub.write(`F${lightRow}:000000\n`)
         rgbHub.write(`W${lightRow}:${startPoint}:${endPoint}:${gettingSuggestLightColor}\n`)
-        _setLightTimeout(holdingLightInSeconds)
+        _setLightTimeout(defaultHoldingLightInSeconds)
         const newStock = {
             binId: tempBinIndex,
             binWidth: req.body.binWidth,
@@ -922,7 +926,7 @@ async function putToLight(req, res) {
             _clearLight()
             // rgbHub.write(`F${tempBinIndex_Y + 1}:000000\n`)
             rgbHub.write(`W${tempBinIndex_Y + 1}:${startPoint}:${endPoint}:${puttingLightColor}\n`)
-            _setLightTimeout(holdingLightInSeconds)
+            _setLightTimeout(defaultHoldingLightInSeconds)
             return res.status(201).json({
                 status: 'success',
                 data: newStock
@@ -956,7 +960,7 @@ async function putToLight(req, res) {
                     _clearLight()
                     // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
                     rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${puttingLightColor}\n`)
-                    _setLightTimeout(holdingLightInSeconds)
+                    _setLightTimeout(defaultHoldingLightInSeconds)
                     return res.status(201).json({
                         status: 'success',
                         data: updatedBin
@@ -997,7 +1001,7 @@ async function putToLight(req, res) {
             _clearLight()
             // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
             rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${puttingLightColor}\n`)
-            _setLightTimeout(holdingLightInSeconds)
+            _setLightTimeout(defaultHoldingLightInSeconds)
             return res.status(201).json({
                 status: 'success',
                 data: updatedBin
@@ -1199,7 +1203,7 @@ async function pickToLight_search(req, res) {
                 // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
                 rgbHub.write(`W${bin.coordinate.Y_index + 1}:${bin.coordinate.startPoint}:${bin.coordinate.endPoint}:${pickToLightSearchColor}\n`)
             })
-            _setLightTimeout(holdingLightInSeconds)
+            _setLightTimeout(defaultHoldingLightInSeconds)
             // result.sort(function (a, b) { return a.productId - b.productId })
             return res.status(200).json({
                 status: 'success',
@@ -1252,7 +1256,7 @@ async function pickToLight(req, res) {
                     // turn the light on
                     rgbHub.write(`W${bin.coordinate.Y_index + 1}:${bin.coordinate.startPoint}:${bin.coordinate.endPoint}:${pickingLightColor}\n`)
                     if (binIdx == allMatchedBin.length - 1) {
-                        _setLightTimeout(holdingLightInSeconds)
+                        _setLightTimeout(defaultHoldingLightInSeconds)
 
                         return res.status(200).json({
                             status: 'success',
@@ -1534,7 +1538,7 @@ function testLight(req, res) {
     rgbHub.write(`F4:${lightColor}\n`)
     rgbHub.write(`F5:${lightColor}\n`)
     if (lightColor != '000000')
-        _setLightTimeout(5)
+        _setLightTimeout(testingHoldingLightInSeconds)
     return res.status(202).json({
         status: 'accepted'
     })
