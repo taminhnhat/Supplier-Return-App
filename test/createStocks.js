@@ -35,11 +35,12 @@ const productList = [
 
 const orderList = ['590028/20/XT/QV/ABQ', '467537/20/XT/QV/ABQ', '989722/20/XT/QV/ABQ', '345628/20/XT/QV/ABQ', '228001/20/XT/QV/ABQ', '377220/20/XT/QV/ABQ']
 const vendorList = ['Kim Dong', 'Nhat Tinh Anh', 'NXB Tre']
+const userList = ['Minh_Nhat', 'Duc_Long', 'Viet_Son']
 const url = 'http://localhost:3000/api/v1/putToLight/'
 const head = { headers: { api_key: 'mgw_cEfRlzOgO2EwRe9ha7Ho' } }
 function pro(binId, vendorName) {
     return {
-        userId: "Minh_Nhat",
+        userId: userList[Math.floor(Math.random() * userList.length)],
         productId: productList[Math.floor(Math.random() * productList.length)],
         productName: 'Đồ chơi',
         vendorName: vendorName,
@@ -58,7 +59,7 @@ async function createStock() {
         // await axios.delete(url, head)
 
         for (let binIdx = 0; binIdx < 45; binIdx++) {
-            const Amount = Math.floor(Math.random() * 2 + 1)
+            const Amount = Math.floor(Math.random() * 4 + 1)
             for (i = 0; i < Amount; i++) {
                 await axios.post(url, pro(binIdx, vendorList[1]), head)
             }

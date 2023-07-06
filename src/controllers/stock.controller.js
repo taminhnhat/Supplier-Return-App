@@ -797,6 +797,7 @@ async function putToLight(req, res) {
             backup.orders.push({
                 orderId: req.body.orderId,
                 vendorName: req.body.vendorName,
+                users: [req.body.userId],
                 dateStarted: date('seconds'),
                 dateCompleted: false
             })
@@ -914,6 +915,7 @@ async function putToLight(req, res) {
                     passedProductQuantity: passedProQty,
                     scrappedProductQuantity: scrappedProQty,
                     productQuantity: passedProQty + scrappedProQty,
+                    users: [{ userId: req.body.userId, qty: passedProQty + scrappedProQty }],
                     pickedProductQuantity: 0,
                     notIncludedInOrder: req.body.notIncludedInOrder
                 }]
@@ -957,16 +959,30 @@ async function putToLight(req, res) {
                     let updateProduct = eachProduct
                     const passedProQty = Number(req.body.passedProductQuantity)
                     const scrappedProQty = Number(req.body.scrappedProductQuantity)
+                    // update quantity
                     updateProduct.passedProductQuantity = updateProduct.passedProductQuantity + passedProQty
                     updateProduct.scrappedProductQuantity = updateProduct.scrappedProductQuantity + scrappedProQty
                     updateProduct.productQuantity += (passedProQty + scrappedProQty)
+
+                    // if new user put this product
+                    const matchedUserIndex = updateProduct.users.findIndex(user => user.userId == req.body.userId)
+                    if (matchedUserIndex == -1)
+                        updateProduct.users.push({ userId: req.body.userId, qty: passedProQty + scrappedProQty })
+                    else {
+                        let updatedUser = updateProduct.users[matchedUserIndex]
+                        updatedUser.qty += (passedProQty + scrappedProQty)
+                        updateProduct.users[matchedUserIndex] = updatedUser
+                    }
+
+                    // save to db
                     thisBin.stock[productIndex] = updateProduct
                     const updatedBin = await thisBin.save()
+                    // set light
                     _clearLightTimeout()
                     _clearLight()
-                    // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
                     rgbHub.write(`W${thisBin.coordinate.Y_index + 1}:${thisBin.coordinate.startPoint}:${thisBin.coordinate.endPoint}:${puttingLightColor}\n`)
                     _setLightTimeout(defaultHoldingLightInSeconds)
+                    // send response
                     logger.debug({ message: 'Response:', value: updatedBin })
                     return res.status(201).json({
                         status: 'success',
@@ -975,7 +991,6 @@ async function putToLight(req, res) {
                 }
             })
         } catch (err) {
-            console.log(err)
             logger.error('Catch unknown error', { error: err })
             return res.status(500).json({
                 status: 'fail',
@@ -1000,6 +1015,7 @@ async function putToLight(req, res) {
                 passedProductQuantity: passedProQty,
                 scrappedProductQuantity: scrappedProQty,
                 productQuantity: passedProQty + scrappedProQty,
+                users: [{ userId: req.body.userId, qty: passedProQty + scrappedProQty }],
                 pickedProductQuantity: 0,
                 notIncludedInOrder: req.body.notIncludedInOrder
             })
@@ -1126,6 +1142,7 @@ async function putToLight_updateQuantity(req, res) {
 async function pickToLight_search(req, res) {
     try {
         const allBins = await StockCollection.find({ stock: { $elemMatch: { productId: req.body.productId } } })
+        // if cannot retrieve from db
         if (allBins == undefined || allBins.length == null) {
             logger.error('Cannot retrieve from database', { value: allBins })
             return res.status(500).json({
@@ -1134,6 +1151,7 @@ async function pickToLight_search(req, res) {
                 error: 'Khong truy xuat duoc database'
             })
         }
+        // if no bin found
         else if (allBins.length == 0) {
             logger.error('ProductId not found', { value: req.body })
             return res.status(400).json({
@@ -1141,74 +1159,75 @@ async function pickToLight_search(req, res) {
                 message: `Không tìm thấy mã sản phẩm: ${req.body.productId}`
             })
         }
+        // if bins found
         else {
             _clearLightTimeout()
             _clearLight()
             let result
+            // scan each bin
             allBins.forEach(bin => {
-                bin.stock.forEach(product => {
-                    let isIncluded = false
-                    let tmpProQty = 0
-                    let tmpPasProQty = 0
-                    let tmpScrProQty = 0
-                    let tmpPicProQty = 0
-
-                    if (product.productId == req.body.productId) {
-                        if (result == undefined) {
-                            result = {}
-                            result.productId = product.productId
-                            result.productName = product.productName
-                            result.M_Product_ID = product.M_Product_ID
-                            result.price = product.price
-                            result.vendorName = product.vendorName || ''
-                            result.productQuantity = product.productQuantity
-                            result.passedProductQuantity = product.passedProductQuantity
-                            result.scrappedProductQuantity = product.scrappedProductQuantity
-                            result.pickedProductQuantity = product.pickedProductQuantity
-                            result.notIncludedInOrder = product.notIncludedInOrder
-                            result.location = [{
-                                binId: bin.binId,
-                                binName: bin.binName,
-                                quantity: product.productQuantity,
-                                passedQuantity: product.passedProductQuantity,
-                                scrappedQuantity: product.scrappedProductQuantity,
-                                pickedQuantity: product.pickedProductQuantity
-                            }]
+                // find matched product
+                const matchedProduct = bin.stock.find(pro => pro.productId == req.body.productId)
+                if (matchedProduct != undefined) {
+                    // if result
+                    if (result == undefined) {
+                        result = {}
+                        result.productId = matchedProduct.productId
+                        result.productName = matchedProduct.productName
+                        result.M_Product_ID = matchedProduct.M_Product_ID
+                        result.price = matchedProduct.price
+                        result.vendorName = matchedProduct.vendorName || ''
+                        result.productQuantity = matchedProduct.productQuantity
+                        result.passedProductQuantity = matchedProduct.passedProductQuantity
+                        result.scrappedProductQuantity = matchedProduct.scrappedProductQuantity
+                        result.pickedProductQuantity = matchedProduct.pickedProductQuantity
+                        result.notIncludedInOrder = matchedProduct.notIncludedInOrder
+                        result.location = [{
+                            binId: bin.binId,
+                            binName: bin.binName,
+                            quantity: matchedProduct.productQuantity,
+                            passedQuantity: matchedProduct.passedProductQuantity,
+                            scrappedQuantity: matchedProduct.scrappedProductQuantity,
+                            pickedQuantity: matchedProduct.pickedProductQuantity,
+                            users: matchedProduct.users
+                        }]
+                    }
+                    else {
+                        result.productQuantity += matchedProduct.productQuantity
+                        result.passedProductQuantity += matchedProduct.passedProductQuantity
+                        result.scrappedProductQuantity += matchedProduct.scrappedProductQuantity
+                        result.pickedProductQuantity += matchedProduct.pickedProductQuantity
+                        const includeIndex = result.location.findIndex(loca => loca.binId == bin.binId)
+                        // let includeIndex = false
+                        // let includeFlag = false
+                        // result.location.forEach((loca, idx) => {
+                        //     if (loca.binId == bin.binId) {
+                        //         includeFlag = true
+                        //         includeIndex = idx
+                        //     }
+                        // })
+                        if (includeIndex != -1) {
+                            result.location[includeIndex].quantity += matchedProduct.productQuantity
+                            result.location[includeIndex].passedQuantity += matchedProduct.passedProductQuantity
+                            result.location[includeIndex].scrappedQuantity += matchedProduct.scrappedProductQuantity
+                            result.location[includeIndex].pickedQuantity += matchedProduct.pickedProductQuantity
+                            const matchedUserIndex = result.location[includeIndex].users.findIndex(user => user.userId == req.body.userId)
+                            result.location[includeIndex].users[matchedUserIndex].qty += matchedProduct.users.find(user => user.userId == req.body.userId)
                         }
                         else {
-                            result.productQuantity += product.productQuantity
-                            result.passedProductQuantity += product.passedProductQuantity
-                            result.scrappedProductQuantity += product.scrappedProductQuantity
-                            result.pickedProductQuantity += product.pickedProductQuantity
-                            let includeFlag = false
-                            let includeIndex = false
-                            result.location.forEach((loca, idx) => {
-                                if (loca.binId == bin.binId) {
-                                    includeFlag = true
-                                    includeIndex = idx
-                                }
+                            result.location.push({
+                                binId: bin.binId,
+                                binName: bin.binName,
+                                quantity: matchedProduct.productQuantity,
+                                passedQuantity: matchedProduct.passedProductQuantity,
+                                scrappedQuantity: matchedProduct.scrappedProductQuantity,
+                                pickedQuantity: matchedProduct.pickedProductQuantity,
+                                users: matchedProduct.users
                             })
-                            if (includeFlag == true) {
-                                result.location[includeIndex].quantity += product.productQuantity
-                                result.location[includeIndex].passedQuantity += product.passedProductQuantity
-                                result.location[includeIndex].scrappedQuantity += product.scrappedProductQuantity
-                                result.location[includeIndex].pickedQuantity += product.pickedProductQuantity
-                            }
-                            else {
-                                result.location.push({
-                                    binId: bin.binId,
-                                    binName: bin.binName,
-                                    quantity: product.productQuantity,
-                                    passedQuantity: product.passedProductQuantity,
-                                    scrappedQuantity: product.scrappedProductQuantity,
-                                    pickedQuantity: product.pickedProductQuantity
-                                })
-                            }
                         }
                     }
-                })
-                // rgbHub.write(`F${thisBin.coordinate.Y_index + 1}:000000\n`)
-                rgbHub.write(`W${bin.coordinate.Y_index + 1}:${bin.coordinate.startPoint}:${bin.coordinate.endPoint}:${pickToLightSearchColor}\n`)
+                    rgbHub.write(`W${bin.coordinate.Y_index + 1}:${bin.coordinate.startPoint}:${bin.coordinate.endPoint}:${pickToLightSearchColor}\n`)
+                }
             })
             _setLightTimeout(defaultHoldingLightInSeconds)
             // result.sort(function (a, b) { return a.productId - b.productId })
@@ -1217,7 +1236,8 @@ async function pickToLight_search(req, res) {
                 data: [result]
             })
         }
-    } catch (err) {
+    }
+    catch (err) {
         console.log(err)
         logger.error('Catch unknown error', { error: err })
         return res.status(500).json({
