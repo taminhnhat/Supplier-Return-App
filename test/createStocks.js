@@ -58,8 +58,8 @@ async function createStock() {
     try {
         // await axios.delete(url, head)
 
-        for (let binIdx = 0; binIdx < 45; binIdx++) {
-            const Amount = Math.floor(Math.random() * 4 + 1)
+        for (let binIdx = 0; binIdx < 15; binIdx++) {
+            const Amount = Math.floor(Math.random() * 6 + 1)
             for (i = 0; i < Amount; i++) {
                 await axios.post(url, pro(binIdx, vendorList[1]), head)
             }

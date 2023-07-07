@@ -144,7 +144,7 @@ async function getProductList(req, res) {
                 // create product list
                 let results = []
                 // scan product in stock
-                allBins.forEach((bin, binIdx) => {
+                allBins.forEach(bin => {
                     bin.stock.forEach(product => {
                         let isIncluded = false
                         // check if product added to list
@@ -163,10 +163,14 @@ async function getProductList(req, res) {
                                     quantity: product.productQuantity,
                                     passedQuantity: product.passedProductQuantity,
                                     scrappedQuantity: product.scrappedProductQuantity,
-                                    pickedQuantity: product.pickedProductQuantity
+                                    pickedQuantity: product.pickedProductQuantity,
+                                    users: product.users
                                 })
                             }
                         })
+                        // find match
+                        const matchedProductIndex = results.findIndex(result => result.productId == product.productId)
+                        //
                         // if not, add new product to list
                         if (!isIncluded) {
                             let temp = product
@@ -190,7 +194,8 @@ async function getProductList(req, res) {
                                     quantity: product.productQuantity,
                                     passedQuantity: product.passedProductQuantity,
                                     scrappedQuantity: product.scrappedProductQuantity,
-                                    pickedQuantity: product.pickedProductQuantity
+                                    pickedQuantity: product.pickedProductQuantity,
+                                    users: product.users
                                 }]
                             })
                         }
@@ -789,11 +794,11 @@ async function putToLight(req, res) {
      */
     async function checkOrder(_orderId, _vendorName) {
         let backup = await BackupCollection.findOne()
-        let ifIncluded = false
-        backup.orders.forEach(async (order, idx) => {
-            if (_orderId == order.orderId && _vendorName == order.vendorName) ifIncluded = true
-        })
-        if (ifIncluded == false) {
+        let matchedOrderIndex = backup.orders.findIndex(order => (order.orderId == _orderId && order.vendorName == _vendorName))
+        // backup.orders.forEach(async (order, idx) => {
+        //     if (_orderId == order.orderId && _vendorName == order.vendorName) ifIncluded = true
+        // })
+        if (matchedOrderIndex == -1) {
             backup.orders.push({
                 orderId: req.body.orderId,
                 vendorName: req.body.vendorName,
@@ -802,6 +807,13 @@ async function putToLight(req, res) {
                 dateCompleted: false
             })
             await backup.save()
+        }
+        else {
+            let matchedUserIndex = backup.orders[ifIncluded].users.findIndex(user => user.userId == req.body.userId)
+            if (matchedUserIndex == -1) {
+                backup.orders[matchedOrderIndex].users.push(req.body.userId)
+                await backup.save()
+            }
         }
     }
     checkOrder(req.body.orderId, req.body.vendorName)
@@ -1164,12 +1176,41 @@ async function pickToLight_search(req, res) {
             _clearLightTimeout()
             _clearLight()
             let result
+            // results example:
+            // {
+            //     "productId": "0700110382456",
+            //     "productName": "Đồ chơi",
+            //     "M_Product_ID": "wyug-wrfqv-evreh",
+            //     "price": "20.000đ",
+            //     "vendorName": "Nhat Tinh Anh",
+            //     "productQuantity": 98,
+            //     "passedProductQuantity": 98,
+            //     "scrappedProductQuantity": 0,
+            //     "pickedProductQuantity": 0,
+            //     "notIncludedInOrder": false,
+            //     "location": [
+            //         {
+            //             "binId": 1,
+            //             "binName": "TH-1",
+            //             "quantity": 25,
+            //             "passedQuantity": 25,
+            //             "scrappedQuantity": 0,
+            //             "pickedQuantity": 0,
+            //             "users": [
+            //                 {
+            //                     "userId": "Duc_Long",
+            //                     "qty": 25
+            //                 }
+            //             ]
+            //         }
+            //     ]
+            // }
             // scan each bin
             allBins.forEach(bin => {
-                // find matched product
+                // find matched product in this bin
                 const matchedProduct = bin.stock.find(pro => pro.productId == req.body.productId)
                 if (matchedProduct != undefined) {
-                    // if result
+                    // if result not inited
                     if (result == undefined) {
                         result = {}
                         result.productId = matchedProduct.productId
