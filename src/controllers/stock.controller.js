@@ -786,7 +786,7 @@ async function putToLight(req, res) {
             await backup.save()
         }
     }
-    ifFirstTimePutToLight()
+    await ifFirstTimePutToLight()
 
     /**
      * Update order list
@@ -809,13 +809,15 @@ async function putToLight(req, res) {
             let matchedUserIndex = backup.orders[matchedOrderIndex].users.findIndex(user => user.userId == req.body.userId)
             console.log('matchedUserIndex', matchedUserIndex)
             if (matchedUserIndex == -1) {
-                backup.orders[matchedOrderIndex].users.push(req.body.userId)
-                console.log(backup.orders[matchedOrderIndex].users)
-                await backup.save()
+                let updateOrders = backup.orders
+                updateOrders[matchedOrderIndex].users.push(req.body.userId)
+                backup.orders = updateOrders
+                let updateResult = await backup.save()
+                console.log('Update result', updateResult, updateResult.orders)
             }
         }
     }
-    checkOrder(req.body.orderId, req.body.vendorName)
+    await checkOrder(req.body.orderId, req.body.vendorName)
 
     /**
      * get bin with the same binId, productId, orderId
