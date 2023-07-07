@@ -36,7 +36,7 @@ const productList = [
 const orderList = ['590028/20/XT/QV/ABQ', '467537/20/XT/QV/ABQ', '989722/20/XT/QV/ABQ', '345628/20/XT/QV/ABQ', '228001/20/XT/QV/ABQ', '377220/20/XT/QV/ABQ']
 const vendorList = ['Kim Dong', 'Nhat Tinh Anh', 'NXB Tre']
 const userList = ['Minh_Nhat', 'Duc_Long', 'Viet_Son']
-const url = 'http://localhost:3000/api/v1/putToLight/'
+const url = 'http://localhost:3000/api/v2/putToLight/'
 const head = { headers: { api_key: 'mgw_cEfRlzOgO2EwRe9ha7Ho' } }
 function pro(binId, vendorName) {
     return {
