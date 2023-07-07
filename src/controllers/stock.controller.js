@@ -168,9 +168,6 @@ async function getProductList(req, res) {
                                 })
                             }
                         })
-                        // find match
-                        const matchedProductIndex = results.findIndex(result => result.productId == product.productId)
-                        //
                         // if not, add new product to list
                         if (!isIncluded) {
                             let temp = product
@@ -238,7 +235,8 @@ async function getProductList(req, res) {
                                     quantity: product.productQuantity,
                                     passedQuantity: product.passedProductQuantity,
                                     scrappedQuantity: product.scrappedProductQuantity,
-                                    pickedQuantity: product.pickedProductQuantity
+                                    pickedQuantity: product.pickedProductQuantity,
+                                    users: product.users
                                 })
                             }
                         })
@@ -264,7 +262,8 @@ async function getProductList(req, res) {
                                     quantity: product.productQuantity,
                                     passedQuantity: product.passedProductQuantity,
                                     scrappedQuantity: product.scrappedProductQuantity,
-                                    pickedQuantity: product.pickedProductQuantity
+                                    pickedQuantity: product.pickedProductQuantity,
+                                    users: product.users
                                 }]
                             })
                         }
@@ -795,9 +794,7 @@ async function putToLight(req, res) {
     async function checkOrder(_orderId, _vendorName) {
         let backup = await BackupCollection.findOne()
         let matchedOrderIndex = backup.orders.findIndex(order => (order.orderId == _orderId && order.vendorName == _vendorName))
-        // backup.orders.forEach(async (order, idx) => {
-        //     if (_orderId == order.orderId && _vendorName == order.vendorName) ifIncluded = true
-        // })
+        console.log('matchedOrderIndex', matchedOrderIndex)
         if (matchedOrderIndex == -1) {
             backup.orders.push({
                 orderId: req.body.orderId,
@@ -809,9 +806,11 @@ async function putToLight(req, res) {
             await backup.save()
         }
         else {
-            let matchedUserIndex = backup.orders[ifIncluded].users.findIndex(user => user.userId == req.body.userId)
+            let matchedUserIndex = backup.orders[matchedOrderIndex].users.findIndex(user => user.userId == req.body.userId)
+            console.log('matchedUserIndex', matchedUserIndex)
             if (matchedUserIndex == -1) {
                 backup.orders[matchedOrderIndex].users.push(req.body.userId)
+                console.log(backup.orders[matchedOrderIndex].users)
                 await backup.save()
             }
         }
