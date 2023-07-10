@@ -130,10 +130,11 @@ async function deleteBin(req, res) {
 async function getProductList(req, res) {
     try {
         const inputOrderId = req.query.orderId || false
+        // if get all order
         if (inputOrderId == false) {
-            const allBins = await StockCollection.find()
-            if (allBins == undefined || allBins == null) {
-                logger.error('Cannot retrieve from database', { value: allBins })
+            const bins = await StockCollection.find()
+            if (bins == undefined || bins == null) {
+                logger.error('Cannot retrieve from database', { value: bins })
                 return res.status(500).json({
                     status: 'fail',
                     message: 'Loi he thong',
@@ -144,7 +145,7 @@ async function getProductList(req, res) {
                 // create product list
                 let results = []
                 // scan product in stock
-                allBins.forEach(bin => {
+                bins.forEach(bin => {
                     bin.stock.forEach(product => {
                         let isIncluded = false
                         // check if product added to list
@@ -205,6 +206,7 @@ async function getProductList(req, res) {
                 })
             }
         }
+        // if get one order
         else {
             const bins = await StockCollection.find()
             if (bins == undefined || bins == null) {
@@ -215,57 +217,87 @@ async function getProductList(req, res) {
                     error: 'Khong truy xuat duoc database'
                 })
             }
-            else {
+            // if get orders list by one user
+            else if (req.query.userId != undefined) {
+                /**
+                 * Init product list
+                 * Examples:
+                 * [
+                    {
+                        "productId": "9786045660812",
+                        "productName": "Anh đã quên em chưa",
+                        "M_Product_ID": 1733027,
+                        "price": 75000,
+                        "vendorName": "CÔNG TY TNHH VĂN HÓA VÀ TRUYỀN THÔNG SKYBOOKS VIỆT NAM",
+                        "orderId": "002116/19/QV/JGD",
+                        "productQuantity": 12,
+                        "passedProductQuantity": 12,
+                        "scrappedProductQuantity": 0,
+                        "pickedProductQuantity": 0,
+                        "notIncludedInOrder": false,
+                        "location": [
+                            {
+                                "binId": 0,
+                                "binName": "TH-0",
+                                "quantity": 12,
+                                "passedQuantity": 12,
+                                "scrappedQuantity": 0,
+                                "pickedQuantity": 0,
+                                "users": [
+                                    {
+                                        "userId": "ttgd_gd2",
+                                        "qty": 18
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+                 */
                 let results = []
                 bins.forEach((bin, binIdx) => {
+                    console.log(`bin ${binIdx} scanning ==========`)
                     //
                     bin.stock.forEach(product => {
-                        let isIncluded = false
-                        results.forEach((result, idx) => {
-                            if (result.productId == product.productId && result.orderId == product.orderId) {
-                                isIncluded = true
-                                result.productQuantity += product.productQuantity
-                                result.passedProductQuantity += product.passedProductQuantity
-                                result.scrappedProductQuantity += product.scrappedProductQuantity
-                                result.pickedProductQuantity += product.pickedProductQuantity
-                                if (product.vendorName != undefined) result.vendorName = product.vendorName
-                                result.location.push({
-                                    binId: bin.binId,
-                                    binName: bin.binName,
-                                    quantity: product.productQuantity,
-                                    passedQuantity: product.passedProductQuantity,
-                                    scrappedQuantity: product.scrappedProductQuantity,
-                                    pickedQuantity: product.pickedProductQuantity,
-                                    users: product.users
-                                })
-                            }
-                        })
-                        if (!isIncluded && product.orderId == inputOrderId) {
-                            let temp = product
-                            temp.location = []
-                            temp.location.push(bin.binId)
+                        const matchProductIndex = results.findIndex(result => (result.productId == product.productId && result.orderId == product.orderId))
+                        console.log('matchProductIndex', matchProductIndex)
+                        // if product not included in results list
+                        if (matchProductIndex == -1) {
+                            // find products create by this user
+                            const usersProduct = product.users.find(user => user.userId == req.query.userId)
+                            // if product found, push to results listlet
+                            let tempQty = 0
+                            if (usersProduct != undefined) tempQty = usersProduct.qty
                             results.push({
                                 productId: product.productId,
                                 productName: product.productName,
                                 M_Product_ID: product.M_Product_ID,
                                 price: product.price,
-                                vendorName: product.vendorName || '',
+                                vendorName: product.vendorName,
                                 orderId: product.orderId,
-                                productQuantity: product.productQuantity,
-                                passedProductQuantity: product.passedProductQuantity,
-                                scrappedProductQuantity: product.scrappedProductQuantity,
-                                pickedProductQuantity: product.pickedProductQuantity,
-                                notIncludedInOrder: product.notIncludedInOrder,
+                                productQuantity: tempQty,
                                 location: [{
                                     binId: bin.binId,
                                     binName: bin.binName,
-                                    quantity: product.productQuantity,
-                                    passedQuantity: product.passedProductQuantity,
-                                    scrappedQuantity: product.scrappedProductQuantity,
-                                    pickedQuantity: product.pickedProductQuantity,
-                                    users: product.users
+                                    quantity: tempQty,
                                 }]
                             })
+                        }
+                        // if product included in results list, update
+                        else {
+                            // find products create by this user
+                            const usersProduct = product.users.find(user => user.userId == req.query.userId)
+                            console.log('usersProduct', usersProduct)
+                            let tempQty = 0
+                            if (usersProduct != undefined) tempQty = usersProduct.qty
+                            let tempResult = results[matchProductIndex]
+                            tempResult.productQuantity += tempQty
+                            tempResult.location.push({
+                                binId: bin.binId,
+                                binName: bin.binName,
+                                quantity: tempQty
+                            })
+                            results[matchProductIndex] = tempResult
                         }
                     })
                 })
@@ -275,9 +307,54 @@ async function getProductList(req, res) {
                     data: results
                 })
             }
+            // if get orders list by all users
+            else if (req.query.userId == undefined) {
+                let results = []
+                bins.forEach((bin, binIdx) => {
+                    console.log(`bin ${binIdx} scanning ==========`)
+                    //
+                    bin.stock.forEach(product => {
+                        const matchProductIndex = results.findIndex(result => (result.productId == product.productId && result.orderId == product.orderId))
+                        console.log('matchProductIndex', matchProductIndex)
+                        // if product not included in results list
+                        if (matchProductIndex == -1) {
+                            results.push({
+                                productId: product.productId,
+                                productName: product.productName,
+                                M_Product_ID: product.M_Product_ID,
+                                price: product.price,
+                                vendorName: product.vendorName,
+                                orderId: product.orderId,
+                                productQuantity: product.productQuantity,
+                                location: [{
+                                    binId: bin.binId,
+                                    binName: bin.binName,
+                                    quantity: product.productQuantity,
+                                }]
+                            })
+                        }
+                        // if product included in results list, update
+                        else {
+                            let tempResult = results[matchProductIndex]
+                            tempResult.productQuantity += product.productQuantity
+                            tempResult.location.push({
+                                binId: bin.binId,
+                                binName: bin.binName,
+                                quantity: product.productQuantity
+                            })
+                            results[matchProductIndex] = tempResult
+                        }
+                    })
+                })
+                return res.status(200).json({
+                    status: 'success',
+                    data: results
+                })
+            }
         }
     } catch (err) {
         logger.error('Catch unknown error', { err: err })
+        console.log(err)
         return res.status(500).json({
             status: 'fail',
             message: 'Loi he thong',

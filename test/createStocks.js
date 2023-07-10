@@ -41,11 +41,11 @@ const head = { headers: { api_key: 'mgw_cEfRlzOgO2EwRe9ha7Ho' } }
 function pro(binId, vendorName) {
     return {
         userId: userList[Math.floor(Math.random() * userList.length)],
-        productId: productList[Math.floor(Math.random() * productList.length)],
+        productId: productList[Math.floor(Math.random() * 5)],
         productName: 'Đồ chơi',
         vendorName: vendorName,
         M_Product_ID: "wyug-wrfqv-evreh",
-        orderId: orderList[Math.floor(Math.random() * orderList.length)],
+        orderId: orderList[Math.floor(Math.random() * 2)],
         binId: binId,
         price: '20.000đ',
         passedProductQuantity: Math.floor(Math.random() * 26 + 5),
@@ -70,36 +70,5 @@ async function createStock() {
     }
 }
 createStock()
-// setTimeout(() => putToLight(0, productList[0], orderList[0], 2), 100)
-// setTimeout(() => putToLight(1, productList[1], orderList[0], 4), 200)
-// setTimeout(() => putToLight(2, productList[2], orderList[0], 56), 300)
-// setTimeout(() => putToLight(3, productList[3], orderList[0], 21), 400)
-// setTimeout(() => putToLight(4, productList[4], orderList[0], 98), 500)
-// setTimeout(() => putToLight(5, productList[5], orderList[0], 53), 600)
-// setTimeout(() => putToLight(6, productList[6], orderList[0], 23), 700)
-// setTimeout(() => putToLight(7, productList[7], orderList[0], 22), 800)
-// setTimeout(() => putToLight(8, productList[8], orderList[0], 72), 900)
-// setTimeout(() => putToLight(9, productList[9], orderList[0], 3), 1000)
-
-// setTimeout(() => putToLight(0, productList[0], orderList[1], 1), 1100)
-// setTimeout(() => putToLight(2, productList[0], orderList[0], 2), 1200)
-// setTimeout(() => putToLight(7, productList[0], orderList[1], 3), 1300)
-
-// setTimeout(() => putToLight(7, productList[9], orderList[0], 1), 1400)
-// setTimeout(() => putToLight(4, productList[9], orderList[0], 2), 1500)
-
-// putToLight(0, productList[0], orderList[1], 32)
-// putToLight(1, productList[1], orderList[1], 5)
-// putToLight(3, productList[3], orderList[1], 1)
-// putToLight(5, productList[5], orderList[1], 3)
-// putToLight(6, productList[6], orderList[1], 9)
-// putToLight(8, productList[8], orderList[1], 5)
-// putToLight(9, productList[9], orderList[1], 6)
-
-// putToLight(1, productList[1], orderList[2], 12)
-// putToLight(2, productList[2], orderList[2], 5)
-// putToLight(3, productList[3], orderList[2], 2)
-// putToLight(8, productList[8], orderList[2], 11)
-// putToLight(9, productList[9], orderList[2], 17)
 
 
