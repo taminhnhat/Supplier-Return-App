@@ -401,8 +401,8 @@ async function getProductList(req, res) {
                 logger.debug(`get productlist of all users`)
                 let results = []
                 bins.forEach((bin, binIdx) => {
-                    if (product.orderId == req.query.orderId) {
-                        bin.stock.forEach(product => {
+                    bin.stock.forEach(product => {
+                        if (product.orderId == req.query.orderId) {
                             const matchProductIndex = results.findIndex(result => (result.productId == product.productId && result.orderId == product.orderId))
                             // if product not included in results list
                             if (matchProductIndex == -1) {
@@ -432,8 +432,8 @@ async function getProductList(req, res) {
                                 })
                                 results[matchProductIndex] = tempResult
                             }
-                        })
-                    }
+                        }
+                    })
                 })
                 return res.status(200).json({
                     status: 'success',
