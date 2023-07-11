@@ -1,6 +1,13 @@
 const logger = require('./logger.middleware')
 
 const putToLight = async (req, res, next) => {
+    if (req.body.userId == '' || req.body.userId == undefined) {
+        logger.error('Invalid userId', { value: req.body })
+        return res.status(400).json({
+            status: 'fail',
+            message: 'User không hợp lệ'
+        });
+    }
     if (req.body.productId == '' || req.body.productId == undefined) {
         logger.error('Invalid productId', { value: req.body })
         return res.status(400).json({
@@ -32,11 +39,37 @@ const putToLight = async (req, res, next) => {
     next()
 }
 
+const updateProduct = async (req, res, next) => {
+    if (req.body.userId == '' || req.body.userId == undefined) {
+        logger.error('Invalid userId', { value: req.body })
+        return res.status(400).json({
+            status: 'fail',
+            message: 'User không hợp lệ'
+        });
+    }
+    if (req.body.productId == '' || req.body.productId == undefined) {
+        logger.error('Invalid productId', { value: req.body })
+        return res.status(400).json({
+            status: 'fail',
+            message: 'Mã sản phẩm không hợp lệ'
+        });
+    }
+    else if (req.body.orderId == '' || req.body.orderId == undefined) {
+        logger.error('Invalid orderId', { value: req.body })
+        return res.status(400).json({
+            status: 'fail',
+            message: 'Mã phiếu không hợp lệ'
+        });
+    }
+    next()
+}
+
 const pickToLight = async (req, res, next) => {
     next()
 }
 
 module.exports = {
     putToLight,
+    updateProduct,
     pickToLight
 }
