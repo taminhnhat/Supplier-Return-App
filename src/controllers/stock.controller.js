@@ -404,6 +404,8 @@ async function getProductList(req, res) {
                     bin.stock.forEach(product => {
                         if (product.orderId == req.query.orderId) {
                             const matchProductIndex = results.findIndex(result => (result.productId == product.productId && result.orderId == product.orderId))
+                            let tmpPassedQty = product.passedProductQuantity
+                            let tmpScrappedQty = product.scrappedProductQuantity
                             // if product not included in results list
                             if (matchProductIndex == -1) {
                                 results.push({
@@ -413,22 +415,28 @@ async function getProductList(req, res) {
                                     price: product.price,
                                     vendorName: product.vendorName,
                                     orderId: product.orderId,
-                                    productQuantity: product.productQuantity,
+                                    productQuantity: tmpPassedQty + tmpScrappedQty,
+                                    passedProductQuantity: tmpPassedQty,
+                                    scrappedProductQuantity: tmpScrappedQty,
                                     location: [{
                                         binId: bin.binId,
                                         binName: bin.binName,
-                                        quantity: product.productQuantity,
+                                        passedProductQuantity: tmpPassedQty,
+                                        scrappedProductQuantity: tmpScrappedQty
                                     }]
                                 })
                             }
                             // if product included in results list, update
                             else {
                                 let tempResult = results[matchProductIndex]
-                                tempResult.productQuantity += product.productQuantity
+                                tempResult.productQuantity += (tmpPassedQty + tmpScrappedQty)
+                                tempResult.passedProductQuantity += tmpPassedQty
+                                tempResult.scrappedProductQuantity += tmpScrappedQty
                                 tempResult.location.push({
                                     binId: bin.binId,
                                     binName: bin.binName,
-                                    quantity: product.productQuantity
+                                    passedProductQuantity: tmpPassedQty,
+                                    scrappedProductQuantity: tmpScrappedQty
                                 })
                                 results[matchProductIndex] = tempResult
                             }
