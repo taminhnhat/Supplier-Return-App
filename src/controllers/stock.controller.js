@@ -401,37 +401,39 @@ async function getProductList(req, res) {
                 logger.debug(`get productlist of all users`)
                 let results = []
                 bins.forEach((bin, binIdx) => {
-                    bin.stock.forEach(product => {
-                        const matchProductIndex = results.findIndex(result => (result.productId == product.productId && result.orderId == product.orderId))
-                        // if product not included in results list
-                        if (matchProductIndex == -1) {
-                            results.push({
-                                productId: product.productId,
-                                productName: product.productName,
-                                M_Product_ID: product.M_Product_ID,
-                                price: product.price,
-                                vendorName: product.vendorName,
-                                orderId: product.orderId,
-                                productQuantity: product.productQuantity,
-                                location: [{
+                    if (product.orderId == req.query.orderId) {
+                        bin.stock.forEach(product => {
+                            const matchProductIndex = results.findIndex(result => (result.productId == product.productId && result.orderId == product.orderId))
+                            // if product not included in results list
+                            if (matchProductIndex == -1) {
+                                results.push({
+                                    productId: product.productId,
+                                    productName: product.productName,
+                                    M_Product_ID: product.M_Product_ID,
+                                    price: product.price,
+                                    vendorName: product.vendorName,
+                                    orderId: product.orderId,
+                                    productQuantity: product.productQuantity,
+                                    location: [{
+                                        binId: bin.binId,
+                                        binName: bin.binName,
+                                        quantity: product.productQuantity,
+                                    }]
+                                })
+                            }
+                            // if product included in results list, update
+                            else {
+                                let tempResult = results[matchProductIndex]
+                                tempResult.productQuantity += product.productQuantity
+                                tempResult.location.push({
                                     binId: bin.binId,
                                     binName: bin.binName,
-                                    quantity: product.productQuantity,
-                                }]
-                            })
-                        }
-                        // if product included in results list, update
-                        else {
-                            let tempResult = results[matchProductIndex]
-                            tempResult.productQuantity += product.productQuantity
-                            tempResult.location.push({
-                                binId: bin.binId,
-                                binName: bin.binName,
-                                quantity: product.productQuantity
-                            })
-                            results[matchProductIndex] = tempResult
-                        }
-                    })
+                                    quantity: product.productQuantity
+                                })
+                                results[matchProductIndex] = tempResult
+                            }
+                        })
+                    }
                 })
                 return res.status(200).json({
                     status: 'success',
