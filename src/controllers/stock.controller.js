@@ -433,6 +433,7 @@ async function getProductList(req, res) {
                                     productQuantity: tmpPassedQty + tmpScrappedQty,
                                     passedProductQuantity: tmpPassedQty,
                                     scrappedProductQuantity: tmpScrappedQty,
+                                    pickedProductQuantity: product.pickedProductQuantity,
                                     location: [{
                                         binId: bin.binId,
                                         binName: bin.binName,
@@ -447,6 +448,7 @@ async function getProductList(req, res) {
                                 tempResult.productQuantity += (tmpPassedQty + tmpScrappedQty)
                                 tempResult.passedProductQuantity += tmpPassedQty
                                 tempResult.scrappedProductQuantity += tmpScrappedQty
+                                tempResult.pickedProductQuantity += product.pickedProductQuantity
                                 tempResult.location.push({
                                     binId: bin.binId,
                                     binName: bin.binName,
