@@ -285,6 +285,7 @@ async function getProductList(req, res) {
         // if get one order
         else {
             const bins = await StockCollection.find()
+            // if cannot get orders from db
             if (bins == undefined || bins == null) {
                 logger.error('Cannot retrieve from database', { value: bins })
                 return res.status(500).json({
@@ -385,15 +386,17 @@ async function getProductList(req, res) {
                                     passedProductQuantity: tmpPassedQty,
                                     scrappedProductQuantity: tmpScrappedQty
                                 })
+
                                 results[matchProductIndex] = tempResult
                             }
                         }
                     })
                 })
+                const filteredResults = results.filter(result => result.productQuantity > 0)
                 // result.sort(function (a, b) { return a.productId - b.productId })
                 return res.status(200).json({
                     status: 'success',
-                    data: results
+                    data: filteredResults
                 })
             }
             // if get orders list by all users
