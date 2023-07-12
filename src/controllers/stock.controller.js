@@ -1242,8 +1242,8 @@ async function putToLight_updateQuantity(req, res) {
             let product = bin.stock.find(product => (product.productId == req.body.productId && product.orderId == req.body.orderId))
             let user = product.users.find(user => user.userId == req.body.userId)
             console.log('scanning user:', user)
-            const _passedQty = product.passedProductQuantity + location.passedQuantity - user.passedProductQuantity
-            const _scrappedQty = product.scrappedProductQuantity + location.scrappedQuantity - user.scrappedProductQuantity
+            const _passedQty = product.passedProductQuantity + location.passedProductQuantity - user.passedProductQuantity
+            const _scrappedQty = product.scrappedProductQuantity + location.scrappedProductQuantity - user.scrappedProductQuantity
 
             let updatedBin = await StockCollection.findOneAndUpdate(
                 {
@@ -1255,8 +1255,8 @@ async function putToLight_updateQuantity(req, res) {
                         'stock.$[outer].passedProductQuantity': _passedQty,
                         'stock.$[outer].scrappedProductQuantity': _scrappedQty,
                         'stock.$[outer].productQuantity': _passedQty + _scrappedQty,
-                        'stock.$[outer].users.$[inner].passedProductQuantity': location.passedQuantity,
-                        'stock.$[outer].users.$[inner].scrappedProductQuantity': location.scrappedQuantity,
+                        'stock.$[outer].users.$[inner].passedProductQuantity': location.passedProductQuantity,
+                        'stock.$[outer].users.$[inner].scrappedProductQuantity': location.scrappedProductQuantity,
                     }
                 },
                 {
