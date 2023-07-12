@@ -129,7 +129,7 @@ async function deleteBin(req, res) {
 
 async function getProductList(req, res) {
     try {
-        // if get all order
+        // if get products list by all order
         if (req.query.orderId == undefined) {
             const bins = await StockCollection.find()
             // if cannot get orders from db
@@ -181,7 +181,7 @@ async function getProductList(req, res) {
                 let results = []
                 bins.forEach((bin, binIdx) => {
                     bin.stock.forEach(product => {
-                        const matchProductIndex = results.findIndex(result => result.productId == product.productId)
+                        const matchProductIndex = results.findIndex(result => (result.productId == product.productId && result.orderId == product.orderId))
                         // if product not included in results list
                         if (matchProductIndex == -1) {
                             // find products create by this user
@@ -235,10 +235,11 @@ async function getProductList(req, res) {
                         }
                     })
                 })
+                const filteredResults = results.filter(result => result.productQuantity > 0)
                 // result.sort(function (a, b) { return a.productId - b.productId })
                 return res.status(200).json({
                     status: 'success',
-                    data: results
+                    data: filteredResults
                 })
             }
             // if get orders list by all users
@@ -261,6 +262,7 @@ async function getProductList(req, res) {
                                 productQuantity: tmpPassedQty + tmpScrappedQty,
                                 passedProductQuantity: tmpPassedQty,
                                 scrappedProductQuantity: tmpScrappedQty,
+                                pickedProductQuantity: product.pickedProductQuantity,
                                 location: [{
                                     binId: bin.binId,
                                     binName: bin.binName,
@@ -275,6 +277,7 @@ async function getProductList(req, res) {
                             tempResult.productQuantity += (tmpPassedQty + tmpScrappedQty)
                             tempResult.passedProductQuantity += tmpPassedQty
                             tempResult.scrappedProductQuantity += tmpScrappedQty
+                            tempResult.pickedProductQuantity += product.pickedProductQuantity
                             tempResult.location.push({
                                 binId: bin.binId,
                                 binName: bin.binName,
@@ -291,7 +294,7 @@ async function getProductList(req, res) {
                 })
             }
         }
-        // if get one order
+        // if get products list by one order
         else {
             const bins = await StockCollection.find()
             // if cannot get orders from db
