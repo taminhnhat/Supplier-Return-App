@@ -132,6 +132,7 @@ async function getProductList(req, res) {
         // if get all order
         if (req.query.orderId == undefined) {
             const bins = await StockCollection.find()
+            // if cannot get orders from db
             if (bins == undefined || bins == null) {
                 logger.error('Cannot retrieve from database', { value: bins })
                 return res.status(500).json({
@@ -180,7 +181,7 @@ async function getProductList(req, res) {
                 let results = []
                 bins.forEach((bin, binIdx) => {
                     bin.stock.forEach(product => {
-                        const matchProductIndex = results.findIndex(result => (result.productId == product.productId && result.orderId == product.orderId))
+                        const matchProductIndex = results.findIndex(result => result.productId == product.productId)
                         // if product not included in results list
                         if (matchProductIndex == -1) {
                             // find products create by this user
@@ -246,6 +247,8 @@ async function getProductList(req, res) {
                 bins.forEach((bin, binIdx) => {
                     bin.stock.forEach(product => {
                         const matchProductIndex = results.findIndex(result => (result.productId == product.productId && result.orderId == product.orderId))
+                        let tmpPassedQty = product.passedProductQuantity
+                        let tmpScrappedQty = product.scrappedProductQuantity
                         // if product not included in results list
                         if (matchProductIndex == -1) {
                             results.push({
@@ -255,22 +258,28 @@ async function getProductList(req, res) {
                                 price: product.price,
                                 vendorName: product.vendorName,
                                 orderId: product.orderId,
-                                productQuantity: product.productQuantity,
+                                productQuantity: tmpPassedQty + tmpScrappedQty,
+                                passedProductQuantity: tmpPassedQty,
+                                scrappedProductQuantity: tmpScrappedQty,
                                 location: [{
                                     binId: bin.binId,
                                     binName: bin.binName,
-                                    quantity: product.productQuantity,
+                                    passedProductQuantity: tmpPassedQty,
+                                    scrappedProductQuantity: tmpScrappedQty
                                 }]
                             })
                         }
                         // if product included in results list, update
                         else {
                             let tempResult = results[matchProductIndex]
-                            tempResult.productQuantity += product.productQuantity
+                            tempResult.productQuantity += (tmpPassedQty + tmpScrappedQty)
+                            tempResult.passedProductQuantity += tmpPassedQty
+                            tempResult.scrappedProductQuantity += tmpScrappedQty
                             tempResult.location.push({
                                 binId: bin.binId,
                                 binName: bin.binName,
-                                quantity: product.productQuantity
+                                passedProductQuantity: tmpPassedQty,
+                                scrappedProductQuantity: tmpScrappedQty
                             })
                             results[matchProductIndex] = tempResult
                         }
