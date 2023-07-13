@@ -588,10 +588,10 @@ async function searchProduct(req, res) {
                             result.location = [{
                                 binId: bin.binId,
                                 binName: bin.binName,
-                                quantity: product.productQuantity,
-                                passedQuantity: product.passedProductQuantity,
-                                scrappedQuantity: product.scrappedProductQuantity,
-                                pickedQuantity: product.pickedProductQuantity
+                                productQuantity: product.productQuantity,
+                                passedProductQuantity: product.passedProductQuantity,
+                                scrappedProductQuantity: product.scrappedProductQuantity,
+                                pickedProductQuantity: product.pickedProductQuantity
                             }]
                         }
                         else {
@@ -608,19 +608,19 @@ async function searchProduct(req, res) {
                                 }
                             })
                             if (includeFlag == true) {
-                                result.location[includeIndex].quantity += product.productQuantity
-                                result.location[includeIndex].passedQuantity += product.passedProductQuantity
-                                result.location[includeIndex].scrappedQuantity += product.scrappedProductQuantity
-                                result.location[includeIndex].pickedQuantity += product.pickedProductQuantity
+                                result.location[includeIndex].productQuantity += product.productQuantity
+                                result.location[includeIndex].passedProductQuantity += product.passedProductQuantity
+                                result.location[includeIndex].scrappedProductQuantity += product.scrappedProductQuantity
+                                result.location[includeIndex].pickedProductQuantity += product.pickedProductQuantity
                             }
                             else {
                                 result.location.push({
                                     binId: bin.binId,
                                     binName: bin.binName,
-                                    quantity: product.productQuantity,
-                                    passedQuantity: product.passedProductQuantity,
-                                    scrappedQuantity: product.scrappedProductQuantity,
-                                    pickedQuantity: product.pickedProductQuantity
+                                    productQuantity: product.productQuantity,
+                                    passedProductQuantity: product.passedProductQuantity,
+                                    scrappedProductQuantity: product.scrappedProductQuantity,
+                                    pickedProductQuantity: product.pickedProductQuantity
                                 })
                             }
                         }
