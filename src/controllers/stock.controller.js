@@ -245,9 +245,10 @@ async function getProductList(req, res) {
             // if get orders list by all users
             else if (req.query.userId == undefined) {
                 let results = []
+                // seperate by only productId
                 bins.forEach((bin, binIdx) => {
                     bin.stock.forEach(product => {
-                        const matchProductIndex = results.findIndex(result => (result.productId == product.productId && result.orderId == product.orderId))
+                        const matchProductIndex = results.findIndex(result => result.productId == product.productId)
                         let tmpPassedQty = product.passedProductQuantity
                         let tmpScrappedQty = product.scrappedProductQuantity
                         // if product not included in results list
@@ -258,7 +259,6 @@ async function getProductList(req, res) {
                                 M_Product_ID: product.M_Product_ID,
                                 price: product.price,
                                 vendorName: product.vendorName,
-                                orderId: product.orderId,
                                 productQuantity: tmpPassedQty + tmpScrappedQty,
                                 passedProductQuantity: tmpPassedQty,
                                 scrappedProductQuantity: tmpScrappedQty,
@@ -288,6 +288,51 @@ async function getProductList(req, res) {
                         }
                     })
                 })
+
+                // Seperate by productId and orderId
+                // bins.forEach((bin, binIdx) => {
+                //     bin.stock.forEach(product => {
+                //         const matchProductIndex = results.findIndex(result => (result.productId == product.productId && result.orderId == product.orderId))
+                //         let tmpPassedQty = product.passedProductQuantity
+                //         let tmpScrappedQty = product.scrappedProductQuantity
+                //         // if product not included in results list
+                //         if (matchProductIndex == -1) {
+                //             results.push({
+                //                 productId: product.productId,
+                //                 productName: product.productName,
+                //                 M_Product_ID: product.M_Product_ID,
+                //                 price: product.price,
+                //                 vendorName: product.vendorName,
+                //                 orderId: product.orderId,
+                //                 productQuantity: tmpPassedQty + tmpScrappedQty,
+                //                 passedProductQuantity: tmpPassedQty,
+                //                 scrappedProductQuantity: tmpScrappedQty,
+                //                 pickedProductQuantity: product.pickedProductQuantity,
+                //                 location: [{
+                //                     binId: bin.binId,
+                //                     binName: bin.binName,
+                //                     passedProductQuantity: tmpPassedQty,
+                //                     scrappedProductQuantity: tmpScrappedQty
+                //                 }]
+                //             })
+                //         }
+                //         // if product included in results list, update
+                //         else {
+                //             let tempResult = results[matchProductIndex]
+                //             tempResult.productQuantity += (tmpPassedQty + tmpScrappedQty)
+                //             tempResult.passedProductQuantity += tmpPassedQty
+                //             tempResult.scrappedProductQuantity += tmpScrappedQty
+                //             tempResult.pickedProductQuantity += product.pickedProductQuantity
+                //             tempResult.location.push({
+                //                 binId: bin.binId,
+                //                 binName: bin.binName,
+                //                 passedProductQuantity: tmpPassedQty,
+                //                 scrappedProductQuantity: tmpScrappedQty
+                //             })
+                //             results[matchProductIndex] = tempResult
+                //         }
+                //     })
+                // })
                 return res.status(200).json({
                     status: 'success',
                     data: results
