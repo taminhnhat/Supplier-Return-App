@@ -744,8 +744,6 @@ async function searchProduct(req, res) {
             }
         }
 
-
-
     } catch (err) {
         console.log(err)
         logger.error('Catch unknown error', { error: err })
