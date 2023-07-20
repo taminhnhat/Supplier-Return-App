@@ -1300,7 +1300,6 @@ async function putToLight_updateQuantity(req, res) {
             )
             let product = bin.stock.find(product => (product.productId == req.body.productId && product.orderId == req.body.orderId))
             let user = product.users.find(user => user.userId == req.body.userId)
-            console.log('scanning user:', user)
             const _passedQty = product.passedProductQuantity + location.passedProductQuantity - user.passedProductQuantity
             const _scrappedQty = product.scrappedProductQuantity + location.scrappedProductQuantity - user.scrappedProductQuantity
 
@@ -1493,7 +1492,6 @@ async function pickToLight_search(req, res) {
                 // })
                 // find matched product in this bin
                 const matchedProducts = bin.stock.filter(pro => pro.productId == req.body.productId)
-                matchedProducts.forEach
                 if (matchedProducts != undefined) {
                     matchedProducts.forEach(matchedProduct => {
                         // if result not inited
@@ -1514,7 +1512,7 @@ async function pickToLight_search(req, res) {
                                 binName: bin.binName,
                                 productQuantity: matchedProduct.productQuantity,
                                 passedProductQuantity: matchedProduct.passedProductQuantity,
-                                passedProductQuantity: matchedProduct.scrappedProductQuantity,
+                                scrappedProductQuantity: matchedProduct.scrappedProductQuantity,
                                 pickedProductQuantity: matchedProduct.pickedProductQuantity
                             }]
                         }
@@ -1589,7 +1587,6 @@ async function pickToLight(req, res) {
                         }
                     })
                     const tmp = await bin.save()
-                    console.log(tmp.stock)
                     result.push(tmp)
                     bin.stock = bin.stock.filter(eachProduct => {
                         return eachProduct.productId == req.body.productId
