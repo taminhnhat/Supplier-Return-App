@@ -404,24 +404,24 @@ async function getProductList(req, res) {
                                 if (usersProduct != undefined) {
                                     tmpPassedQty = usersProduct.passedProductQuantity
                                     tmpScrappedQty = usersProduct.scrappedProductQuantity
-                                }
-                                results.push({
-                                    productId: product.productId,
-                                    productName: product.productName,
-                                    M_Product_ID: product.M_Product_ID,
-                                    price: product.price,
-                                    vendorName: product.vendorName,
-                                    orderId: product.orderId,
-                                    productQuantity: tmpPassedQty + tmpScrappedQty,
-                                    passedProductQuantity: tmpPassedQty,
-                                    scrappedProductQuantity: tmpScrappedQty,
-                                    location: [{
-                                        binId: bin.binId,
-                                        binName: bin.binName,
+                                    results.push({
+                                        productId: product.productId,
+                                        productName: product.productName,
+                                        M_Product_ID: product.M_Product_ID,
+                                        price: product.price,
+                                        vendorName: product.vendorName,
+                                        orderId: product.orderId,
+                                        productQuantity: tmpPassedQty + tmpScrappedQty,
                                         passedProductQuantity: tmpPassedQty,
                                         scrappedProductQuantity: tmpScrappedQty,
-                                    }]
-                                })
+                                        location: [{
+                                            binId: bin.binId,
+                                            binName: bin.binName,
+                                            passedProductQuantity: tmpPassedQty,
+                                            scrappedProductQuantity: tmpScrappedQty,
+                                        }]
+                                    })
+                                }
                             }
                             // if product included in results list, update
                             else {
