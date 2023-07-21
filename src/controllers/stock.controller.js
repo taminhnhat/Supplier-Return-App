@@ -432,19 +432,18 @@ async function getProductList(req, res) {
                                 if (usersProduct != undefined) {
                                     tmpPassedQty = usersProduct.passedProductQuantity
                                     tmpScrappedQty = usersProduct.scrappedProductQuantity
+                                    let tempResult = results[matchProductIndex]
+                                    tempResult.productQuantity += (tmpPassedQty + tmpScrappedQty)
+                                    tempResult.passedProductQuantity += tmpPassedQty
+                                    tempResult.scrappedProductQuantity += tmpScrappedQty
+                                    tempResult.location.push({
+                                        binId: bin.binId,
+                                        binName: bin.binName,
+                                        passedProductQuantity: tmpPassedQty,
+                                        scrappedProductQuantity: tmpScrappedQty
+                                    })
+                                    results[matchProductIndex] = tempResult
                                 }
-                                let tempResult = results[matchProductIndex]
-                                tempResult.productQuantity += (tmpPassedQty + tmpScrappedQty)
-                                tempResult.passedProductQuantity += tmpPassedQty
-                                tempResult.scrappedProductQuantity += tmpScrappedQty
-                                tempResult.location.push({
-                                    binId: bin.binId,
-                                    binName: bin.binName,
-                                    passedProductQuantity: tmpPassedQty,
-                                    scrappedProductQuantity: tmpScrappedQty
-                                })
-
-                                results[matchProductIndex] = tempResult
                             }
                         }
                     })
