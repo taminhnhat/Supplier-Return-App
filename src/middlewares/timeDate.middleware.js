@@ -23,7 +23,7 @@ module.exports = (mode) => {
                 ;
 
         default:
-            formatedTime = t.format("DD/MM/YYYY h:mm")
+            formatedTime = t.format("DD/MM/YYYY HH:mm")
             return formatedTime
 
     }
