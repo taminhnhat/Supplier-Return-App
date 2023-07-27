@@ -10,15 +10,15 @@ module.exports = (mode) => {
     const t = dayjs()
     switch (mode) {
         case 'minutes':
-            formatedTime = t.format("DD/MM/YYYY h:mm")
+            formatedTime = t.format("DD/MM/YYYY HH:mm")
             return formatedTime
 
         case 'seconds':
-            formatedTime = t.format("DD/MM/YYYY h:mm:ss")
+            formatedTime = t.format("DD/MM/YYYY HH:mm:ss")
             return formatedTime
 
         case 'miliseconds':
-            formatedTime = t.format("DD/MM/YYYY h:mm:ss.SSS")
+            formatedTime = t.format("DD/MM/YYYY HH:mm:ss.SSS")
             return formatedTime
                 ;
 
