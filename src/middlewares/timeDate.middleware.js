@@ -20,7 +20,6 @@ module.exports = (mode) => {
         case 'miliseconds':
             formatedTime = t.format("DD/MM/YYYY HH:mm:ss.SSS")
             return formatedTime
-                ;
 
         default:
             formatedTime = t.format("DD/MM/YYYY HH:mm")
