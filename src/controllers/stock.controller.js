@@ -757,9 +757,7 @@ async function searchProduct(req, res) {
 async function deleteProduct(req, res) {
     try {
         // get matched bin
-        const inputProductId = req.params.productId
-
-        const allMatchedBin = await StockCollection.find({ stock: { $elemMatch: { productId: inputProductId } } }, { _id: 1, coordinate: 1, binId: 1, stock: 1 })
+        let allMatchedBin = await StockCollection.find({ stock: { $elemMatch: { productId: req.body.productId } } }, { _id: 1, coordinate: 1, binId: 1, stock: 1 })
 
         // if stock is empty
         if (allMatchedBin == null || allMatchedBin == undefined) {
@@ -774,27 +772,85 @@ async function deleteProduct(req, res) {
         if (allMatchedBin.length == 0)
             return res.status(400).json({
                 status: 'fail',
-                message: `Khong tim thay san pham co id:${inputProductId}`
+                message: `Khong tim thay san pham co id:${req.body.productId}`
             })
+
+        let binsToUpdate = []
         // remove matched Product
-        allMatchedBin.forEach((eachBin, index) => {
-            const filteredBin = eachBin.stock.filter(eachStock => {
-                return eachStock.productId != inputProductId
+        allMatchedBin.forEach(async (eachBin, binIndex) => {
+            // const filteredBin = eachBin.stock.filter(eachStock => {
+            //     return eachStock.productId != req.body.productId
+            // })
+            // eachBin.stock = filteredBin
+            // console.log('FOUND BIN: ', eachBin.stock)
+            let needToUpdate = false
+            eachBin.stock.forEach((product, productIndex) => {
+                if (product.productId == req.body.productId) {
+                    let updateProduct = product
+                    updateProduct.users.forEach((user, userIndex) => {
+                        if (user.userId == req.body.userId) {
+                            needToUpdate = true
+                            updateProduct.productQuantity -= (user.passedProductQuantity + user.scrappedProductQuantity)
+                            updateProduct.passedProductQuantity -= user.passedProductQuantity
+                            updateProduct.scrappedProductQuantity -= user.scrappedProductQuantity
+
+                            user.passedProductQuantity = 0
+                            user.scrappedProductQuantity = 0
+                        }
+                    })
+                    eachBin.stock[productIndex] = updateProduct
+                }
             })
-            eachBin.stock = filteredBin
-        })
-        // update stock
-        let result = []
-        allMatchedBin.forEach(async (eachBin, index) => {
-            const out = await eachBin.save()
-            result.push(out)
-            if (index == allMatchedBin.length - 1)
+
+            if (needToUpdate) {
+                const res = await eachBin.save()
+                binsToUpdate.push(res)
+            }
+            if (binIndex == allMatchedBin.length - 1) {
                 return res.status(200).json({
                     status: 'success',
-                    data: result
+                    data: binsToUpdate
                 })
+            }
         })
+
+        // // update stock
+        // let result = []
+        // binsToUpdate.forEach(async (eachBin, index) => {
+        //     const out = await eachBin.save()
+        //     result.push(out)
+        //     if (index == binsToUpdate.length - 1)
+        //         return res.status(200).json({
+        //             status: 'success',
+        //             data: result
+        //         })
+        // })
+
+
+        // DO THIS NOT WORK
+        // let updatedBins = await StockCollection.updateMany(
+        //     {
+        //         stock: { $elemMatch: { productId: req.body.productId } }
+        //     },
+        //     {
+        //         $set: {
+        //             'stock.$[outer].users.$[inner].passedProductQuantity': 0,
+        //             'stock.$[outer].users.$[inner].scrappedProductQuantity': 0
+        //         }
+        //     },
+        //     {
+        //         arrayFilters: [
+        //             { 'outer.productId': req.body.productId },
+        //             { 'inner.userId': req.body.userId }
+        //         ]
+        //     }
+        // )
+        // return res.status(200).json({
+        //     status: 'success',
+        //     data: updatedBins
+        // })
     } catch (err) {
+        console.log(err)
         logger.error('Catch unknown error', { error: err })
         return res.status(500).json({
             status: 'fail',
