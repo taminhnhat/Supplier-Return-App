@@ -1,0 +1,12 @@
+[Unit]
+Description=Mergewall KHOCTY service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/nhattm/Supplier-Return-App
+ExecStart=/home/nhattm/Supplier-Return-App/scripts/server.sh
+Restart=on-failure
+StandardOutput=file:/home/nhattm/.mergewall/mergewall_KHOCTY.log
+
+[Install]
+WantedBy=default.target
